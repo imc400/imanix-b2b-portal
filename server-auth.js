@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs').promises;
 const session = require('express-session');
+const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
@@ -185,6 +186,98 @@ function applyB2BDiscount(price, discount) {
   return Math.round(price * (1 - discount / 100));
 }
 
+// Función para obtener productos B2B desde Shopify
+async function fetchB2BProductsFromShopify() {
+  const graphqlUrl = `https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2024-04/graphql.json`;
+  
+  const getProductsQuery = `
+    query getProductsByTag($cursor: String) {
+      products(first: 50, after: $cursor, query: "tag:b2b") {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        edges {
+          node {
+            id
+            title
+            handle
+            tags
+            totalInventory
+            images(first: 5) {
+              edges {
+                node {
+                  id
+                  url
+                  altText
+                  width
+                  height
+                }
+              }
+            }
+            variants(first: 10) {
+              edges {
+                node {
+                  id
+                  title
+                  sku
+                  price
+                  inventoryQuantity
+                  image {
+                    url
+                    altText
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  let allProducts = [];
+  let hasNextPage = true;
+  let cursor = null;
+
+  try {
+    while (hasNextPage) {
+      const response = await axios.post(
+        graphqlUrl,
+        {
+          query: getProductsQuery,
+          variables: { cursor: cursor },
+        },
+        {
+          headers: {
+            'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      const productsData = response.data.data.products;
+      const productsOnPage = productsData.edges.map(edge => edge.node);
+      allProducts = allProducts.concat(productsOnPage);
+
+      hasNextPage = productsData.pageInfo.hasNextPage;
+      cursor = productsData.pageInfo.endCursor;
+    }
+
+    return allProducts;
+  } catch (error) {
+    console.error('Error obteniendo productos desde Shopify:', error);
+    // Fallback: intentar leer desde archivo local si existe
+    try {
+      const data = await fs.readFile('b2b-products.json', 'utf8');
+      return JSON.parse(data);
+    } catch (fileError) {
+      console.error('Error leyendo archivo local:', fileError);
+      return [];
+    }
+  }
+}
+
 // Ruta principal
 app.get('/', async (req, res) => {
   try {
@@ -194,12 +287,13 @@ app.get('/', async (req, res) => {
       return res.send(getLoginHTML());
     }
 
-    const data = await fs.readFile('b2b-products.json', 'utf8');
-    const products = JSON.parse(data);
+    // Obtener productos desde Shopify directamente
+    const products = await fetchB2BProductsFromShopify();
     
     res.send(getPortalHTML(products, req.session.customer));
     
   } catch (error) {
+    console.error('Error en ruta principal:', error);
     res.status(500).send(`Error: ${error.message}`);
   }
 });
@@ -1347,7 +1441,9 @@ app.post('/webhooks/products/update', express.raw({ type: 'application/json' }),
   console.log('🔄 Webhook recibido de Shopify');
   
   try {
-    const product = JSON.parse(req.body);
+    // Convertir Buffer a string y luego parsear
+    const bodyString = req.body.toString();
+    const product = JSON.parse(bodyString);
     const tags = product.tags || '';
     
     console.log(`📦 Producto: ${product.title}`);
