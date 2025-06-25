@@ -298,6 +298,670 @@ app.get('/', async (req, res) => {
   }
 });
 
+// Ruta del carrito
+app.get('/carrito', (req, res) => {
+  try {
+    // Verificar si el usuario está autenticado
+    if (!req.session.customer) {
+      return res.redirect('/');
+    }
+
+    res.send(getCartHTML(req.session.customer));
+    
+  } catch (error) {
+    console.error('Error en ruta del carrito:', error);
+    res.status(500).send(`Error: ${error.message}`);
+  }
+});
+
+// Función para generar HTML del carrito
+function getCartHTML(customer) {
+  const customerDiscount = customer.discount;
+  
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito de Compras - Portal B2B BrainToys Chile</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            color: #1e293b;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: #000000;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 1.5rem;
+        }
+
+        .brand-logo {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+                 .nav-actions {
+             display: flex;
+             align-items: center;
+             gap: 1rem;
+         }
+
+         .customer-info {
+             display: flex;
+             align-items: center;
+             gap: 0.5rem;
+         }
+
+        .nav-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: #000000;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .cart-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .cart-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .cart-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .cart-subtitle {
+            color: #64748b;
+            font-size: 1rem;
+        }
+
+        .cart-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+        }
+
+        .cart-items {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 2rem;
+        }
+
+        .cart-item {
+            display: grid;
+            grid-template-columns: 100px 1fr auto auto;
+            gap: 1rem;
+            align-items: center;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: #f1f5f9;
+        }
+
+        .item-details h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-price-info {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .price-breakdown {
+            margin-top: 0.25rem;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f8fafc;
+            padding: 0.5rem;
+            border-radius: 12px;
+        }
+
+        .quantity-btn {
+            background: #FFCE36;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quantity-display {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .item-total {
+            text-align: right;
+            min-width: 120px;
+        }
+
+        .item-total-price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .item-total-breakdown {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+
+        .remove-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        .cart-summary {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 2rem;
+            height: fit-content;
+            position: sticky;
+            top: 120px;
+        }
+
+        .summary-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            color: #1e293b;
+        }
+
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        .summary-line.total {
+            border-top: 2px solid #e2e8f0;
+            padding-top: 1rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .summary-label {
+            color: #64748b;
+        }
+
+        .summary-value {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .discount-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #FFCE36, #FF7B85);
+            color: #000000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .checkout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 206, 54, 0.4);
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .empty-cart-icon {
+            font-size: 4rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+
+        .empty-cart-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-cart-subtitle {
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        .continue-shopping {
+            background: linear-gradient(135deg, #FFCE36, #FF7B85);
+            color: #000000;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .cart-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .cart-item {
+                grid-template-columns: 80px 1fr;
+                gap: 1rem;
+            }
+            
+            .quantity-controls {
+                margin-top: 1rem;
+                justify-self: start;
+            }
+            
+            .item-total {
+                margin-top: 0.5rem;
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="/" class="brand">
+                <div class="brand-logo">🧠</div>
+                <span>BrainToys B2B</span>
+            </a>
+            
+            <div class="nav-actions">
+                <div class="customer-info">
+                    <span style="color: #000000; font-weight: 600;">
+                        ${customer.firstName} ${customer.lastName}
+                    </span>
+                    <div class="discount-badge">-${customerDiscount}%</div>
+                </div>
+                <button class="nav-button" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="cart-container">
+        <div class="cart-header">
+            <h1 class="cart-title">
+                <i class="fas fa-shopping-cart"></i>
+                Tu Carrito de Compras
+            </h1>
+            <p class="cart-subtitle">Revisa y modifica tus productos antes de proceder</p>
+        </div>
+
+        <div id="cartContent">
+            <!-- El contenido se carga dinámicamente -->
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
+        const customerDiscount = ${customerDiscount};
+
+        // Función para formatear precios
+        function formatPrice(price) {
+            return new Intl.NumberFormat('es-CL', {
+                style: 'currency',
+                currency: 'CLP'
+            }).format(price);
+        }
+
+        // Función para calcular precio neto (sin IVA)
+        function calculateNetPrice(grossPrice) {
+            return Math.round(grossPrice / 1.19);
+        }
+
+        // Función para calcular IVA
+        function calculateIVA(netPrice) {
+            return Math.round(netPrice * 0.19);
+        }
+
+        // Función para renderizar el carrito
+        function renderCart() {
+            const cartContent = document.getElementById('cartContent');
+            
+            if (cart.length === 0) {
+                cartContent.innerHTML = \`
+                    <div class="empty-cart">
+                        <div class="empty-cart-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <h2 class="empty-cart-title">Tu carrito está vacío</h2>
+                        <p class="empty-cart-subtitle">Agrega productos desde nuestro catálogo B2B</p>
+                        <a href="/" class="continue-shopping">
+                            <i class="fas fa-arrow-left"></i>
+                            Continuar Comprando
+                        </a>
+                    </div>
+                \`;
+                return;
+            }
+
+            let subtotalBruto = 0;
+            
+            const itemsHTML = cart.map(item => {
+                const itemTotalBruto = item.price * item.quantity;
+                const itemTotalNeto = calculateNetPrice(itemTotalBruto);
+                const itemTotalIVA = calculateIVA(itemTotalNeto);
+                
+                subtotalBruto += itemTotalBruto;
+                
+                const unitPriceNeto = calculateNetPrice(item.price);
+                const unitPriceIVA = calculateIVA(unitPriceNeto);
+                
+                return \`
+                    <div class="cart-item" data-product-id="\${item.productId}">
+                        <img src="\${item.image}" alt="\${item.title}" class="item-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjFGNUY5Ii8+CjxwYXRoIGQ9Ik0zNSA0MEg2NVY2MEgzNVY0MFoiIGZpbGw9IiNCREMzQzciLz4KPC9zdmc+'" />
+                        
+                        <div class="item-details">
+                            <h3>\${item.title}</h3>
+                            <div class="item-price-info">
+                                Precio unitario: \${formatPrice(item.price)}
+                                <div class="price-breakdown">
+                                    Neto: \${formatPrice(unitPriceNeto)} + IVA: \${formatPrice(unitPriceIVA)}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="quantity-controls">
+                            <button class="quantity-btn" onclick="updateQuantity('\${item.productId}', -1)">-</button>
+                            <span class="quantity-display">\${item.quantity}</span>
+                            <button class="quantity-btn" onclick="updateQuantity('\${item.productId}', 1)">+</button>
+                            <button class="remove-btn" onclick="removeFromCart('\${item.productId}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="item-total">
+                            <div class="item-total-price">\${formatPrice(itemTotalBruto)}</div>
+                            <div class="item-total-breakdown">
+                                Neto: \${formatPrice(itemTotalNeto)}<br>
+                                IVA: \${formatPrice(itemTotalIVA)}
+                            </div>
+                        </div>
+                    </div>
+                \`;
+            }).join('');
+
+            // Calcular totales
+            const subtotalNeto = calculateNetPrice(subtotalBruto);
+            const subtotalIVA = calculateIVA(subtotalNeto);
+            const descuentoMonto = Math.round(subtotalBruto * (customerDiscount / 100));
+            const totalConDescuento = subtotalBruto - descuentoMonto;
+            const totalNetoConDescuento = calculateNetPrice(totalConDescuento);
+            const totalIVAConDescuento = calculateIVA(totalNetoConDescuento);
+
+            cartContent.innerHTML = \`
+                <div class="cart-content">
+                    <div class="cart-items">
+                        \${itemsHTML}
+                    </div>
+                    
+                    <div class="cart-summary">
+                        <h3 class="summary-title">Resumen del Pedido</h3>
+                        
+                        <div class="summary-line">
+                            <span class="summary-label">Subtotal (Bruto):</span>
+                            <span class="summary-value">\${formatPrice(subtotalBruto)}</span>
+                        </div>
+                        
+                        <div class="summary-line">
+                            <span class="summary-label">• Neto:</span>
+                            <span class="summary-value">\${formatPrice(subtotalNeto)}</span>
+                        </div>
+                        
+                        <div class="summary-line">
+                            <span class="summary-label">• IVA (19%):</span>
+                            <span class="summary-value">\${formatPrice(subtotalIVA)}</span>
+                        </div>
+                        
+                        <div class="summary-line">
+                            <span class="summary-label">Descuento B2B (-\${customerDiscount}%):</span>
+                            <span class="summary-value" style="color: #10b981;">-\${formatPrice(descuentoMonto)}</span>
+                        </div>
+                        
+                        <div class="summary-line total">
+                            <span class="summary-label">Total a Pagar:</span>
+                            <span class="summary-value">\${formatPrice(totalConDescuento)}</span>
+                        </div>
+                        
+                        <div class="summary-line" style="font-size: 0.875rem; margin-top: -0.5rem;">
+                            <span class="summary-label">• Neto final:</span>
+                            <span class="summary-value">\${formatPrice(totalNetoConDescuento)}</span>
+                        </div>
+                        
+                        <div class="summary-line" style="font-size: 0.875rem; margin-top: -0.5rem; margin-bottom: 0;">
+                            <span class="summary-label">• IVA final:</span>
+                            <span class="summary-value">\${formatPrice(totalIVAConDescuento)}</span>
+                        </div>
+                        
+                        <button class="checkout-btn" onclick="proceedToCheckout()">
+                            <i class="fas fa-credit-card"></i>
+                            Proceder al Pago
+                        </button>
+                        
+                        <a href="/" class="nav-button" style="width: 100%; justify-content: center; margin-top: 1rem; text-decoration: none;">
+                            <i class="fas fa-arrow-left"></i>
+                            Continuar Comprando
+                        </a>
+                    </div>
+                </div>
+            \`;
+        }
+
+        // Función para actualizar cantidad
+        function updateQuantity(productId, change) {
+            const item = cart.find(item => item.productId === productId);
+            if (item) {
+                item.quantity += change;
+                if (item.quantity <= 0) {
+                    removeFromCart(productId);
+                } else {
+                    localStorage.setItem('b2bCart', JSON.stringify(cart));
+                    renderCart();
+                    showNotification('Cantidad actualizada', 'success');
+                }
+            }
+        }
+
+        // Función para eliminar del carrito
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.productId !== productId);
+            localStorage.setItem('b2bCart', JSON.stringify(cart));
+            renderCart();
+            showNotification('Producto eliminado del carrito', 'success');
+        }
+
+        // Función para proceder al checkout
+        function proceedToCheckout() {
+            if (cart.length === 0) {
+                showNotification('Tu carrito está vacío', 'error');
+                return;
+            }
+            
+            // Por ahora mostramos un mensaje, aquí integrarías con tu sistema de pagos
+            alert('Funcionalidad de pago en desarrollo\\nContáctanos para procesar tu pedido:\\nEmail: ventas@braintoys.cl\\nTeléfono: +56 2 2345 6789');
+        }
+
+        // Función para mostrar notificaciones
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.style.cssText = \`
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: \${type === 'success' ? '#10b981' : '#ef4444'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                z-index: 10000;
+                font-weight: 600;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            \`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Función para cerrar sesión
+        async function logout() {
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                try {
+                    const response = await fetch('/api/auth/logout', {
+                        method: 'POST'
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        localStorage.removeItem('b2bCart');
+                        window.location.href = '/';
+                    } else {
+                        alert('Error al cerrar sesión');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error de conexión');
+                }
+            }
+        }
+
+        // Inicializar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            renderCart();
+        });
+    </script>
+</body>
+</html>`;
+}
+
 // Función para generar HTML de login
 function getLoginHTML() {
   return `
@@ -1338,25 +2002,9 @@ function getPortalHTML(products, customer) {
             alert(customerInfo);
         }
 
-        // Mostrar carrito
+        // Mostrar carrito - redirigir a página dedicada
         function showCart() {
-            if (cart.length === 0) {
-                alert('Tu carrito está vacío');
-                return;
-            }
-            
-            let cartHTML = 'Carrito de Compras:\\n\\n';
-            let total = 0;
-            
-            cart.forEach(item => {
-                const subtotal = item.price * item.quantity;
-                total += subtotal;
-                cartHTML += \`\${item.title}\\n\`;
-                cartHTML += \`Cantidad: \${item.quantity} x \${formatPrice(item.price)} = \${formatPrice(subtotal)}\\n\\n\`;
-            });
-            
-            cartHTML += \`Total: \${formatPrice(total)}\`;
-            alert(cartHTML);
+            window.location.href = '/carrito';
         }
 
         // Mostrar notificación
