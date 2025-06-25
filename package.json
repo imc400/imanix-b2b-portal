@@ -6,20 +6,30 @@
   "scripts": {
     "start": "node server-auth.js",
     "dev": "node server-auth.js",
-    "sync": "node sync.js"
+    "sync": "node sync.js",
+    "setup-db": "node setup-database.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "express-session": "^1.17.3",
+    "@supabase/supabase-js": "^2.50.2",
+    "axios": "^1.6.0",
+    "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "axios": "^1.6.0"
+    "express": "^4.21.2",
+    "express-session": "^1.17.3",
+    "uuid": "^9.0.1"
   },
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["b2b", "shopify", "portal", "braintoys", "imanix"],
+  "keywords": [
+    "b2b",
+    "shopify",
+    "portal",
+    "braintoys",
+    "imanix"
+  ],
   "author": "Ignacio Blanco",
   "license": "MIT"
 }

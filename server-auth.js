@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs').promises;
 const session = require('express-session');
 const axios = require('axios');
+const database = require('./database');
 require('dotenv').config();
 
 const app = express();
@@ -105,6 +106,21 @@ app.post('/api/auth/login', async (req, res) => {
       discount: discount,
       tags: customer.tags
     };
+
+    // Crear o actualizar perfil en base de datos
+    if (database) {
+      const discountTag = customer.tags?.split(',').find(tag => tag.trim().toLowerCase().startsWith('b2b')) || null;
+      await database.createOrUpdateProfile({
+        email: customer.email,
+        shopify_customer_id: customer.id,
+        company_name: customer.default_address?.company || null,
+        contact_name: `${customer.first_name} ${customer.last_name}`,
+        phone: customer.phone || customer.default_address?.phone || null,
+        discount_percentage: discount,
+        discount_tag: discountTag?.trim(),
+        is_active: true
+      });
+    }
 
     console.log(`✅ Cliente B2B autenticado: ${email} - Descuento: ${discount}%`);
 
@@ -1994,12 +2010,9 @@ function getPortalHTML(products, customer) {
 
         // Mostrar información del usuario
         function showUserMenu() {
-            const customerInfo = "Información del Cliente:\\n" +
-                "• Nombre: ${customer.firstName} ${customer.lastName}\\n" +
-                "• Email: ${customer.email}\\n" +
-                "• Descuento B2B: ${customerDiscount}%\\n" +
-                "• Etiquetas: ${customer.tags}";
-            alert(customerInfo);
+            if (confirm("¿Quieres ir a tu perfil de usuario?\\n\\nAhí puedes:\\n• Editar tu información personal\\n• Gestionar direcciones de envío\\n• Ver historial de pedidos\\n• Ver estadísticas de compras")) {
+                window.location.href = '/perfil';
+            }
         }
 
         // Mostrar carrito - redirigir a página dedicada
@@ -2083,6 +2096,999 @@ function getPortalHTML(products, customer) {
 </body>
 </html>`;
 }
+
+// Función para generar HTML del perfil de usuario
+function getProfileHTML(customer, profile, addresses, orders, stats) {
+  const customerDiscount = customer.discount || 0;
+  
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - Portal B2B Imanix</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #5a67d8;
+            text-decoration: none;
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #4a5568;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background: #f7fafc;
+            color: #5a67d8;
+        }
+
+        .nav-link.active {
+            background: #5a67d8;
+            color: white;
+        }
+
+        .profile-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .profile-header {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #5a67d8, #667eea);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .profile-tabs {
+            display: flex;
+            background: white;
+            border-radius: 15px;
+            padding: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #5a67d8, #667eea);
+            color: white;
+            box-shadow: 0 5px 15px rgba(90,103,216,0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stat-icon.orders { background: linear-gradient(135deg, #48bb78, #38a169); }
+        .stat-icon.spent { background: linear-gradient(135deg, #ed8936, #dd6b20); }
+        .stat-icon.saved { background: linear-gradient(135deg, #38b2ac, #319795); }
+        .stat-icon.discount { background: linear-gradient(135deg, #9f7aea, #805ad5); }
+
+        .content-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #5a67d8;
+            box-shadow: 0 0 0 3px rgba(90,103,216,0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #5a67d8, #667eea);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(90,103,216,0.3);
+        }
+
+        .btn-secondary {
+            background: #f7fafc;
+            color: #4a5568;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-danger {
+            background: #fed7d7;
+            color: #e53e3e;
+            border: 2px solid #feb2b2;
+        }
+
+        .address-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .address-card:hover {
+            border-color: #5a67d8;
+            box-shadow: 0 5px 15px rgba(90,103,216,0.1);
+        }
+
+        .address-card.default {
+            border-color: #48bb78;
+            background: #f0fff4;
+        }
+
+        .address-type {
+            background: #5a67d8;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .address-type.billing {
+            background: #ed8936;
+        }
+
+        .order-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .order-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .order-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-completed { background: #c6f6d5; color: #22543d; }
+        .status-pending { background: #feebc8; color: #9c4221; }
+        .status-cancelled { background: #fed7d7; color: #742a2a; }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #718096;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                padding: 0 1rem;
+            }
+
+            .navbar {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .order-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">
+            <i class="fas fa-cube"></i>
+            Portal B2B Imanix
+        </a>
+        
+        <div class="navbar-nav">
+            <a href="/" class="nav-link">
+                <i class="fas fa-home"></i>
+                Catálogo
+            </a>
+            <a href="/perfil" class="nav-link active">
+                <i class="fas fa-user"></i>
+                Mi Perfil
+            </a>
+            <a href="/carrito" class="nav-link">
+                <i class="fas fa-shopping-cart"></i>
+                Carrito
+            </a>
+            <a href="#" class="nav-link" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                Salir
+            </a>
+        </div>
+    </nav>
+
+    <div class="profile-container">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                ${customer.firstName ? customer.firstName.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <h1>${customer.firstName} ${customer.lastName}</h1>
+            <p style="color: #718096; margin-top: 0.5rem;">${customer.email}</p>
+            <p style="color: #5a67d8; font-weight: 600; margin-top: 0.5rem;">
+                <i class="fas fa-percentage"></i>
+                Descuento B2B: ${customerDiscount}%
+            </p>
+        </div>
+
+        ${stats ? `
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon orders">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+                <h3>${stats.totalOrders}</h3>
+                <p>Pedidos Realizados</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon spent">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <h3>$${new Intl.NumberFormat('es-CL').format(stats.totalSpent || 0)}</h3>
+                <p>Total Gastado</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon saved">
+                    <i class="fas fa-piggy-bank"></i>
+                </div>
+                <h3>$${new Intl.NumberFormat('es-CL').format(stats.totalSaved || 0)}</h3>
+                <p>Total Ahorrado</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon discount">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <h3>${stats.discountPercentage}%</h3>
+                <p>Descuento Activo</p>
+            </div>
+        </div>
+        ` : ''}
+
+        <div class="profile-tabs">
+            <button class="tab-button active" onclick="switchTab('profile')">
+                <i class="fas fa-user"></i>
+                Perfil
+            </button>
+            <button class="tab-button" onclick="switchTab('addresses')">
+                <i class="fas fa-map-marker-alt"></i>
+                Direcciones
+            </button>
+            <button class="tab-button" onclick="switchTab('orders')">
+                <i class="fas fa-history"></i>
+                Historial
+            </button>
+        </div>
+
+        <!-- Tab Perfil -->
+        <div id="profile-tab" class="tab-content active">
+            <div class="content-card">
+                <h2 class="section-title">
+                    <i class="fas fa-user-edit"></i>
+                    Información Personal
+                </h2>
+                
+                <form id="profileForm" onsubmit="updateProfile(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-input" value="${customer.email}" disabled>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Nombre de Contacto</label>
+                            <input type="text" name="contact_name" class="form-input" 
+                                   value="${profile?.contact_name || ''}" placeholder="Tu nombre completo">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Empresa</label>
+                            <input type="text" name="company_name" class="form-input" 
+                                   value="${profile?.company_name || ''}" placeholder="Nombre de tu empresa">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Teléfono</label>
+                            <input type="tel" name="phone" class="form-input" 
+                                   value="${profile?.phone || ''}" placeholder="+56 9 1234 5678">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Guardar Cambios
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tab Direcciones -->
+        <div id="addresses-tab" class="tab-content">
+            <div class="content-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 class="section-title" style="margin-bottom: 0;">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Mis Direcciones
+                    </h2>
+                    <button class="btn btn-primary" onclick="showAddAddressModal()">
+                        <i class="fas fa-plus"></i>
+                        Agregar Dirección
+                    </button>
+                </div>
+                
+                <div id="addressesList">
+                    ${addresses && addresses.length > 0 ? 
+                        addresses.map(addr => `
+                            <div class="address-card ${addr.is_default ? 'default' : ''}">
+                                <div class="address-type ${addr.type}">
+                                    ${addr.type === 'shipping' ? 'Envío' : 'Facturación'}
+                                    ${addr.is_default ? ' (Por Defecto)' : ''}
+                                </div>
+                                <p><strong>${addr.first_name} ${addr.last_name}</strong></p>
+                                ${addr.company ? `<p>${addr.company}</p>` : ''}
+                                <p>${addr.address1}</p>
+                                ${addr.address2 ? `<p>${addr.address2}</p>` : ''}
+                                <p>${addr.city}, ${addr.state || ''} ${addr.postal_code}</p>
+                                <p>${addr.country}</p>
+                                ${addr.phone ? `<p><i class="fas fa-phone"></i> ${addr.phone}</p>` : ''}
+                                
+                                <div style="margin-top: 1rem;">
+                                    <button class="btn btn-secondary" onclick="editAddress('${addr.id}')">
+                                        <i class="fas fa-edit"></i>
+                                        Editar
+                                    </button>
+                                    <button class="btn btn-danger" onclick="deleteAddress('${addr.id}')">
+                                        <i class="fas fa-trash"></i>
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('') :
+                        `<div class="empty-state">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <h3>No tienes direcciones guardadas</h3>
+                            <p>Agrega tu primera dirección para facilitar tus pedidos</p>
+                        </div>`
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Historial -->
+        <div id="orders-tab" class="tab-content">
+            <div class="content-card">
+                <h2 class="section-title">
+                    <i class="fas fa-history"></i>
+                    Historial de Pedidos
+                </h2>
+                
+                <div id="ordersList">
+                    ${orders && orders.length > 0 ? 
+                        orders.map(order => `
+                            <div class="order-card">
+                                <div class="order-header">
+                                    <div>
+                                        <h4>Pedido #${order.order_number || order.id.substring(0, 8)}</h4>
+                                        <p style="color: #718096; margin-top: 0.25rem;">
+                                            ${new Date(order.order_date).toLocaleDateString('es-CL')}
+                                        </p>
+                                    </div>
+                                    <div class="order-status status-${order.status.toLowerCase()}">
+                                        ${order.status}
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-bottom: 1rem;">
+                                    <strong>Total: ${formatPrice(order.total_amount)}</strong>
+                                    ${order.discount_amount > 0 ? 
+                                        `<span style="color: #48bb78; margin-left: 1rem;">
+                                            Ahorrado: ${formatPrice(order.discount_amount)}
+                                        </span>` : ''
+                                    }
+                                </div>
+                                
+                                ${order.order_items && order.order_items.length > 0 ? `
+                                    <div>
+                                        <p style="font-weight: 600; margin-bottom: 0.5rem;">Productos:</p>
+                                        ${order.order_items.map(item => `
+                                            <p style="color: #718096; margin-left: 1rem;">
+                                                • ${item.product_title} ${item.variant_title ? `(${item.variant_title})` : ''} 
+                                                x${item.quantity}
+                                            </p>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('') :
+                        `<div class="empty-state">
+                            <i class="fas fa-shopping-bag"></i>
+                            <h3>No tienes pedidos aún</h3>
+                            <p>Cuando realices tu primer pedido aparecerá aquí</p>
+                            <a href="/" class="btn btn-primary" style="margin-top: 1rem;">
+                                <i class="fas fa-shopping-cart"></i>
+                                Explorar Catálogo
+                            </a>
+                        </div>`
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Ocultar todas las tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Mostrar tab seleccionada
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Actualizar botones
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        async function updateProfile(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('Perfil actualizado exitosamente', 'success');
+                } else {
+                    showNotification(result.message || 'Error actualizando perfil', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error de conexión', 'error');
+            }
+        }
+
+        function showAddAddressModal() {
+            // Implementar modal para agregar dirección
+            const type = prompt('Tipo de dirección (shipping/billing):');
+            if (!type || !['shipping', 'billing'].includes(type)) return;
+            
+            const firstName = prompt('Nombre:');
+            if (!firstName) return;
+            
+            const lastName = prompt('Apellido:');
+            if (!lastName) return;
+            
+            const address1 = prompt('Dirección:');
+            if (!address1) return;
+            
+            const city = prompt('Ciudad:');
+            if (!city) return;
+            
+            const postalCode = prompt('Código Postal:');
+            if (!postalCode) return;
+            
+            addAddress({
+                type,
+                first_name: firstName,
+                last_name: lastName,
+                address1,
+                city,
+                postal_code: postalCode,
+                country: 'Chile'
+            });
+        }
+
+        async function addAddress(addressData) {
+            try {
+                const response = await fetch('/api/addresses', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(addressData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('Dirección agregada exitosamente', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showNotification(result.message || 'Error agregando dirección', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error de conexión', 'error');
+            }
+        }
+
+        async function deleteAddress(addressId) {
+            if (!confirm('¿Estás seguro de que quieres eliminar esta dirección?')) return;
+            
+            try {
+                const response = await fetch(\`/api/addresses/\${addressId}\`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('Dirección eliminada exitosamente', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showNotification(result.message || 'Error eliminando dirección', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error de conexión', 'error');
+            }
+        }
+
+        function editAddress(addressId) {
+            // Implementar edición de dirección
+            showNotification('Función de edición en desarrollo', 'info');
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.style.cssText = \`
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: \${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                z-index: 10000;
+                font-weight: 600;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            \`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('es-CL', {
+                style: 'currency',
+                currency: 'CLP'
+            }).format(price);
+        }
+
+        async function logout() {
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                try {
+                    const response = await fetch('/api/auth/logout', { method: 'POST' });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        localStorage.removeItem('b2bCart');
+                        window.location.href = '/';
+                    } else {
+                        alert('Error al cerrar sesión');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error de conexión');
+                }
+            }
+        }
+    </script>
+</body>
+</html>`;
+}
+
+// ========== RUTAS DEL PERFIL DE USUARIO ==========
+
+// Middleware para verificar autenticación
+function requireAuth(req, res, next) {
+  if (!req.session.customer) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Acceso no autorizado' 
+    });
+  }
+  next();
+}
+
+// Página del perfil de usuario
+app.get('/perfil', requireAuth, async (req, res) => {
+  try {
+    const customer = req.session.customer;
+    const profile = await database.getProfile(customer.email);
+    const addresses = await database.getUserAddresses(customer.email);
+    const orders = await database.getUserOrders(customer.email, 10);
+    const stats = await database.getStats(customer.email);
+    
+    const html = getProfileHTML(customer, profile, addresses, orders, stats);
+    res.send(html);
+  } catch (error) {
+    console.error('Error cargando perfil:', error);
+    res.status(500).send('Error interno del servidor');
+  }
+});
+
+// API - Obtener perfil
+app.get('/api/profile', requireAuth, async (req, res) => {
+  try {
+    const customer = req.session.customer;
+    const profile = await database.getProfile(customer.email);
+    const stats = await database.getStats(customer.email);
+    
+    res.json({
+      success: true,
+      data: {
+        profile,
+        stats,
+        customer
+      }
+    });
+  } catch (error) {
+    console.error('Error obteniendo perfil:', error);
+    res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+});
+
+// API - Actualizar perfil
+app.put('/api/profile', requireAuth, async (req, res) => {
+  try {
+    const customer = req.session.customer;
+    const updates = req.body;
+    
+    // Campos permitidos para actualizar
+    const allowedFields = ['company_name', 'contact_name', 'phone'];
+    const filteredUpdates = {};
+    
+    allowedFields.forEach(field => {
+      if (updates[field] !== undefined) {
+        filteredUpdates[field] = updates[field];
+      }
+    });
+    
+    const profile = await database.updateProfile(customer.email, filteredUpdates);
+    
+    if (profile) {
+      res.json({ success: true, data: profile });
+    } else {
+      res.status(400).json({ success: false, message: 'Error actualizando perfil' });
+    }
+  } catch (error) {
+    console.error('Error actualizando perfil:', error);
+    res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+});
+
+// API - Obtener direcciones
+app.get('/api/addresses', requireAuth, async (req, res) => {
+  try {
+    const customer = req.session.customer;
+    const addresses = await database.getUserAddresses(customer.email);
+    
+    res.json({ success: true, data: addresses });
+  } catch (error) {
+    console.error('Error obteniendo direcciones:', error);
+    res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+});
+
+// API - Agregar dirección
+app.post('/api/addresses', requireAuth, async (req, res) => {
+  try {
+    const customer = req.session.customer;
+    const addressData = req.body;
+    
+    // Validar campos requeridos
+    const required = ['type', 'first_name', 'last_name', 'address1', 'city', 'postal_code'];
+    const missing = required.filter(field => !addressData[field]);
+    
+    if (missing.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Campos requeridos: ${missing.join(', ')}`
+      });
+    }
+    
+    if (!['shipping', 'billing'].includes(addressData.type)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tipo de dirección debe ser "shipping" o "billing"'
+      });
+    }
+    
+    const address = await database.addAddress(customer.email, addressData);
+    
+    if (address) {
+      res.json({ success: true, data: address });
+    } else {
+      res.status(400).json({ success: false, message: 'Error agregando dirección' });
+    }
+  } catch (error) {
+    console.error('Error agregando dirección:', error);
+    res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+});
+
+// API - Actualizar dirección
+app.put('/api/addresses/:id', requireAuth, async (req, res) => {
+  try {
+    const addressId = req.params.id;
+    const updates = req.body;
+    
+    const address = await database.updateAddress(addressId, updates);
+    
+    if (address) {
+      res.json({ success: true, data: address });
+    } else {
+      res.status(400).json({ success: false, message: 'Error actualizando dirección' });
+    }
+  } catch (error) {
+    console.error('Error actualizando dirección:', error);
+    res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+});
+
+// API - Eliminar dirección
+app.delete('/api/addresses/:id', requireAuth, async (req, res) => {
+  try {
+    const addressId = req.params.id;
+    const success = await database.deleteAddress(addressId);
+    
+    if (success) {
+      res.json({ success: true, message: 'Dirección eliminada' });
+    } else {
+      res.status(400).json({ success: false, message: 'Error eliminando dirección' });
+    }
+  } catch (error) {
+    console.error('Error eliminando dirección:', error);
+    res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+});
+
+// API - Obtener historial de pedidos
+app.get('/api/orders', requireAuth, async (req, res) => {
+  try {
+    const customer = req.session.customer;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+    
+    const orders = await database.getUserOrders(customer.email, limit, offset);
+    
+    res.json({ success: true, data: orders });
+  } catch (error) {
+    console.error('Error obteniendo pedidos:', error);
+    res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+});
+
+// API - Obtener detalles de un pedido
+app.get('/api/orders/:id', requireAuth, async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const order = await database.getOrderDetails(orderId);
+    
+    if (order) {
+      res.json({ success: true, data: order });
+    } else {
+      res.status(404).json({ success: false, message: 'Pedido no encontrado' });
+    }
+  } catch (error) {
+    console.error('Error obteniendo detalles del pedido:', error);
+    res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+});
 
 // Webhooks de Shopify (mantenemos los existentes del server original)
 app.post('/webhooks/products/update', express.raw({ type: 'application/json' }), (req, res) => {
