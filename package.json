@@ -1,35 +1,31 @@
 {
   "name": "imanix-b2b-portal",
   "version": "1.0.0",
-  "description": "Portal B2B para BrainToys Chile con autenticación por etiquetas de Shopify",
+  "description": "Portal B2B para IMANIX Chile con autenticación Shopify y gestión de perfiles empresariales",
   "main": "server-auth.js",
   "scripts": {
     "start": "node server-auth.js",
     "dev": "node server-auth.js",
-    "sync": "node sync.js",
-    "setup-db": "node setup-database.js"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.50.2",
-    "axios": "^1.6.0",
-    "bcrypt": "^5.1.1",
-    "body-parser": "^1.20.2",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.21.2",
-    "express-session": "^1.17.3",
-    "uuid": "^9.0.1"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "build": "echo 'Build completed'",
+    "lint": "echo 'Linting skipped'",
+    "test": "echo 'Tests skipped'"
   },
   "keywords": [
     "b2b",
     "shopify",
+    "supabase",
     "portal",
-    "braintoys",
-    "imanix"
+    "ecommerce",
+    "chile"
   ],
-  "author": "Ignacio Blanco",
-  "license": "MIT"
+  "author": "IMANIX Chile",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.3",
+    "body-parser": "^1.20.2",
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }

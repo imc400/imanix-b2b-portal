@@ -63,6 +63,59 @@ function extractB2BDiscount(tags) {
   return null;
 }
 
+// Función para crear o actualizar perfil automáticamente al autenticarse
+async function createOrUpdateUserProfile(customer) {
+  if (!database) return null;
+  
+  try {
+    // Datos del cliente desde Shopify
+    const profileData = {
+      email: customer.email,
+      shopify_customer_id: customer.id || null,
+      company_name: customer.company || customer.defaultAddress?.company || null,
+      contact_name: `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || null,
+      mobile_phone: customer.phone || customer.defaultAddress?.phone || null,
+      discount_percentage: customer.discount || 0,
+      discount_tag: customer.tags.find(tag => tag.startsWith('b2b')) || null,
+      is_active: true
+    };
+
+    console.log('🔄 Creando/actualizando perfil para:', customer.email);
+    const profile = await database.createOrUpdateProfile(profileData);
+    
+    if (profile) {
+      console.log('✅ Perfil creado/actualizado exitosamente');
+      
+      // Si el cliente tiene dirección por defecto, crear/actualizar en Supabase
+      if (customer.defaultAddress) {
+        const address = customer.defaultAddress;
+        const addressData = {
+          type: 'shipping',
+          is_default: true,
+          company: address.company || null,
+          first_name: address.firstName || customer.firstName,
+          last_name: address.lastName || customer.lastName,
+          address1: address.address1,
+          address2: address.address2 || null,
+          city: address.city,
+          state: address.province || null,
+          postal_code: address.zip,
+          country: address.country || 'Chile',
+          phone: address.phone || customer.phone || null
+        };
+        
+        console.log('🏠 Sincronizando dirección por defecto');
+        await database.addAddress(customer.email, addressData);
+      }
+    }
+    
+    return profile;
+  } catch (error) {
+    console.error('❌ Error creando/actualizando perfil:', error);
+    return null;
+  }
+}
+
 // Endpoint para autenticación de clientes B2B
 app.post('/api/auth/login', async (req, res) => {
   try {
@@ -115,7 +168,7 @@ app.post('/api/auth/login', async (req, res) => {
         shopify_customer_id: customer.id,
         company_name: customer.default_address?.company || null,
         contact_name: `${customer.first_name} ${customer.last_name}`,
-        phone: customer.phone || customer.default_address?.phone || null,
+        mobile_phone: customer.phone || customer.default_address?.phone || null,
         discount_percentage: discount,
         discount_tag: discountTag?.trim(),
         is_active: true
@@ -124,9 +177,16 @@ app.post('/api/auth/login', async (req, res) => {
 
     console.log(`✅ Cliente B2B autenticado: ${email} - Descuento: ${discount}%`);
 
+    // Verificar si el perfil está completo
+    let profileCompleted = false;
+    if (database) {
+      profileCompleted = await database.checkProfileCompletion(email);
+    }
+
     res.json({ 
       success: true, 
       message: 'Autenticación exitosa',
+      profileCompleted: profileCompleted,
       customer: {
         firstName: customer.first_name,
         lastName: customer.last_name,
@@ -175,6 +235,185 @@ app.post('/api/auth/logout', (req, res) => {
   });
 });
 
+// Endpoint para obtener datos actuales del perfil
+app.get('/api/profile/current', requireAuth, async (req, res) => {
+  try {
+    const customer = req.session.customer;
+    let profile = null;
+
+    if (database) {
+      profile = await database.getProfile(customer.email);
+    }
+
+    // Si no hay perfil, crear uno básico
+    if (!profile) {
+      profile = {
+        email: customer.email,
+        contact_name: `${customer.firstName} ${customer.lastName}`,
+        first_name: customer.firstName || '',
+        last_name: customer.lastName || '',
+        mobile_phone: '',
+        company_name: '',
+        company_rut: '',
+        company_giro: '',
+        company_address: '',
+        region: '',
+        comuna: ''
+      };
+    }
+
+    res.json({ 
+      success: true, 
+      profile: profile 
+    });
+
+  } catch (error) {
+    console.error('Error obteniendo perfil:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error interno del servidor' 
+    });
+  }
+});
+
+// Endpoint para actualizar datos del perfil empresarial
+app.post('/api/profile/update', async (req, res) => {
+  try {
+    // Verificar autenticación
+    if (!req.session.customer) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Usuario no autenticado' 
+      });
+    }
+
+    const { profileData } = req.body;
+    const email = req.session.customer.email;
+
+    if (!profileData) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Datos del perfil requeridos' 
+      });
+    }
+
+    // Validar campos requeridos
+    const requiredFields = {
+      first_name: 'Nombre',
+      last_name: 'Apellido', 
+      mobile_phone: 'Celular',
+      company_name: 'Razón Social',
+      company_rut: 'RUT Empresa',
+      company_giro: 'Giro',
+      company_address: 'Dirección',
+      region: 'Región',
+      comuna: 'Comuna'
+    };
+
+    const missingFields = [];
+    for (const [field, label] of Object.entries(requiredFields)) {
+      if (!profileData[field] || profileData[field].toString().trim() === '') {
+        missingFields.push(label);
+      }
+    }
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Los siguientes campos son obligatorios: ${missingFields.join(', ')}` 
+      });
+    }
+
+    // Actualizar perfil en base de datos
+    if (database) {
+      const updatedProfile = await database.updateProfileData(email, profileData);
+      
+      if (updatedProfile) {
+        console.log(`✅ Perfil empresarial actualizado para: ${email}`);
+        
+        res.json({ 
+          success: true, 
+          message: '¡Datos empresariales guardados exitosamente!',
+          profileCompleted: updatedProfile.profile_completed
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: 'Error actualizando el perfil. Inténtalo nuevamente.' 
+        });
+      }
+    } else {
+      res.status(500).json({ 
+        success: false, 
+        message: 'Base de datos no disponible' 
+      });
+    }
+
+  } catch (error) {
+    console.error('Error actualizando perfil:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error interno del servidor' 
+    });
+  }
+});
+
+// Endpoint para procesar checkout y crear draft order
+app.post('/api/checkout', async (req, res) => {
+  try {
+    // Verificar autenticación
+    if (!req.session.customer) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Usuario no autenticado' 
+      });
+    }
+
+    const { cartItems } = req.body;
+    
+    if (!cartItems || cartItems.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'El carrito está vacío' 
+      });
+    }
+
+    const customer = req.session.customer;
+    const discountPercentage = customer.discount || 0;
+
+    // Crear draft order en Shopify
+    const draftOrder = await createDraftOrder(customer, cartItems, discountPercentage);
+    
+    // Log para seguimiento
+    console.log(`🎯 Draft Order #${draftOrder.id} creado para cliente B2B: ${customer.email}`);
+    console.log(`💰 Total items: ${cartItems.length}, Descuento aplicado: ${discountPercentage}%`);
+
+    res.json({ 
+      success: true, 
+      message: `¡Pedido enviado exitosamente! Tu solicitud #D${draftOrder.id} está siendo procesada por nuestro equipo.`,
+      draftOrderId: draftOrder.id,
+      draftOrderNumber: `D${draftOrder.id}`,
+      total: draftOrder.total_price,
+      discount: draftOrder.total_discounts,
+      status: 'pendiente',
+      note: 'Tu pedido está siendo revisado por nuestro equipo. Te contactaremos pronto para confirmar los detalles.',
+      nextSteps: [
+        'Revisaremos tu pedido y disponibilidad de stock',
+        'Te contactaremos para confirmar detalles y método de pago',
+        'Procesaremos el pedido una vez confirmado',
+        'Coordinaremos la entrega según tus preferencias'
+      ]
+    });
+
+  } catch (error) {
+    console.error('Error en checkout:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error procesando el pedido. Inténtalo nuevamente o contacta a soporte.' 
+    });
+  }
+});
+
 // Funciones de formato
 function formatPrice(price) {
   return new Intl.NumberFormat('es-CL', {
@@ -202,8 +441,180 @@ function applyB2BDiscount(price, discount) {
   return Math.round(price * (1 - discount / 100));
 }
 
-// Función para obtener productos B2B desde Shopify
+// Función para guardar draft order en Supabase
+async function saveDraftOrderToDatabase(draftOrder, customer) {
+    try {
+        // Usar la función del database manager que es compatible con el perfil
+        const orderData = {
+            shopify_order_id: draftOrder.id.toString(),
+            order_number: `D${draftOrder.id}`, // Draft order con prefijo D
+            status: 'pendiente', // Estado para draft orders
+            total_amount: parseFloat(draftOrder.total_price || 0),
+            discount_amount: parseFloat(draftOrder.total_discounts || 0),
+            currency: draftOrder.currency || 'CLP',
+            order_date: new Date().toISOString(),
+            items: draftOrder.line_items?.map(item => ({
+                shopify_product_id: item.product_id?.toString() || null,
+                shopify_variant_id: item.variant_id?.toString() || null,
+                product_title: item.title || item.name || 'Producto',
+                variant_title: item.variant_title || null,
+                quantity: item.quantity || 1,
+                price: parseFloat(item.price || 0),
+                discount_price: null, // Se calcula en el total
+                sku: item.sku || null
+            })) || []
+        };
+
+        const result = await database.addOrder(customer.email, orderData);
+        
+        if (result) {
+            console.log('📝 Draft Order guardado en historial del usuario:', draftOrder.id);
+        } else {
+            console.log('⚠️ No se pudo guardar en historial (base de datos no disponible)');
+        }
+    } catch (error) {
+        console.error('Error en saveDraftOrderToDatabase:', error);
+    }
+}
+
+// Función para crear Draft Order en Shopify
+async function createDraftOrder(customer, cartItems, discountPercentage) {
+    // Obtener datos del perfil empresarial desde la base de datos
+    let profileData = null;
+    if (database) {
+        profileData = await database.getProfile(customer.email);
+    }
+
+    // Extraer el ID numérico de la variant (desde GraphQL ID)
+    const lineItems = cartItems.map(item => {
+        // Si no tiene variantId, usar productId como fallback (productos del carrito viejo)
+        let variantId = item.variantId || item.productId;
+        
+        if (!variantId) {
+            throw new Error(`Item sin variantId ni productId: ${JSON.stringify(item)}`);
+        }
+
+        // El variantId puede venir como "gid://shopify/ProductVariant/123456" o ya como número
+        let numericId = variantId;
+        
+        if (typeof variantId === 'string' && variantId.includes('gid://')) {
+            numericId = variantId.split('/').pop();
+        }
+        
+        return {
+            variant_id: parseInt(numericId),
+            quantity: item.quantity,
+            price: item.price.toString()
+        };
+    });
+
+    // Construir nota con información empresarial completa
+    let orderNote = `Pedido B2B desde portal - Cliente: ${customer.email} - Descuento: ${discountPercentage}%`;
+    
+    if (profileData && profileData.profile_completed) {
+        orderNote += `
+
+DATOS EMPRESARIALES:
+• Razón Social: ${profileData.company_name || 'N/A'}
+• RUT: ${profileData.company_rut || 'N/A'}
+• Giro: ${profileData.company_giro || 'N/A'}
+• Dirección: ${profileData.company_address || 'N/A'}
+• Comuna: ${profileData.comuna || 'N/A'}
+
+CONTACTO:
+• Nombre: ${profileData.first_name || ''} ${profileData.last_name || ''}
+• Teléfono: ${profileData.phone || 'N/A'}
+• Celular: ${profileData.mobile_phone || 'N/A'}`;
+    } else {
+        orderNote += `
+
+⚠️ PERFIL EMPRESARIAL INCOMPLETO - Verificar datos con el cliente`;
+    }
+
+    const draftOrder = {
+        draft_order: {
+            line_items: lineItems,
+            customer: {
+                id: customer.shopifyId || null,
+                email: customer.email,
+                first_name: profileData?.first_name || customer.firstName || customer.name?.split(' ')[0] || '',
+                last_name: profileData?.last_name || customer.lastName || customer.name?.split(' ').slice(1).join(' ') || ''
+            },
+            applied_discount: {
+                description: `Descuento B2B ${discountPercentage}%`,
+                value_type: "percentage",
+                value: discountPercentage.toString(),
+                amount: null
+            },
+            note: orderNote,
+            tags: `b2b-portal,descuento-${discountPercentage}${profileData?.profile_completed ? ',perfil-completo' : ',perfil-incompleto'}`,
+            invoice_sent_at: null,
+            invoice_url: null,
+            status: "open",
+            // Incluir dirección si está disponible en el perfil
+            ...(profileData?.company_address && {
+                billing_address: {
+                    first_name: profileData.first_name || '',
+                    last_name: profileData.last_name || '',
+                    company: profileData.company_name || '',
+                    address1: profileData.company_address || '',
+                    city: profileData.comuna || '',
+                    province: 'Región Metropolitana',
+                    country: 'Chile',
+                    phone: profileData.phone || profileData.mobile_phone || ''
+                }
+            })
+        }
+    };
+
+    try {
+        const response = await fetch(`https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2023-10/draft_orders.json`, {
+            method: 'POST',
+            headers: {
+                'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(draftOrder)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error creando draft order:', response.status, errorText);
+            throw new Error(`Error ${response.status}: ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log('✅ Draft Order creado exitosamente:', result.draft_order.id);
+        
+        // Guardar el pedido en Supabase para el historial del usuario
+        await saveDraftOrderToDatabase(result.draft_order, customer);
+        
+        return result.draft_order;
+    } catch (error) {
+        console.error('Error creando draft order:', error);
+        throw error;
+    }
+}
+
+// Función para obtener productos B2B - PRIORIZA ARCHIVO LOCAL
 async function fetchB2BProductsFromShopify() {
+  // PRIMERO: Intentar cargar desde archivo local
+  try {
+    console.log('📦 Cargando productos B2B desde archivo local...');
+    const data = await fs.readFile('b2b-products.json', 'utf8');
+    const products = JSON.parse(data);
+    console.log(`✅ ${products.length} productos B2B cargados desde archivo local`);
+    return products;
+  } catch (fileError) {
+    console.log('⚠️ No se pudo cargar archivo local, intentando Shopify API...');
+  }
+
+  // FALLBACK: Shopify API si no hay archivo local
+  if (!SHOPIFY_ACCESS_TOKEN) {
+    console.log('❌ No hay token de Shopify configurado');
+    return [];
+  }
+
   const graphqlUrl = `https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2024-04/graphql.json`;
   
   const getProductsQuery = `
@@ -280,17 +691,11 @@ async function fetchB2BProductsFromShopify() {
       cursor = productsData.pageInfo.endCursor;
     }
 
+    console.log(`✅ ${allProducts.length} productos B2B obtenidos desde Shopify`);
     return allProducts;
   } catch (error) {
     console.error('Error obteniendo productos desde Shopify:', error);
-    // Fallback: intentar leer desde archivo local si existe
-    try {
-      const data = await fs.readFile('b2b-products.json', 'utf8');
-      return JSON.parse(data);
-    } catch (fileError) {
-      console.error('Error leyendo archivo local:', fileError);
-      return [];
-    }
+    return [];
   }
 }
 
@@ -303,6 +708,15 @@ app.get('/', async (req, res) => {
       return res.send(getLoginHTML());
     }
 
+    // Verificar si el perfil está completo
+    if (database) {
+      const profileCompleted = await database.checkProfileCompletion(req.session.customer.email);
+      if (!profileCompleted) {
+        // Redirigir a completar perfil
+        return res.redirect('/complete-profile');
+      }
+    }
+
     // Obtener productos desde Shopify directamente
     const products = await fetchB2BProductsFromShopify();
     
@@ -311,6 +725,21 @@ app.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error en ruta principal:', error);
     res.status(500).send(`Error: ${error.message}`);
+  }
+});
+
+// Ruta para completar perfil empresarial
+app.get('/complete-profile', (req, res) => {
+  try {
+    // Verificar autenticación
+    if (!req.session.customer) {
+      return res.redirect('/');
+    }
+
+    res.send(getCompleteProfileHTML(req.session.customer));
+  } catch (error) {
+    console.error('Error en ruta complete-profile:', error);
+    res.status(500).send('Error interno del servidor');
   }
 });
 
@@ -330,6 +759,46 @@ app.get('/carrito', (req, res) => {
   }
 });
 
+// Ruta para página de perfil del usuario (requiere autenticación)
+app.get('/perfil', requireAuth, async (req, res) => {
+  try {
+    const customer = req.session.customer;
+    let profile = null;
+    let addresses = [];
+    let orders = [];
+    let stats = null;
+
+    if (database) {
+      profile = await database.getProfile(customer.email);
+      addresses = await database.getUserAddresses(customer.email);
+      orders = await database.getUserOrders(customer.email, 10);
+      stats = await database.getStats(customer.email);
+    }
+
+    // Si no hay perfil, crear uno básico
+    if (!profile) {
+      profile = {
+        email: customer.email,
+        contact_name: `${customer.firstName} ${customer.lastName}`,
+        first_name: customer.firstName || '',
+        last_name: customer.lastName || '',
+        mobile_phone: '',
+        company_name: '',
+        company_rut: '',
+        company_giro: '',
+        company_address: '',
+        region: '',
+        comuna: ''
+      };
+    }
+
+    res.send(getProfileHTML(customer, profile, addresses, orders, stats));
+  } catch (error) {
+    console.error('Error cargando perfil:', error);
+    res.status(500).send('<h1>Error cargando perfil</h1>');
+  }
+});
+
 // Función para generar HTML del carrito
 function getCartHTML(customer) {
   const customerDiscount = customer.discount;
@@ -340,7 +809,7 @@ function getCartHTML(customer) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carrito de Compras - Portal B2B BrainToys Chile</title>
+                    <title>Carrito de Compras - Portal B2B IMANIX Chile</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -385,14 +854,16 @@ function getCartHTML(customer) {
         }
 
         .brand-logo {
-            width: 50px;
             height: 50px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+        }
+
+        .brand-logo img {
+            height: 45px;
+            width: auto;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2));
         }
 
                  .nav-actions {
@@ -690,8 +1161,16 @@ function getCartHTML(customer) {
     <nav class="navbar">
         <div class="navbar-content">
             <a href="/" class="brand">
-                <div class="brand-logo">🧠</div>
-                <span>BrainToys B2B</span>
+                <div class="brand-logo">
+                    <svg width="140" height="45" viewBox="0 0 140 45" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 35px; width: auto;">
+                        <text x="5" y="25" font-family="Arial, sans-serif" font-size="20" font-weight="900" fill="#2D3748">IMANIX</text>
+                        <text x="5" y="37" font-family="Arial, sans-serif" font-size="8" fill="#718096">by BrainToys</text>
+                        <circle cx="120" cy="18" r="10" fill="#FFCE36"/>
+                        <circle cx="120" cy="18" r="6" fill="#2D3748"/>
+                        <circle cx="120" cy="18" r="3" fill="#FFCE36"/>
+                    </svg>
+                </div>
+                <span>IMANIX B2B</span>
             </a>
             
             <div class="nav-actions">
@@ -727,6 +1206,32 @@ function getCartHTML(customer) {
         // Variables globales
         let cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
         const customerDiscount = ${customerDiscount};
+
+        // Limpiar y migrar productos del carrito (productos añadidos antes de la actualización)
+        let cartChanged = false;
+
+        cart = cart.map(item => {
+            // Si el item no tiene variantId pero tiene productId, intentamos solucionarlo
+            if (!item.variantId && item.productId) {
+                console.log('🔧 Migrando producto sin variantId:', item.title);
+                item.variantId = item.productId; // Usar productId como fallback
+                cartChanged = true;
+            }
+            return item;
+        }).filter(item => {
+            // Eliminar items que no tienen ni variantId ni productId
+            if (!item.variantId && !item.productId) {
+                console.log('🗑️ Eliminando producto inválido:', item);
+                cartChanged = true;
+                return false;
+            }
+            return true;
+        });
+
+        if (cartChanged) {
+            localStorage.setItem('b2bCart', JSON.stringify(cart));
+            console.log('🧹 Carrito limpiado y migrado');
+        }
 
         // Función para formatear precios
         function formatPrice(price) {
@@ -780,7 +1285,7 @@ function getCartHTML(customer) {
                 const unitPriceIVA = calculateIVA(unitPriceNeto);
                 
                 return \`
-                    <div class="cart-item" data-product-id="\${item.productId}">
+                    <div class="cart-item" data-product-id="\${item.productId}" data-variant-id="\${item.variantId}">
                         <img src="\${item.image}" alt="\${item.title}" class="item-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjFGNUY5Ii8+CjxwYXRoIGQ9Ik0zNSA0MEg2NVY2MEgzNVY0MFoiIGZpbGw9IiNCREMzQzciLz4KPC9zdmc+'" />
                         
                         <div class="item-details">
@@ -794,10 +1299,10 @@ function getCartHTML(customer) {
                         </div>
                         
                         <div class="quantity-controls">
-                            <button class="quantity-btn" onclick="updateQuantity('\${item.productId}', -1)">-</button>
+                            <button class="quantity-btn" onclick="updateQuantity('\${item.productId}', '\${item.variantId}', -1)">-</button>
                             <span class="quantity-display">\${item.quantity}</span>
-                            <button class="quantity-btn" onclick="updateQuantity('\${item.productId}', 1)">+</button>
-                            <button class="remove-btn" onclick="removeFromCart('\${item.productId}')">
+                            <button class="quantity-btn" onclick="updateQuantity('\${item.productId}', '\${item.variantId}', 1)">+</button>
+                            <button class="remove-btn" onclick="removeFromCart('\${item.productId}', '\${item.variantId}')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -874,18 +1379,23 @@ function getCartHTML(customer) {
                             <i class="fas fa-arrow-left"></i>
                             Continuar Comprando
                         </a>
+                        
+                        <button class="nav-button" onclick="clearCart()" style="width: 100%; justify-content: center; margin-top: 0.5rem; background: #ef4444; border: none; cursor: pointer;">
+                            <i class="fas fa-trash"></i>
+                            Limpiar Carrito
+                        </button>
                     </div>
                 </div>
             \`;
         }
 
         // Función para actualizar cantidad
-        function updateQuantity(productId, change) {
-            const item = cart.find(item => item.productId === productId);
+        function updateQuantity(productId, variantId, change) {
+            const item = cart.find(item => item.productId === productId && item.variantId === variantId);
             if (item) {
                 item.quantity += change;
                 if (item.quantity <= 0) {
-                    removeFromCart(productId);
+                    removeFromCart(productId, variantId);
                 } else {
                     localStorage.setItem('b2bCart', JSON.stringify(cart));
                     renderCart();
@@ -895,22 +1405,195 @@ function getCartHTML(customer) {
         }
 
         // Función para eliminar del carrito
-        function removeFromCart(productId) {
-            cart = cart.filter(item => item.productId !== productId);
+        function removeFromCart(productId, variantId) {
+            cart = cart.filter(item => !(item.productId === productId && item.variantId === variantId));
             localStorage.setItem('b2bCart', JSON.stringify(cart));
             renderCart();
             showNotification('Producto eliminado del carrito', 'success');
         }
 
+        // Función para limpiar completamente el carrito
+        function clearCart() {
+            if (confirm('¿Estás seguro de que quieres limpiar todo el carrito?')) {
+                cart = [];
+                localStorage.setItem('b2bCart', JSON.stringify(cart));
+                renderCart();
+                showNotification('Carrito limpiado completamente', 'success');
+            }
+        }
+
         // Función para proceder al checkout
-        function proceedToCheckout() {
+        async function proceedToCheckout() {
             if (cart.length === 0) {
                 showNotification('Tu carrito está vacío', 'error');
                 return;
             }
             
-            // Por ahora mostramos un mensaje, aquí integrarías con tu sistema de pagos
-            alert('Funcionalidad de pago en desarrollo\\nContáctanos para procesar tu pedido:\\nEmail: ventas@braintoys.cl\\nTeléfono: +56 2 2345 6789');
+            // Mostrar confirmación antes de enviar
+            const confirmMessage = \`¿Confirmas tu pedido de \${cart.length} productos?\n\nTu solicitud será enviada a nuestro equipo para procesamiento.\`;
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            // Mostrar loading
+            const checkoutBtn = document.querySelector('.checkout-btn');
+            const originalText = checkoutBtn.innerHTML;
+            checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            checkoutBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        cartItems: cart.map(item => ({
+                            variantId: item.variantId,
+                            quantity: item.quantity,
+                            price: item.price,
+                            title: item.title
+                        }))
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Éxito - limpiar carrito y mostrar mensaje detallado
+                    localStorage.removeItem('b2bCart');
+                    cart = [];
+                    
+                    // Crear modal de éxito con información del pedido
+                    showOrderSuccessModal(data);
+                    
+                    // Redirigir después de mostrar el mensaje
+                    setTimeout(() => {
+                        window.location.href = '/perfil';
+                    }, 8000);
+                } else {
+                    showNotification(data.message || 'Error procesando el pedido', 'error');
+                }
+            } catch (error) {
+                console.error('Error en checkout:', error);
+                showNotification('Error de conexión. Inténtalo nuevamente.', 'error');
+            } finally {
+                // Restaurar botón
+                checkoutBtn.innerHTML = originalText;
+                checkoutBtn.disabled = false;
+            }
+        }
+
+        // Función para mostrar modal de pedido exitoso
+        function showOrderSuccessModal(data) {
+            const modal = document.createElement('div');
+            modal.style.cssText = \`
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                padding: 2rem;
+            \`;
+            
+            modal.innerHTML = \`
+                <div style="
+                    background: white;
+                    border-radius: 20px;
+                    padding: 2.5rem;
+                    max-width: 600px;
+                    width: 100%;
+                    text-align: center;
+                    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+                    animation: slideIn 0.3s ease;
+                ">
+                    <div style="color: #10b981; font-size: 4rem; margin-bottom: 1rem;">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    
+                    <h2 style="color: #1f2937; margin-bottom: 1rem; font-size: 1.8rem;">
+                        ¡Pedido Enviado Exitosamente!
+                    </h2>
+                    
+                    <div style="background: #f3f4f6; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: left;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span><strong>Número de Pedido:</strong></span>
+                            <span style="color: #6366f1; font-weight: bold;">\${data.draftOrderNumber}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span><strong>Total:</strong></span>
+                            <span style="color: #059669; font-weight: bold;">\${formatPrice(data.total)}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span><strong>Descuento:</strong></span>
+                            <span style="color: #dc2626; font-weight: bold;">\${formatPrice(data.discount)}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span><strong>Estado:</strong></span>
+                            <span style="color: #f59e0b; font-weight: bold; text-transform: capitalize;">\${data.status}</span>
+                        </div>
+                    </div>
+                    
+                    <p style="color: #6b7280; margin-bottom: 1.5rem; line-height: 1.6;">
+                        \${data.note}
+                    </p>
+                    
+                    <div style="text-align: left; margin-bottom: 2rem;">
+                        <h4 style="color: #374151; margin-bottom: 1rem;">Próximos Pasos:</h4>
+                        <ol style="color: #6b7280; line-height: 1.8; padding-left: 1.5rem;">
+                            \${data.nextSteps.map(step => \`<li>\${step}</li>\`).join('')}
+                        </ol>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                                style="background: #6366f1; color: white; border: none; padding: 0.8rem 2rem; border-radius: 10px; cursor: pointer; font-weight: 600;">
+                            Cerrar
+                        </button>
+                        <button onclick="window.location.href='/perfil'" 
+                                style="background: #10b981; color: white; border: none; padding: 0.8rem 2rem; border-radius: 10px; cursor: pointer; font-weight: 600;">
+                            Ver Mis Pedidos
+                        </button>
+                    </div>
+                    
+                    <p style="color: #9ca3af; font-size: 0.875rem; margin-top: 1.5rem;">
+                        Serás redirigido automáticamente en <span id="countdown">8</span> segundos
+                    </p>
+                </div>
+                
+                <style>
+                    @keyframes slideIn {
+                        from { opacity: 0; transform: scale(0.9) translateY(-20px); }
+                        to { opacity: 1; transform: scale(1) translateY(0); }
+                    }
+                </style>
+            \`;
+            
+            document.body.appendChild(modal);
+            
+            // Countdown
+            let seconds = 8;
+            const countdownEl = modal.querySelector('#countdown');
+            const interval = setInterval(() => {
+                seconds--;
+                if (countdownEl) countdownEl.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                }
+            }, 1000);
+            
+            // Cerrar al hacer click fuera del modal
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                    clearInterval(interval);
+                }
+            });
         }
 
         // Función para mostrar notificaciones
@@ -986,7 +1669,7 @@ function getLoginHTML() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal B2B - Acceso Cliente - BrainToys Chile</title>
+                    <title>Portal B2B - Acceso Cliente - IMANIX Chile</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -1185,13 +1868,97 @@ function getLoginHTML() {
                 font-size: 1.75rem;
             }
         }
+
+        /* Sistema de Notificaciones IMANIX */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            max-width: 400px;
+        }
+
+        .notification {
+            margin-bottom: 10px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: white;
+            font-weight: 500;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .notification-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .notification-message {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            border-radius: 4px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .notification-close:hover {
+            opacity: 1;
+        }
+
+        @media (max-width: 480px) {
+            .notification-container {
+                left: 20px;
+                right: 20px;
+                max-width: none;
+            }
+            
+            .notification {
+                margin-bottom: 8px;
+                padding: 14px 16px;
+                font-size: 13px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <div class="brand-logo">IM</div>
+                  <div class="brand-logo">
+              <svg width="140" height="45" viewBox="0 0 140 45" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 40px; width: auto;">
+                  <text x="5" y="28" font-family="Arial, sans-serif" font-size="22" font-weight="900" fill="#FFFFFF">IMANIX</text>
+                  <text x="5" y="40" font-family="Arial, sans-serif" font-size="9" fill="#E2E8F0">by BrainToys</text>
+                  <circle cx="120" cy="20" r="10" fill="#FFCE36"/>
+                  <circle cx="120" cy="20" r="6" fill="#2D3748"/>
+                  <circle cx="120" cy="20" r="3" fill="#FFCE36"/>
+              </svg>
+          </div>
         <h1 class="login-title">Portal B2B</h1>
-        <p class="login-subtitle">Acceso exclusivo para clientes BrainToys</p>
+                        <p class="login-subtitle">Acceso exclusivo para clientes IMANIX</p>
         
         <form class="login-form" id="loginForm">
             <div class="form-group">
@@ -1230,7 +1997,86 @@ function getLoginHTML() {
         </div>
     </div>
 
+    <!-- Sistema de Notificaciones IMANIX -->
+    <div id="notificationContainer" class="notification-container"></div>
+
     <script>
+        // Sistema de Notificaciones con Branding IMANIX
+        function showNotification(message, type = 'info', duration = 5000) {
+            const container = document.getElementById('notificationContainer');
+            if (!container) return;
+            
+            const notification = document.createElement('div');
+            
+            const typeConfig = {
+                success: {
+                    icon: 'fas fa-check-circle',
+                    bgColor: '#10B981',
+                    borderColor: '#059669'
+                },
+                error: {
+                    icon: 'fas fa-exclamation-triangle',
+                    bgColor: '#EF4444',
+                    borderColor: '#DC2626'
+                },
+                warning: {
+                    icon: 'fas fa-exclamation-triangle',
+                    bgColor: '#F59E0B',
+                    borderColor: '#D97706'
+                },
+                info: {
+                    icon: 'fas fa-info-circle',
+                    bgColor: '#3B82F6',
+                    borderColor: '#2563EB'
+                }
+            };
+            
+            const config = typeConfig[type] || typeConfig.info;
+            
+            notification.className = 'notification notification-' + type;
+            notification.innerHTML = \`
+                <div class="notification-content">
+                    <div class="notification-icon">
+                        <i class="\${config.icon}"></i>
+                    </div>
+                    <div class="notification-message">\${message}</div>
+                    <button class="notification-close" onclick="closeNotification(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            \`;
+            
+            // Estilos dinámicos
+            notification.style.cssText = \`
+                background: linear-gradient(135deg, \${config.bgColor}, \${config.borderColor});
+                border-left: 4px solid \${config.borderColor};
+            \`;
+            
+            container.appendChild(notification);
+            
+            // Animación de entrada
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Auto-cerrar después del tiempo especificado
+            if (duration > 0) {
+                setTimeout(() => {
+                    closeNotification(notification.querySelector('.notification-close'));
+                }, duration);
+            }
+        }
+        
+        function closeNotification(closeBtn) {
+            const notification = closeBtn.closest('.notification');
+            if (notification) {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }
+        }
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -1242,7 +2088,7 @@ function getLoginHTML() {
             const loadingSpinner = document.getElementById('loadingSpinner');
             
             if (!email) {
-                showError('Por favor ingresa tu email');
+                showNotification('Por favor ingresa tu email para acceder al portal', 'warning');
                 return;
             }
 
@@ -1270,17 +2116,23 @@ function getLoginHTML() {
                 if (data.success) {
                     console.log('✅ Autenticación exitosa');
                     loginText.textContent = '¡Acceso autorizado!';
+                    showNotification('¡Bienvenido al Portal B2B IMANIX! Acceso autorizado exitosamente.', 'success', 2000);
                     setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
+                        // Verificar si necesita completar perfil
+                        if (!data.profileCompleted) {
+                            window.location.href = '/complete-profile';
+                        } else {
+                            window.location.reload();
+                        }
+                    }, 1500);
                 } else {
                     console.log('❌ Error de autenticación:', data.message);
-                    showError(data.message || 'Error de autenticación');
+                    showNotification(data.message || 'Error de autenticación. Verifica tus credenciales.', 'error');
                     resetButton();
                 }
             } catch (error) {
                 console.error('💥 Error de conexión:', error);
-                showError('Error de conexión. Inténtalo nuevamente.');
+                showNotification('Error de conexión con el servidor. Por favor, inténtalo nuevamente.', 'error');
                 resetButton();
             }
         });
@@ -1302,6 +2154,646 @@ function getLoginHTML() {
             loadingSpinner.style.display = 'none';
             loginText.textContent = 'Acceder al Portal';
         }
+    </script>
+</body>
+</html>`;
+}
+
+// Función para generar HTML del formulario de completar perfil
+// Datos de regiones y comunas de Chile
+const regionesComunas = {
+  "Región de Arica y Parinacota": ["Arica", "Camarones", "Putre", "General Lagos"],
+  "Región de Tarapacá": ["Iquique", "Alto Hospicio", "Pozo Almonte", "Camiña", "Colchane", "Huara", "Pica"],
+  "Región de Antofagasta": ["Antofagasta", "Mejillones", "Sierra Gorda", "Taltal", "Calama", "Ollagüe", "San Pedro de Atacama", "Tocopilla", "María Elena"],
+  "Región de Atacama": ["Copiapó", "Caldera", "Tierra Amarilla", "Chañaral", "Diego de Almagro", "Vallenar", "Alto del Carmen", "Freirina", "Huasco"],
+  "Región de Coquimbo": ["La Serena", "Coquimbo", "Andacollo", "La Higuera", "Paiguano", "Vicuña", "Illapel", "Canela", "Los Vilos", "Salamanca", "Ovalle", "Combarbalá", "Monte Patria", "Punitaqui", "Río Hurtado"],
+  "Región de Valparaíso": ["Valparaíso", "Casablanca", "Concón", "Juan Fernández", "Puchuncaví", "Quintero", "Viña del Mar", "Isla de Pascua", "Los Andes", "Calle Larga", "Rinconada", "San Esteban", "La Ligua", "Cabildo", "Papudo", "Petorca", "Zapallar", "Quillota", "Calera", "Hijuelas", "La Cruz", "Nogales", "San Antonio", "Algarrobo", "Cartagena", "El Quisco", "El Tabo", "Santo Domingo", "San Felipe", "Catemu", "Llaillay", "Panquehue", "Putaendo", "Santa María", "Quilpué", "Limache", "Olmué", "Villa Alemana"],
+  "Región Metropolitana": ["Cerrillos", "Cerro Navia", "Conchalí", "El Bosque", "Estación Central", "Huechuraba", "Independencia", "La Cisterna", "La Florida", "La Granja", "La Pintana", "La Reina", "Las Condes", "Lo Barnechea", "Lo Espejo", "Lo Prado", "Macul", "Maipú", "Ñuñoa", "Pedro Aguirre Cerda", "Peñalolén", "Providencia", "Pudahuel", "Quilicura", "Quinta Normal", "Recoleta", "Renca", "Santiago", "San Joaquín", "San Miguel", "San Ramón", "Vitacura", "Puente Alto", "Pirque", "San José de Maipo", "Colina", "Lampa", "Tiltil", "San Bernardo", "Buin", "Calera de Tango", "Paine", "Melipilla", "Alhué", "Curacaví", "María Pinto", "San Pedro", "Talagante", "El Monte", "Isla de Maipo", "Padre Hurtado", "Peñaflor"],
+  "Región del Libertador General Bernardo O'Higgins": ["Rancagua", "Codegua", "Coinco", "Coltauco", "Doñihue", "Graneros", "Las Cabras", "Machalí", "Malloa", "Mostazal", "Olivar", "Peumo", "Pichidegua", "Quinta de Tilcoco", "Rengo", "Requínoa", "San Vicente", "Pichilemu", "La Estrella", "Litueche", "Marchihue", "Navidad", "Paredones", "San Fernando", "Chépica", "Chimbarongo", "Lolol", "Nancagua", "Palmilla", "Peralillo", "Placilla", "Pumanque", "Santa Cruz"],
+  "Región del Maule": ["Talca", "Constitución", "Curepto", "Empedrado", "Maule", "Pelarco", "Pencahue", "Río Claro", "San Clemente", "San Rafael", "Cauquenes", "Chanco", "Pelluhue", "Curicó", "Hualañé", "Licantén", "Molina", "Rauco", "Romeral", "Sagrada Familia", "Teno", "Vichuquén", "Linares", "Colbún", "Longaví", "Parral", "Retiro", "San Javier", "Villa Alegre", "Yerbas Buenas"],
+  "Región de Ñuble": ["Chillán", "Bulnes", "Cobquecura", "Coelemu", "Coihueco", "Chillán Viejo", "El Carmen", "Ninhue", "Ñiquén", "Pemuco", "Pinto", "Portezuelo", "Quillón", "Quirihue", "Ránquil", "San Carlos", "San Fabián", "San Ignacio", "San Nicolás", "Treguaco", "Yungay"],
+  "Región del Biobío": ["Concepción", "Coronel", "Chiguayante", "Florida", "Hualqui", "Lota", "Penco", "San Pedro de la Paz", "Santa Juana", "Talcahuano", "Tomé", "Hualpén", "Lebu", "Arauco", "Cañete", "Contulmo", "Curanilahue", "Los Álamos", "Tirúa", "Los Ángeles", "Antuco", "Cabrero", "Laja", "Mulchén", "Nacimiento", "Negrete", "Quilaco", "Quilleco", "San Rosendo", "Santa Bárbara", "Tucapel", "Yumbel", "Alto Biobío"],
+  "Región de La Araucanía": ["Temuco", "Carahue", "Cunco", "Curarrehue", "Freire", "Galvarino", "Gorbea", "Lautaro", "Loncoche", "Melipeuco", "Nueva Imperial", "Padre Las Casas", "Perquenco", "Pitrufquén", "Pucón", "Saavedra", "Teodoro Schmidt", "Toltén", "Vilcún", "Villarrica", "Cholchol", "Angol", "Collipulli", "Curacautín", "Ercilla", "Lonquimay", "Los Sauces", "Lumaco", "Purén", "Renaico", "Traiguén", "Victoria"],
+  "Región de Los Ríos": ["Valdivia", "Corral", "Lanco", "Los Lagos", "Máfil", "Mariquina", "Paillaco", "Panguipulli", "La Unión", "Futrono", "Lago Ranco", "Río Bueno"],
+  "Región de Los Lagos": ["Puerto Montt", "Calbuco", "Cochamó", "Fresia", "Frutillar", "Los Muermos", "Llanquihue", "Maullín", "Puerto Varas", "Castro", "Ancud", "Chonchi", "Curaco de Vélez", "Dalcahue", "Puqueldón", "Queilén", "Quellón", "Quemchi", "Quinchao", "Osorno", "Puerto Octay", "Purranque", "Puyehue", "Río Negro", "San Juan de la Costa", "San Pablo", "Chaitén", "Futaleufú", "Hualaihué", "Palena"],
+  "Región de Aysén": ["Coyhaique", "Lago Verde", "Aysén", "Cisnes", "Guaitecas", "Cochrane", "O'Higgins", "Tortel", "Chile Chico", "Río Ibáñez"],
+  "Región de Magallanes y Antártica Chilena": ["Punta Arenas", "Laguna Blanca", "Río Verde", "San Gregorio", "Cabo de Hornos", "Antártica", "Porvenir", "Primavera", "Timaukel", "Natales", "Torres del Paine"]
+};
+
+function getCompleteProfileHTML(customer) {
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completa tu Perfil Empresarial - Portal B2B IMANIX</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
+            min-height: 100vh;
+            color: #212529;
+            padding: 2rem;
+        }
+
+        .profile-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .brand-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #FFCE36, #FFC107);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 2rem;
+            color: #000000;
+            margin: 0 auto 1.5rem;
+        }
+
+        .profile-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #000000;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .profile-description {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border-left: 4px solid #FFCE36;
+            margin-bottom: 2rem;
+        }
+
+        .profile-description h3 {
+            color: #000000;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-description p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-form {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .form-section {
+            background: #f8fafc;
+            padding: 2rem;
+            border-radius: 16px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #000000;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #000000;
+            font-size: 0.875rem;
+        }
+
+        .form-label .required {
+            color: #EF4444;
+            margin-left: 0.25rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+            color: #1e293b;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: #FFCE36;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 206, 54, 0.2);
+        }
+
+        .submit-section {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .submit-button {
+            background: linear-gradient(135deg, #FFCE36, #FFC107);
+            color: #000000;
+            border: none;
+            padding: 1.25rem 3rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-height: 60px;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 206, 54, 0.4);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid #000000;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Sistema de Notificaciones IMANIX */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            max-width: 400px;
+        }
+
+        .notification {
+            margin-bottom: 10px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: white;
+            font-weight: 500;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .notification-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .notification-message {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            border-radius: 4px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .notification-close:hover {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .notification-container {
+                left: 20px;
+                right: 20px;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <div class="profile-header">
+            <div class="brand-logo">
+                <svg width="140" height="45" viewBox="0 0 140 45" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 40px; width: auto;">
+                    <text x="5" y="28" font-family="Arial, sans-serif" font-size="22" font-weight="900" fill="#FFFFFF">IMANIX</text>
+                    <text x="5" y="40" font-family="Arial, sans-serif" font-size="9" fill="#E2E8F0">by BrainToys</text>
+                    <circle cx="120" cy="20" r="10" fill="#FFCE36"/>
+                    <circle cx="120" cy="20" r="6" fill="#2D3748"/>
+                    <circle cx="120" cy="20" r="3" fill="#FFCE36"/>
+                </svg>
+            </div>
+            <h1 class="profile-title">Completa tu Perfil Empresarial</h1>
+            <p class="profile-subtitle">¡Bienvenido ${customer.firstName || ''}! Para continuar al portal B2B, necesitamos algunos datos de tu empresa.</p>
+            
+            <div class="profile-description">
+                <h3><i class="fas fa-info-circle"></i> ¿Por qué necesitamos esta información?</h3>
+                <p>• <strong>Facturación precisa:</strong> Los datos aparecerán en todas tus órdenes de compra</p>
+                <p>• <strong>Proceso más rápido:</strong> No tendrás que completar estos datos en cada pedido</p>
+                <p>• <strong>Comunicación directa:</strong> Te contactaremos para confirmar pedidos y coordinar entregas</p>
+            </div>
+        </div>
+
+        <form class="profile-form" id="profileForm">
+            <!-- Datos Personales -->
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-user"></i>
+                    Datos Personales
+                </h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="first_name">Nombre <span class="required">*</span></label>
+                        <input type="text" id="first_name" name="first_name" class="form-input" 
+                               placeholder="Tu nombre" required value="${customer.firstName || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="last_name">Apellido <span class="required">*</span></label>
+                        <input type="text" id="last_name" name="last_name" class="form-input" 
+                               placeholder="Tu apellido" required value="${customer.lastName || ''}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="mobile_phone">Celular <span class="required">*</span></label>
+                        <input type="tel" id="mobile_phone" name="mobile_phone" class="form-input" 
+                               placeholder="+56 9 1234 5678" required>
+                    </div>
+                    <div class="form-group">
+                        <!-- Espacio para mantener el layout en dos columnas -->
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label class="form-label" for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-input" 
+                           value="${customer.email}" readonly style="background: #f3f4f6; cursor: not-allowed;">
+                </div>
+            </div>
+
+            <!-- Datos Empresariales -->
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-building"></i>
+                    Datos Empresariales
+                </h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="company_name">Razón Social <span class="required">*</span></label>
+                        <input type="text" id="company_name" name="company_name" class="form-input" 
+                               placeholder="Empresa SPA" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="company_rut">RUT Empresa <span class="required">*</span></label>
+                        <input type="text" id="company_rut" name="company_rut" class="form-input" 
+                               placeholder="12.345.678-9" required>
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label class="form-label" for="company_giro">Giro Empresarial <span class="required">*</span></label>
+                    <input type="text" id="company_giro" name="company_giro" class="form-input" 
+                           placeholder="Venta al por menor de juguetes" required>
+                </div>
+                <div class="form-group full-width">
+                    <label class="form-label" for="company_address">Dirección <span class="required">*</span></label>
+                    <input type="text" id="company_address" name="company_address" class="form-input" 
+                           placeholder="Av. Ejemplo 1234" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="region">Región <span class="required">*</span></label>
+                        <select id="region" name="region" class="form-select" required onchange="updateComunas()">
+                            <option value="">Selecciona tu región</option>
+                            ${Object.keys(regionesComunas).map(region => 
+                                `<option value="${region}">${region}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="comuna">Comuna <span class="required">*</span></label>
+                        <select id="comuna" name="comuna" class="form-select" required disabled>
+                            <option value="">Primero selecciona una región</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="submit-section">
+                <button type="submit" class="submit-button" id="submitButton">
+                    <span class="loading-spinner" id="loadingSpinner"></span>
+                    <i class="fas fa-save" id="submitIcon"></i>
+                    <span id="submitText">Guardar y Continuar al Portal</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sistema de Notificaciones IMANIX -->
+    <div id="notificationContainer" class="notification-container"></div>
+
+    <script>
+        // Sistema de Notificaciones con Branding IMANIX
+        function showNotification(message, type = 'info', duration = 5000) {
+            const container = document.getElementById('notificationContainer');
+            if (!container) return;
+            
+            const notification = document.createElement('div');
+            
+            const typeConfig = {
+                success: {
+                    icon: 'fas fa-check-circle',
+                    bgColor: '#10B981',
+                    borderColor: '#059669'
+                },
+                error: {
+                    icon: 'fas fa-exclamation-triangle',
+                    bgColor: '#EF4444',
+                    borderColor: '#DC2626'
+                },
+                warning: {
+                    icon: 'fas fa-exclamation-triangle',
+                    bgColor: '#F59E0B',
+                    borderColor: '#D97706'
+                },
+                info: {
+                    icon: 'fas fa-info-circle',
+                    bgColor: '#3B82F6',
+                    borderColor: '#2563EB'
+                }
+            };
+            
+            const config = typeConfig[type] || typeConfig.info;
+            
+            notification.className = 'notification notification-' + type;
+            notification.innerHTML = \`
+                <div class="notification-content">
+                    <div class="notification-icon">
+                        <i class="\${config.icon}"></i>
+                    </div>
+                    <div class="notification-message">\${message}</div>
+                    <button class="notification-close" onclick="closeNotification(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            \`;
+            
+            // Estilos dinámicos
+            notification.style.cssText = \`
+                background: linear-gradient(135deg, \${config.bgColor}, \${config.borderColor});
+                border-left: 4px solid \${config.borderColor};
+            \`;
+            
+            container.appendChild(notification);
+            
+            // Animación de entrada
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Auto-cerrar después del tiempo especificado
+            if (duration > 0) {
+                setTimeout(() => {
+                    closeNotification(notification.querySelector('.notification-close'));
+                }, duration);
+            }
+        }
+        
+        function closeNotification(closeBtn) {
+            const notification = closeBtn.closest('.notification');
+            if (notification) {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }
+        }
+
+        // Manejo del formulario
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitButton = document.getElementById('submitButton');
+            const submitIcon = document.getElementById('submitIcon');
+            const submitText = document.getElementById('submitText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            
+            // Recopilar datos del formulario
+            const formData = new FormData(e.target);
+            const profileData = {};
+            
+            for (let [key, value] of formData.entries()) {
+                profileData[key] = value.trim();
+            }
+
+            // Validación básica
+            const requiredFields = ['first_name', 'last_name', 'mobile_phone', 'company_name', 'company_rut', 'company_giro', 'company_address', 'region', 'comuna'];
+            const missingFields = requiredFields.filter(field => !profileData[field]);
+            
+            if (missingFields.length > 0) {
+                showNotification('Por favor, completa todos los campos obligatorios marcados con *', 'warning');
+                return;
+            }
+
+            // Mostrar estado de carga
+            submitButton.disabled = true;
+            submitIcon.style.display = 'none';
+            loadingSpinner.style.display = 'block';
+            submitText.textContent = 'Guardando datos...';
+
+            try {
+                const response = await fetch('/api/profile/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ profileData })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('¡Perfil guardado exitosamente! Redirigiendo al portal...', 'success', 2000);
+                    submitText.textContent = '¡Datos guardados!';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    showNotification(data.message || 'Error al guardar el perfil. Inténtalo nuevamente.', 'error');
+                    resetButton();
+                }
+            } catch (error) {
+                console.error('Error enviando formulario:', error);
+                showNotification('Error de conexión. Por favor, inténtalo nuevamente.', 'error');
+                resetButton();
+            }
+        });
+
+        function resetButton() {
+            const submitButton = document.getElementById('submitButton');
+            const submitIcon = document.getElementById('submitIcon');
+            const submitText = document.getElementById('submitText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            
+            submitButton.disabled = false;
+            submitIcon.style.display = 'inline';
+            loadingSpinner.style.display = 'none';
+            submitText.textContent = 'Guardar y Continuar al Portal';
+        }
+
+        // Datos de regiones y comunas de Chile
+        const regionesComunas = ${JSON.stringify(regionesComunas, null, 8)};
+        
+        // Función para actualizar comunas según región seleccionada
+        function updateComunas() {
+            const regionSelect = document.getElementById('region');
+            const comunaSelect = document.getElementById('comuna');
+            const selectedRegion = regionSelect.value;
+            
+            // Limpiar opciones actuales
+            comunaSelect.innerHTML = '<option value="">Selecciona una comuna</option>';
+            
+            if (selectedRegion && regionesComunas[selectedRegion]) {
+                // Habilitar el select de comunas
+                comunaSelect.disabled = false;
+                
+                // Agregar las comunas de la región seleccionada
+                regionesComunas[selectedRegion].forEach(comuna => {
+                    const option = document.createElement('option');
+                    option.value = comuna;
+                    option.textContent = comuna;
+                    comunaSelect.appendChild(option);
+                });
+            } else {
+                // Deshabilitar el select de comunas
+                comunaSelect.disabled = true;
+                comunaSelect.innerHTML = '<option value="">Primero selecciona una región</option>';
+            }
+        }
+
+        // Formateo automático del RUT
+        document.getElementById('company_rut').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^0-9kK]/g, '');
+            
+            if (value.length > 1) {
+                let rut = value.slice(0, -1);
+                let dv = value.slice(-1);
+                
+                // Formatear con puntos
+                rut = rut.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                
+                e.target.value = rut + '-' + dv;
+            }
+        });
+
+        // Formateo automático del teléfono
+        function formatPhone(input) {
+            input.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/[^0-9+]/g, '');
+                
+                if (value.startsWith('56')) {
+                    value = '+' + value;
+                } else if (value.startsWith('9') && value.length === 9) {
+                    value = '+56 ' + value;
+                }
+                
+                e.target.value = value;
+            });
+        }
+
+        formatPhone(document.getElementById('mobile_phone'));
     </script>
 </body>
 </html>`;
@@ -1352,7 +2844,7 @@ function getPortalHTML(products, customer) {
                             <span class="stock-count">${stock} unidades</span>
                         </div>
                         <button class="add-to-cart-btn" ${stock === 0 ? 'disabled' : ''} 
-                                onclick="addToCart('${product.id}', '${product.title}', ${discountedPrice}, '${image}')">
+                                onclick="addToCart('${product.id}', '${variant?.id}', '${product.title}', ${discountedPrice}, '${image}')">
                             <i class="fas fa-cart-plus"></i>
                             ${stock > 0 ? 'Agregar al Carrito' : 'Sin Stock'}
                         </button>
@@ -1368,7 +2860,7 @@ function getPortalHTML(products, customer) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal B2B Profesional - BrainToys Chile</title>
+                    <title>Portal B2B Profesional - IMANIX Chile</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -1445,6 +2937,7 @@ function getPortalHTML(products, customer) {
         }
 
         .user-account {
+            position: relative;
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -1462,6 +2955,90 @@ function getPortalHTML(products, customer) {
         .user-account:hover {
             background: rgba(0, 0, 0, 0.1);
             transform: translateY(-2px);
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            min-width: 220px;
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .user-dropdown.show {
+            display: block;
+            animation: dropdownFadeIn 0.3s ease;
+        }
+
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-header {
+            padding: 1rem;
+            background: linear-gradient(135deg, #FFCE36, #FF7B85);
+            color: #000000;
+        }
+
+        .dropdown-header .user-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .dropdown-header .user-email {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .dropdown-menu {
+            padding: 0.5rem 0;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: #374151;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 206, 54, 0.1);
+            color: #000000;
+        }
+
+        .dropdown-item i {
+            width: 16px;
+            text-align: center;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+            margin: 0.5rem 0;
         }
 
         .cart-navbar-btn {
@@ -1873,16 +3450,52 @@ function getPortalHTML(products, customer) {
     <div class="navbar">
         <div class="navbar-content">
             <div class="navbar-brand">
-                <div class="brand-logo">IM</div>
+                <div class="brand-logo">
+                    <svg width="140" height="45" viewBox="0 0 140 45" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 45px; width: auto;">
+                        <text x="5" y="30" font-family="Arial, sans-serif" font-size="24" font-weight="900" fill="#2D3748">IMANIX</text>
+                        <text x="5" y="42" font-family="Arial, sans-serif" font-size="10" fill="#718096">by BrainToys</text>
+                        <circle cx="125" cy="22" r="12" fill="#FFCE36"/>
+                        <circle cx="125" cy="22" r="8" fill="#2D3748"/>
+                        <circle cx="125" cy="22" r="4" fill="#FFCE36"/>
+                    </svg>
+                </div>
                 <div class="brand-text">
-                    <h1>Portal B2B - BrainToys</h1>
+                    <h1>Portal B2B - IMANIX</h1>
                     <p>Distribución Profesional</p>
                 </div>
             </div>
             <div class="navbar-actions">
-                <div class="user-account" onclick="showUserMenu()">
+                <div class="user-account" onclick="toggleUserDropdown()">
                     <i class="fas fa-user-circle"></i>
-                    <span>${customer.firstName} ${customer.lastName}</span>
+                    <span>${customer.firstName} ${customer.lastName || ''}</span>
+                    <i class="fas fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.25rem;"></i>
+                    
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-header">
+                            <div class="user-name">${customer.firstName} ${customer.lastName || ''}</div>
+                            <div class="user-email">${customer.email}</div>
+                        </div>
+                        
+                        <div class="dropdown-menu">
+                            <a href="/perfil" class="dropdown-item">
+                                <i class="fas fa-user-edit"></i>
+                                Mi Perfil
+                            </a>
+                            <a href="/carrito" class="dropdown-item">
+                                <i class="fas fa-shopping-cart"></i>
+                                Mi Carrito
+                            </a>
+                            <a href="/historial" class="dropdown-item">
+                                <i class="fas fa-history"></i>
+                                Historial de Pedidos
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <button onclick="logout()" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Cerrar Sesión
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <button class="cart-navbar-btn" onclick="showCart()">
                     <i class="fas fa-shopping-cart"></i>
@@ -1960,6 +3573,32 @@ function getPortalHTML(products, customer) {
     <script>
         // Carrito de compras
         let cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
+
+        // Limpiar y migrar productos del carrito (productos añadidos antes de la actualización)
+        let cartChanged = false;
+
+        cart = cart.map(item => {
+            // Si el item no tiene variantId pero tiene productId, intentamos solucionarlo
+            if (!item.variantId && item.productId) {
+                console.log('🔧 Migrando producto sin variantId:', item.title);
+                item.variantId = item.productId; // Usar productId como fallback
+                cartChanged = true;
+            }
+            return item;
+        }).filter(item => {
+            // Eliminar items que no tienen ni variantId ni productId
+            if (!item.variantId && !item.productId) {
+                console.log('🗑️ Eliminando producto inválido:', item);
+                cartChanged = true;
+                return false;
+            }
+            return true;
+        });
+
+        if (cartChanged) {
+            localStorage.setItem('b2bCart', JSON.stringify(cart));
+            console.log('🧹 Carrito limpiado y migrado');
+        }
         
         // Actualizar contador del carrito
         function updateCartBadge() {
@@ -1969,14 +3608,15 @@ function getPortalHTML(products, customer) {
         }
 
         // Agregar producto al carrito
-        function addToCart(productId, title, price, image) {
-            const existingItem = cart.find(item => item.productId === productId);
+        function addToCart(productId, variantId, title, price, image) {
+            const existingItem = cart.find(item => item.productId === productId && item.variantId === variantId);
             
             if (existingItem) {
                 existingItem.quantity += 1;
             } else {
                 cart.push({
                     productId,
+                    variantId,
                     title,
                     price,
                     image,
@@ -2008,12 +3648,21 @@ function getPortalHTML(products, customer) {
             });
         }
 
-        // Mostrar información del usuario
-        function showUserMenu() {
-            if (confirm("¿Quieres ir a tu perfil de usuario?\\n\\nAhí puedes:\\n• Editar tu información personal\\n• Gestionar direcciones de envío\\n• Ver historial de pedidos\\n• Ver estadísticas de compras")) {
-                window.location.href = '/perfil';
-            }
+        // Toggle del dropdown del usuario
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
         }
+
+        // Cerrar dropdown al hacer clic fuera
+        document.addEventListener('click', function(event) {
+            const userAccount = document.querySelector('.user-account');
+            const dropdown = document.getElementById('userDropdown');
+            
+            if (!userAccount.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
 
         // Mostrar carrito - redirigir a página dedicada
         function showCart() {
@@ -2097,17 +3746,38 @@ function getPortalHTML(products, customer) {
 </html>`;
 }
 
-// Función para generar HTML del perfil de usuario
+// Función para generar HTML del perfil de usuario con formulario editable
 function getProfileHTML(customer, profile, addresses, orders, stats) {
   const customerDiscount = customer.discount || 0;
+  
+  // Datos de regiones y comunas de Chile
+  const regionesComunas = {
+    "Región de Arica y Parinacota": ["Arica", "Camarones", "Putre", "General Lagos"],
+    "Región de Tarapacá": ["Iquique", "Alto Hospicio", "Pozo Almonte", "Camiña", "Colchane", "Huara", "Pica"],
+    "Región de Antofagasta": ["Antofagasta", "Mejillones", "Sierra Gorda", "Taltal", "Calama", "Ollagüe", "San Pedro de Atacama", "Tocopilla", "María Elena"],
+    "Región de Atacama": ["Copiapó", "Caldera", "Tierra Amarilla", "Chañaral", "Diego de Almagro", "Vallenar", "Alto del Carmen", "Freirina", "Huasco"],
+    "Región de Coquimbo": ["La Serena", "Coquimbo", "Andacollo", "La Higuera", "Paiguano", "Vicuña", "Illapel", "Canela", "Los Vilos", "Salamanca", "Ovalle", "Combarbalá", "Monte Patria", "Punitaqui", "Río Hurtado"],
+    "Región de Valparaíso": ["Valparaíso", "Casablanca", "Concón", "Juan Fernández", "Puchuncaví", "Quintero", "Viña del Mar", "Isla de Pascua", "Los Andes", "Calle Larga", "Rinconada", "San Esteban", "La Ligua", "Cabildo", "Papudo", "Petorca", "Zapallar", "Quillota", "La Calera", "Hijuelas", "La Cruz", "Nogales", "San Antonio", "Algarrobo", "Cartagena", "El Quisco", "El Tabo", "Santo Domingo", "San Felipe", "Catemu", "Llaillay", "Panquehue", "Putaendo", "Santa María", "Quilpué", "Limache", "Olmué", "Villa Alemana"],
+    "Región Metropolitana": ["Cerrillos", "Cerro Navia", "Conchalí", "El Bosque", "Estación Central", "Huechuraba", "Independencia", "La Cisterna", "La Florida", "La Granja", "La Pintana", "La Reina", "Las Condes", "Lo Barnechea", "Lo Espejo", "Lo Prado", "Macul", "Maipú", "Ñuñoa", "Pedro Aguirre Cerda", "Peñalolén", "Providencia", "Pudahuel", "Quilicura", "Quinta Normal", "Recoleta", "Renca", "Santiago", "San Joaquín", "San Miguel", "San Ramón", "Vitacura", "Puente Alto", "Pirque", "San José de Maipo", "Colina", "Lampa", "Tiltil", "San Bernardo", "Buin", "Calera de Tango", "Paine", "Melipilla", "Alhué", "Curacaví", "María Pinto", "San Pedro", "Talagante", "El Monte", "Isla de Maipo", "Padre Hurtado", "Peñaflor"],
+    "Región del Libertador Bernardo O'Higgins": ["Rancagua", "Codegua", "Coinco", "Coltauco", "Doñihue", "Graneros", "Las Cabras", "Machalí", "Malloa", "Mostazal", "Olivar", "Peumo", "Pichidegua", "Quinta de Tilcoco", "Rengo", "Requínoa", "San Vicente", "Pichilemu", "La Estrella", "Litueche", "Marchihue", "Navidad", "Paredones", "San Fernando", "Chépica", "Chimbarongo", "Lolol", "Nancagua", "Palmilla", "Peralillo", "Placilla", "Pumanque", "Santa Cruz"],
+    "Región del Maule": ["Talca", "Constitución", "Curepto", "Empedrado", "Maule", "Pelarco", "Pencahue", "Río Claro", "San Clemente", "San Rafael", "Cauquenes", "Chanco", "Pelluhue", "Curicó", "Hualañé", "Licantén", "Molina", "Rauco", "Romeral", "Sagrada Familia", "Teno", "Vichuquén", "Linares", "Colbún", "Longaví", "Parral", "Retiro", "San Javier", "Villa Alegre", "Yerbas Buenas"],
+    "Región del Ñuble": ["Chillán", "Bulnes", "Cobquecura", "Coelemu", "Coihueco", "Chillán Viejo", "El Carmen", "Ninhue", "Ñiquén", "Pemuco", "Pinto", "Portezuelo", "Quillón", "Quirihue", "Ránquil", "San Carlos", "San Fabián", "San Ignacio", "San Nicolás", "Treguaco", "Yungay"],
+    "Región del Biobío": ["Concepción", "Coronel", "Chiguayante", "Florida", "Hualqui", "Lota", "Penco", "San Pedro de la Paz", "Santa Juana", "Talcahuano", "Tomé", "Hualpén", "Lebu", "Arauco", "Cañete", "Contulmo", "Curanilahue", "Los Álamos", "Tirúa", "Los Ángeles", "Antuco", "Cabrero", "Laja", "Mulchén", "Nacimiento", "Negrete", "Quilaco", "Quilleco", "San Rosendo", "Santa Bárbara", "Tucapel", "Yumbel", "Alto Biobío"],
+    "Región de La Araucanía": ["Temuco", "Carahue", "Cunco", "Curarrehue", "Freire", "Galvarino", "Gorbea", "Lautaro", "Loncoche", "Melipeuco", "Nueva Imperial", "Padre Las Casas", "Perquenco", "Pitrufquén", "Pucón", "Saavedra", "Teodoro Schmidt", "Toltén", "Vilcún", "Villarrica", "Cholchol", "Angol", "Collipulli", "Curacautín", "Ercilla", "Lonquimay", "Los Sauces", "Lumaco", "Purén", "Renaico", "Traiguén", "Victoria"],
+    "Región de Los Ríos": ["Valdivia", "Corral", "Lanco", "Los Lagos", "Máfil", "Mariquina", "Paillaco", "Panguipulli", "La Unión", "Futrono", "Lago Ranco", "Río Bueno"],
+    "Región de Los Lagos": ["Puerto Montt", "Calbuco", "Cochamó", "Fresia", "Frutillar", "Los Muermos", "Llanquihue", "Maullín", "Puerto Varas", "Castro", "Ancud", "Chonchi", "Curaco de Vélez", "Dalcahue", "Puqueldón", "Queilén", "Quellón", "Quemchi", "Quinchao", "Osorno", "Puerto Octay", "Purranque", "Puyehue", "Río Negro", "San Juan de la Costa", "San Pablo", "Chaitén", "Futaleufú", "Hualaihué", "Palena"],
+    "Región de Aysén": ["Coyhaique", "Lago Verde", "Aysén", "Cisnes", "Guaitecas", "Cochrane", "O'Higgins", "Tortel", "Chile Chico", "Río Ibáñez"],
+    "Región de Magallanes": ["Punta Arenas", "Laguna Blanca", "Río Verde", "San Gregorio", "Cabo de Hornos", "Antártica", "Porvenir", "Primavera", "Timaukel", "Natales", "Torres del Paine"]
+  };
   
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Perfil - Portal B2B Imanix</title>
+    <title>Mi Perfil Empresarial - Portal B2B IMANIX Chile</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -2116,59 +3786,63 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             min-height: 100vh;
-            color: #333;
+            color: #1e293b;
         }
 
         .navbar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
             padding: 1rem 2rem;
-            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             position: sticky;
             top: 0;
             z-index: 100;
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .navbar-brand {
+        .brand {
             display: flex;
             align-items: center;
             gap: 1rem;
+            color: #000000;
+            text-decoration: none;
+            font-weight: 800;
             font-size: 1.5rem;
-            font-weight: 700;
-            color: #5a67d8;
-            text-decoration: none;
         }
 
-        .navbar-nav {
+        .nav-actions {
             display: flex;
-            gap: 2rem;
             align-items: center;
+            gap: 1rem;
         }
 
-        .nav-link {
-            color: #4a5568;
-            text-decoration: none;
-            font-weight: 500;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
+        .nav-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: #000000;
+            font-weight: 600;
+            cursor: pointer;
             transition: all 0.3s ease;
-            position: relative;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .nav-link:hover {
-            background: #f7fafc;
-            color: #5a67d8;
-        }
-
-        .nav-link.active {
-            background: #5a67d8;
-            color: white;
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
         }
 
         .profile-container {
@@ -2179,34 +3853,31 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         .profile-header {
             background: white;
-            border-radius: 20px;
             padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             margin-bottom: 2rem;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            text-align: center;
         }
 
-        .profile-avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #5a67d8, #667eea);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            color: white;
+        .profile-title {
             font-size: 2rem;
-            font-weight: bold;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-subtitle {
+            color: #64748b;
+            font-size: 1rem;
         }
 
         .profile-tabs {
             display: flex;
             background: white;
-            border-radius: 15px;
+            border-radius: 20px;
             padding: 0.5rem;
             margin-bottom: 2rem;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             overflow-x: auto;
         }
 
@@ -2216,16 +3887,22 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             border: none;
             background: none;
             cursor: pointer;
-            border-radius: 10px;
+            border-radius: 12px;
             font-weight: 600;
             transition: all 0.3s ease;
             white-space: nowrap;
+            color: #64748b;
         }
 
         .tab-button.active {
-            background: linear-gradient(135deg, #5a67d8, #667eea);
-            color: white;
-            box-shadow: 0 5px 15px rgba(90,103,216,0.3);
+            background: linear-gradient(135deg, #FFCE36, #FF7B85);
+            color: #000000;
+            box-shadow: 0 5px 15px rgba(255, 206, 54, 0.3);
+        }
+
+        .tab-button:hover {
+            background: rgba(255, 206, 54, 0.1);
+            color: #1e293b;
         }
 
         .tab-content {
@@ -2251,10 +3928,10 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         .stat-card {
             background: white;
-            border-radius: 15px;
+            border-radius: 20px;
             padding: 1.5rem;
             text-align: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             transition: transform 0.3s ease;
         }
 
@@ -2274,17 +3951,17 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             color: white;
         }
 
-        .stat-icon.orders { background: linear-gradient(135deg, #48bb78, #38a169); }
-        .stat-icon.spent { background: linear-gradient(135deg, #ed8936, #dd6b20); }
-        .stat-icon.saved { background: linear-gradient(135deg, #38b2ac, #319795); }
-        .stat-icon.discount { background: linear-gradient(135deg, #9f7aea, #805ad5); }
+        .stat-icon.orders { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .stat-icon.spent { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .stat-icon.saved { background: linear-gradient(135deg, #10b981, #059669); }
+        .stat-icon.discount { background: linear-gradient(135deg, #FFCE36, #FF7B85); }
 
         .content-card {
             background: white;
-            border-radius: 15px;
+            border-radius: 20px;
             padding: 2rem;
             margin-bottom: 2rem;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
         .section-title {
@@ -2325,8 +4002,8 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         .form-input:focus {
             outline: none;
-            border-color: #5a67d8;
-            box-shadow: 0 0 0 3px rgba(90,103,216,0.1);
+            border-color: #FFCE36;
+            box-shadow: 0 0 0 3px rgba(255, 206, 54, 0.2);
         }
 
         .btn {
@@ -2343,13 +4020,13 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #5a67d8, #667eea);
-            color: white;
+            background: linear-gradient(135deg, #FFCE36, #FF7B85);
+            color: #000000;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(90,103,216,0.3);
+            box-shadow: 0 8px 25px rgba(255, 206, 54, 0.4);
         }
 
         .btn-secondary {
@@ -2373,8 +4050,8 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .address-card:hover {
-            border-color: #5a67d8;
-            box-shadow: 0 5px 15px rgba(90,103,216,0.1);
+            border-color: #FFCE36;
+            box-shadow: 0 5px 15px rgba(255, 206, 54, 0.2);
         }
 
         .address-card.default {
@@ -2383,7 +4060,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .address-type {
-            background: #5a67d8;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             color: white;
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
@@ -2394,7 +4071,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .address-type.billing {
-            background: #ed8936;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
         }
 
         .order-card {
@@ -2466,42 +4143,50 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 </head>
 <body>
     <nav class="navbar">
-        <a href="/" class="navbar-brand">
-            <i class="fas fa-cube"></i>
-            Portal B2B Imanix
-        </a>
-        
-        <div class="navbar-nav">
-            <a href="/" class="nav-link">
-                <i class="fas fa-home"></i>
-                Catálogo
+        <div class="navbar-content">
+            <a href="/" class="brand">
+                <div class="brand-logo">
+                    <svg width="140" height="45" viewBox="0 0 140 45" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 35px; width: auto;">
+                        <text x="5" y="25" font-family="Arial, sans-serif" font-size="20" font-weight="900" fill="#2D3748">IMANIX</text>
+                        <text x="5" y="37" font-family="Arial, sans-serif" font-size="8" fill="#718096">by BrainToys</text>
+                        <circle cx="120" cy="18" r="10" fill="#FFCE36"/>
+                        <circle cx="120" cy="18" r="6" fill="#2D3748"/>
+                        <circle cx="120" cy="18" r="3" fill="#FFCE36"/>
+                    </svg>
+                </div>
+                <span>IMANIX B2B</span>
             </a>
-            <a href="/perfil" class="nav-link active">
-                <i class="fas fa-user"></i>
-                Mi Perfil
-            </a>
-            <a href="/carrito" class="nav-link">
-                <i class="fas fa-shopping-cart"></i>
-                Carrito
-            </a>
-            <a href="#" class="nav-link" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i>
-                Salir
-            </a>
+            
+            <div class="nav-actions">
+                <div class="customer-info">
+                    <span style="color: #000000; font-weight: 600;">
+                        ${customer.firstName}
+                    </span>
+                    <div class="discount-badge" style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">-${customerDiscount}%</div>
+                </div>
+                <a href="/" class="nav-button">
+                    <i class="fas fa-home"></i>
+                    Catálogo
+                </a>
+                <a href="/carrito" class="nav-button">
+                    <i class="fas fa-shopping-cart"></i>
+                    Carrito
+                </a>
+                <button class="nav-button" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesión
+                </button>
+            </div>
         </div>
     </nav>
 
     <div class="profile-container">
         <div class="profile-header">
-            <div class="profile-avatar">
-                ${customer.firstName ? customer.firstName.charAt(0).toUpperCase() : 'U'}
-            </div>
-            <h1>${customer.firstName} ${customer.lastName}</h1>
-            <p style="color: #718096; margin-top: 0.5rem;">${customer.email}</p>
-            <p style="color: #5a67d8; font-weight: 600; margin-top: 0.5rem;">
-                <i class="fas fa-percentage"></i>
-                Descuento B2B: ${customerDiscount}%
-            </p>
+            <h1 class="profile-title">
+                <i class="fas fa-user-circle"></i>
+                Mi Perfil B2B
+            </h1>
+            <p class="profile-subtitle">Bienvenido/a ${customer.firstName} • ${customer.email} • Descuento B2B: ${customerDiscount}%</p>
         </div>
 
         ${stats ? `
@@ -2561,28 +4246,98 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                 </h2>
                 
                 <form id="profileForm" onsubmit="updateProfile(event)">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-input" value="${customer.email}" disabled>
+                    <!-- Datos Personales -->
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="color: #1e293b; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-user"></i>
+                            Datos Personales
+                        </h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-input" value="${customer.email}" disabled>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Nombre</label>
+                                <input type="text" name="first_name" class="form-input" 
+                                       value="${profile?.first_name || ''}" placeholder="Tu nombre">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Apellido</label>
+                                <input type="text" name="last_name" class="form-input" 
+                                       value="${profile?.last_name || ''}" placeholder="Tu apellido">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Celular</label>
+                                <input type="tel" name="mobile_phone" class="form-input" 
+                                       value="${profile?.mobile_phone || ''}" placeholder="+56 9 1234 5678">
+                            </div>
                         </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Nombre de Contacto</label>
-                            <input type="text" name="contact_name" class="form-input" 
-                                   value="${profile?.contact_name || ''}" placeholder="Tu nombre completo">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Empresa</label>
-                            <input type="text" name="company_name" class="form-input" 
-                                   value="${profile?.company_name || ''}" placeholder="Nombre de tu empresa">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Teléfono</label>
-                            <input type="tel" name="phone" class="form-input" 
-                                   value="${profile?.phone || ''}" placeholder="+56 9 1234 5678">
+                    </div>
+
+                    <!-- Datos Empresariales -->
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="color: #1e293b; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-building"></i>
+                            Datos Empresariales
+                        </h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Razón Social</label>
+                                <input type="text" name="company_name" class="form-input" 
+                                       value="${profile?.company_name || ''}" placeholder="Nombre de tu empresa">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">RUT Empresa</label>
+                                <input type="text" name="company_rut" class="form-input" 
+                                       value="${profile?.company_rut || ''}" placeholder="12.345.678-9">
+                            </div>
+                            
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label class="form-label">Giro Empresarial</label>
+                                <input type="text" name="company_giro" class="form-input" 
+                                       value="${profile?.company_giro || ''}" placeholder="Venta al por menor de juguetes">
+                            </div>
+                            
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label class="form-label">Dirección</label>
+                                <input type="text" name="company_address" class="form-input" 
+                                       value="${profile?.company_address || ''}" placeholder="Av. Ejemplo 1234">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Región</label>
+                                <select name="region" class="form-input" onchange="updateComunasInProfile()">
+                                    <option value="">Selecciona tu región</option>
+                                    <option value="Región de Arica y Parinacota" ${profile?.region === 'Región de Arica y Parinacota' ? 'selected' : ''}>Región de Arica y Parinacota</option>
+                                    <option value="Región de Tarapacá" ${profile?.region === 'Región de Tarapacá' ? 'selected' : ''}>Región de Tarapacá</option>
+                                    <option value="Región de Antofagasta" ${profile?.region === 'Región de Antofagasta' ? 'selected' : ''}>Región de Antofagasta</option>
+                                    <option value="Región de Atacama" ${profile?.region === 'Región de Atacama' ? 'selected' : ''}>Región de Atacama</option>
+                                    <option value="Región de Coquimbo" ${profile?.region === 'Región de Coquimbo' ? 'selected' : ''}>Región de Coquimbo</option>
+                                    <option value="Región de Valparaíso" ${profile?.region === 'Región de Valparaíso' ? 'selected' : ''}>Región de Valparaíso</option>
+                                    <option value="Región Metropolitana" ${profile?.region === 'Región Metropolitana' ? 'selected' : ''}>Región Metropolitana</option>
+                                    <option value="Región del Libertador General Bernardo O'Higgins" ${profile?.region === "Región del Libertador General Bernardo O'Higgins" ? 'selected' : ''}>Región del Libertador General Bernardo O'Higgins</option>
+                                    <option value="Región del Maule" ${profile?.region === 'Región del Maule' ? 'selected' : ''}>Región del Maule</option>
+                                    <option value="Región de Ñuble" ${profile?.region === 'Región de Ñuble' ? 'selected' : ''}>Región de Ñuble</option>
+                                    <option value="Región del Biobío" ${profile?.region === 'Región del Biobío' ? 'selected' : ''}>Región del Biobío</option>
+                                    <option value="Región de La Araucanía" ${profile?.region === 'Región de La Araucanía' ? 'selected' : ''}>Región de La Araucanía</option>
+                                    <option value="Región de Los Ríos" ${profile?.region === 'Región de Los Ríos' ? 'selected' : ''}>Región de Los Ríos</option>
+                                    <option value="Región de Los Lagos" ${profile?.region === 'Región de Los Lagos' ? 'selected' : ''}>Región de Los Lagos</option>
+                                    <option value="Región Aysén del General Carlos Ibáñez del Campo" ${profile?.region === 'Región Aysén del General Carlos Ibáñez del Campo' ? 'selected' : ''}>Región Aysén del General Carlos Ibáñez del Campo</option>
+                                    <option value="Región de Magallanes y de la Antártica Chilena" ${profile?.region === 'Región de Magallanes y de la Antártica Chilena' ? 'selected' : ''}>Región de Magallanes y de la Antártica Chilena</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Comuna</label>
+                                <select name="comuna" id="comunaSelectProfile" class="form-input">
+                                    <option value="">Selecciona tu comuna</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     
@@ -2726,15 +4481,15 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             event.preventDefault();
             
             const formData = new FormData(event.target);
-            const data = Object.fromEntries(formData);
+            const profileData = Object.fromEntries(formData);
             
             try {
-                const response = await fetch('/api/profile', {
-                    method: 'PUT',
+                const response = await fetch('/api/profile/update', {
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({ profileData })
                 });
                 
                 const result = await response.json();
@@ -2749,6 +4504,69 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                 showNotification('Error de conexión', 'error');
             }
         }
+
+        // Datos de regiones y comunas para el perfil
+        const regionesComunasProfile = {
+            "Región de Arica y Parinacota": ["Arica", "Camarones", "Putre", "General Lagos"],
+            "Región de Tarapacá": ["Iquique", "Alto Hospicio", "Pozo Almonte", "Camiña", "Colchane", "Huara", "Pica"],
+            "Región de Antofagasta": ["Antofagasta", "Mejillones", "Sierra Gorda", "Taltal", "Calama", "Ollagüe", "San Pedro de Atacama", "Tocopilla", "María Elena"],
+            "Región de Atacama": ["Copiapó", "Caldera", "Tierra Amarilla", "Chañaral", "Diego de Almagro", "Vallenar", "Alto del Carmen", "Freirina", "Huasco"],
+            "Región de Coquimbo": ["La Serena", "Coquimbo", "Andacollo", "La Higuera", "Paiguano", "Vicuña", "Illapel", "Canela", "Los Vilos", "Salamanca", "Ovalle", "Combarbalá", "Monte Patria", "Punitaqui", "Río Hurtado"],
+            "Región de Valparaíso": ["Valparaíso", "Casablanca", "Concón", "Juan Fernández", "Puchuncaví", "Quintero", "Viña del Mar", "Isla de Pascua", "Los Andes", "Calle Larga", "Rinconada", "San Esteban", "La Ligua", "Cabildo", "Papudo", "Petorca", "Zapallar", "Quillota", "Calera", "Hijuelas", "La Cruz", "Nogales", "San Antonio", "Algarrobo", "Cartagena", "El Quisco", "El Tabo", "Santo Domingo", "San Felipe", "Catemu", "Llaillay", "Panquehue", "Putaendo", "Santa María", "Quilpué", "Limache", "Olmué", "Villa Alemana"],
+            "Región Metropolitana": ["Cerrillos", "Cerro Navia", "Conchalí", "El Bosque", "Estación Central", "Huechuraba", "Independencia", "La Cisterna", "La Florida", "La Granja", "La Pintana", "La Reina", "Las Condes", "Lo Barnechea", "Lo Espejo", "Lo Prado", "Macul", "Maipú", "Ñuñoa", "Pedro Aguirre Cerda", "Peñalolén", "Providencia", "Pudahuel", "Quilicura", "Quinta Normal", "Recoleta", "Renca", "Santiago", "San Joaquín", "San Miguel", "San Ramón", "Vitacura", "Puente Alto", "Pirque", "San José de Maipo", "Colina", "Lampa", "Tiltil", "San Bernardo", "Buin", "Calera de Tango", "Paine", "Melipilla", "Alhué", "Curacaví", "María Pinto", "San Pedro", "Talagante", "El Monte", "Isla de Maipo", "Padre Hurtado", "Peñaflor"],
+            "Región del Libertador General Bernardo O'Higgins": ["Rancagua", "Codegua", "Coinco", "Coltauco", "Doñihue", "Graneros", "Las Cabras", "Machalí", "Malloa", "Mostazal", "Olivar", "Peumo", "Pichidegua", "Quinta de Tilcoco", "Rengo", "Requínoa", "San Vicente", "Pichilemu", "La Estrella", "Litueche", "Marchihue", "Navidad", "Paredones", "San Fernando", "Chépica", "Chimbarongo", "Lolol", "Nancagua", "Palmilla", "Peralillo", "Placilla", "Pumanque", "Santa Cruz"],
+            "Región del Maule": ["Talca", "Constitución", "Curepto", "Empedrado", "Maule", "Pelarco", "Pencahue", "Río Claro", "San Clemente", "San Rafael", "Cauquenes", "Chanco", "Pelluhue", "Curicó", "Hualañé", "Licantén", "Molina", "Rauco", "Romeral", "Sagrada Familia", "Teno", "Vichuquén", "Linares", "Colbún", "Longaví", "Parral", "Retiro", "San Javier", "Villa Alegre", "Yerbas Buenas"],
+            "Región de Ñuble": ["Chillán", "Bulnes", "Cobquecura", "Coelemu", "Coihueco", "Chillán Viejo", "El Carmen", "Ninhue", "Ñiquén", "Pemuco", "Pinto", "Portezuelo", "Quillón", "Quirihue", "Ránquil", "San Carlos", "San Fabián", "San Ignacio", "San Nicolás", "Treguaco", "Yungay"],
+            "Región del Biobío": ["Concepción", "Coronel", "Chiguayante", "Florida", "Hualqui", "Lota", "Penco", "San Pedro de la Paz", "Santa Juana", "Talcahuano", "Tomé", "Hualpén", "Lebu", "Arauco", "Cañete", "Contulmo", "Curanilahue", "Los Álamos", "Tirúa", "Los Ángeles", "Antuco", "Cabrero", "Laja", "Mulchén", "Nacimiento", "Negrete", "Quilaco", "Quilleco", "San Rosendo", "Santa Bárbara", "Tucapel", "Yumbel", "Alto Biobío"],
+            "Región de La Araucanía": ["Temuco", "Carahue", "Cunco", "Curarrehue", "Freire", "Galvarino", "Gorbea", "Lautaro", "Loncoche", "Melipeuco", "Nueva Imperial", "Padre Las Casas", "Perquenco", "Pitrufquén", "Pucón", "Saavedra", "Teodoro Schmidt", "Toltén", "Vilcún", "Villarrica", "Cholchol", "Angol", "Collipulli", "Curacautín", "Ercilla", "Lonquimay", "Los Sauces", "Lumaco", "Purén", "Renaico", "Traiguén", "Victoria"],
+            "Región de Los Ríos": ["Valdivia", "Corral", "Lanco", "Los Lagos", "Máfil", "Mariquina", "Paillaco", "Panguipulli", "La Unión", "Futrono", "Lago Ranco", "Río Bueno"],
+            "Región de Los Lagos": ["Puerto Montt", "Calbuco", "Cochamó", "Fresia", "Frutillar", "Los Muermos", "Llanquihue", "Maullín", "Puerto Varas", "Castro", "Ancud", "Chonchi", "Curaco de Vélez", "Dalcahue", "Puqueldón", "Queilén", "Quellón", "Quemchi", "Quinchao", "Osorno", "Puerto Octay", "Purranque", "Puyehue", "Río Negro", "San Juan de la Costa", "San Pablo", "Chaitén", "Futaleufú", "Hualaihué", "Palena"],
+            "Región Aysén del General Carlos Ibáñez del Campo": ["Coyhaique", "Lago Verde", "Aysén", "Cisnes", "Guaitecas", "Cochrane", "O'Higgins", "Tortel", "Chile Chico", "Río Ibáñez"],
+            "Región de Magallanes y de la Antártica Chilena": ["Punta Arenas", "Laguna Blanca", "Río Verde", "San Gregorio", "Cabo de Hornos", "Antártica", "Porvenir", "Primavera", "Timaukel", "Natales", "Torres del Paine"]
+        };
+
+        function updateComunasInProfile() {
+            const regionSelect = document.querySelector('select[name="region"]');
+            const comunaSelect = document.getElementById('comunaSelectProfile');
+            
+            if (!regionSelect || !comunaSelect) return;
+            
+            const selectedRegion = regionSelect.value;
+            
+            // Limpiar comunas actuales
+            comunaSelect.innerHTML = '<option value="">Selecciona tu comuna</option>';
+            
+            if (selectedRegion && regionesComunasProfile[selectedRegion]) {
+                comunaSelect.disabled = false;
+                
+                regionesComunasProfile[selectedRegion].forEach(comuna => {
+                    const option = document.createElement('option');
+                    option.value = comuna;
+                    option.textContent = comuna;
+                    comunaSelect.appendChild(option);
+                });
+            } else {
+                comunaSelect.disabled = true;
+            }
+        }
+
+        // Inicializar comunas al cargar la página si hay región seleccionada
+        document.addEventListener('DOMContentLoaded', function() {
+            const regionSelect = document.querySelector('select[name="region"]');
+            const comunaSelect = document.getElementById('comunaSelectProfile');
+            const currentComuna = '${profile?.comuna || ''}';
+            
+            if (regionSelect && regionSelect.value) {
+                updateComunasInProfile();
+                
+                // Seleccionar la comuna actual si existe
+                if (currentComuna && comunaSelect) {
+                    setTimeout(() => {
+                        comunaSelect.value = currentComuna;
+                    }, 100);
+                }
+            }
+        });
 
         function showAddAddressModal() {
             // Implementar modal para agregar dirección
@@ -3090,11 +4908,31 @@ app.get('/api/orders/:id', requireAuth, async (req, res) => {
   }
 });
 
-// Webhooks de Shopify (mantenemos los existentes del server original)
+// Webhooks de Shopify con validación de seguridad
 app.post('/webhooks/products/update', express.raw({ type: 'application/json' }), (req, res) => {
   console.log('🔄 Webhook recibido de Shopify');
   
   try {
+    // Validar webhook secret (opcional para desarrollo)
+    const hmacHeader = req.get('X-Shopify-Hmac-Sha256');
+    const webhookSecret = process.env.WEBHOOK_SECRET;
+    
+    if (webhookSecret && hmacHeader) {
+      const crypto = require('crypto');
+      const body = req.body;
+      const hash = crypto.createHmac('sha256', webhookSecret).update(body, 'utf8').digest('base64');
+      
+      if (hash !== hmacHeader) {
+        console.log('❌ Webhook no autorizado - HMAC inválido');
+        return res.status(401).send('Unauthorized');
+      }
+      console.log('🔐 Webhook verificado correctamente');
+    } else if (webhookSecret) {
+      console.log('⚠️ No se recibió HMAC header para validación');
+    } else {
+      console.log('⚠️ WEBHOOK_SECRET no configurado - saltando validación');
+    }
+    
     // Convertir Buffer a string y luego parsear
     const bodyString = req.body.toString();
     const product = JSON.parse(bodyString);

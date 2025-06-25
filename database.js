@@ -22,12 +22,24 @@ class DatabaseManager {
       const profileData = {
         email: userData.email,
         shopify_customer_id: userData.shopify_customer_id || null,
-        company_name: userData.company_name || null,
+        // Datos personales
+        first_name: userData.first_name || null,
+        last_name: userData.last_name || null,
         contact_name: userData.contact_name || null,
-        phone: userData.phone || null,
+        mobile_phone: userData.mobile_phone || null,
+        // Datos empresariales
+        company_name: userData.company_name || null,
+        company_rut: userData.company_rut || null,
+        company_giro: userData.company_giro || null,
+        company_address: userData.company_address || null,
+        region: userData.region || null,
+        comuna: userData.comuna || null,
+        // Sistema B2B
         discount_percentage: userData.discount_percentage || 0,
         discount_tag: userData.discount_tag || null,
-        is_active: userData.is_active !== false
+        is_active: userData.is_active !== false,
+        // Control de perfil
+        profile_completed: userData.profile_completed || false
       };
 
       // Intentar actualizar primero
@@ -96,6 +108,97 @@ class DatabaseManager {
     } catch (err) {
       console.error('Error en updateProfile:', err);
       return null;
+    }
+  }
+
+  async updateProfileData(email, profileData) {
+    if (!supabase) return null;
+    
+    try {
+      // Verificar si el perfil está completo
+      const isComplete = this.isProfileComplete(profileData);
+      
+      console.log(`🔄 Actualizando perfil para ${email}:`);
+      console.log(`   - Datos recibidos:`, Object.keys(profileData));
+      console.log(`   - Es completo: ${isComplete}`);
+      
+      const updateData = {
+        ...profileData,
+        profile_completed: isComplete,
+        updated_at: new Date().toISOString()
+      };
+      
+      console.log(`   - Guardando profile_completed: ${updateData.profile_completed}`);
+
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update(updateData)
+        .eq('email', email)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error actualizando datos del perfil:', error);
+        return null;
+      }
+      
+      console.log(`✅ Perfil actualizado. profile_completed en DB: ${data.profile_completed}`);
+
+      return data;
+    } catch (err) {
+      console.error('Error en updateProfileData:', err);
+      return null;
+    }
+  }
+
+  isProfileComplete(profile) {
+    // Campos requeridos para un perfil completo
+    const requiredFields = [
+      'first_name', 'last_name', 'mobile_phone', 'company_name', 
+      'company_rut', 'company_giro', 'company_address', 'region', 'comuna'
+    ];
+    
+    return requiredFields.every(field => 
+      profile[field] && profile[field].toString().trim() !== ''
+    );
+  }
+
+  async checkProfileCompletion(email) {
+    if (!supabase) return false;
+    
+    try {
+      const profile = await this.getProfile(email);
+      if (!profile) {
+        console.log(`🔍 No se encontró perfil para: ${email}`);
+        return false;
+      }
+      
+      const isComplete = this.isProfileComplete(profile);
+      console.log(`🔍 Verificando perfil de ${email}:`);
+      console.log(`   - profile_completed en DB: ${profile.profile_completed}`);
+      console.log(`   - isProfileComplete calculado: ${isComplete}`);
+      
+      // Verificar campos uno por uno para debugging
+      const requiredFields = [
+        'first_name', 'last_name', 'mobile_phone', 'company_name', 
+        'company_rut', 'company_giro', 'company_address', 'region', 'comuna'
+      ];
+      
+      const missingFields = [];
+      requiredFields.forEach(field => {
+        if (!profile[field] || profile[field].toString().trim() === '') {
+          missingFields.push(field);
+        }
+      });
+      
+      if (missingFields.length > 0) {
+        console.log(`   - Campos faltantes: ${missingFields.join(', ')}`);
+      }
+      
+      return isComplete;
+    } catch (err) {
+      console.error('Error verificando completitud del perfil:', err);
+      return false;
     }
   }
 

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completar Perfil Empresarial - IMANIX</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading, .error, .success {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .loading {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        @media (max-width: 600px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">📋 Perfil Empresarial</div>
+            <div class="subtitle">Complete su información para acceder al portal B2B</div>
+        </div>
+        
+        <form id="profileForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="first_name">Nombre *</label>
+                    <input type="text" id="first_name" name="first_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Apellido *</label>
+                    <input type="text" id="last_name" name="last_name" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required readonly>
+                </div>
+                <div class="form-group">
+                    <label for="mobile_phone">Teléfono *</label>
+                    <input type="tel" id="mobile_phone" name="mobile_phone" required 
+                           placeholder="ej: 9 1234 5678">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="company_name">Nombre de la Empresa *</label>
+                <input type="text" id="company_name" name="company_name" required>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="company_rut">RUT Empresa *</label>
+                    <input type="text" id="company_rut" name="company_rut" required 
+                           placeholder="ej: 12345678-9">
+                </div>
+                <div class="form-group">
+                    <label for="company_giro">Giro Empresarial *</label>
+                    <input type="text" id="company_giro" name="company_giro" required 
+                           placeholder="ej: Retail, Servicios">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="company_address">Dirección *</label>
+                <input type="text" id="company_address" name="company_address" required 
+                       placeholder="ej: Av. Providencia 123, Oficina 45">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="region">Región *</label>
+                    <select id="region" name="region" required>
+                        <option value="">Seleccione región</option>
+                        <option value="Región Metropolitana">Región Metropolitana</option>
+                        <option value="Región de Valparaíso">Región de Valparaíso</option>
+                        <option value="Región del Biobío">Región del Biobío</option>
+                        <option value="Región de La Araucanía">Región de La Araucanía</option>
+                        <option value="Región de Los Lagos">Región de Los Lagos</option>
+                        <option value="Otra">Otra región</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="comuna">Comuna *</label>
+                    <select id="comuna" name="comuna" required>
+                        <option value="">Seleccione comuna</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn" id="submitBtn">
+                Completar Perfil y Acceder
+            </button>
+            
+            <div class="loading" id="loading">
+                🔄 Guardando información...
+            </div>
+            
+            <div class="error" id="error"></div>
+            <div class="success" id="success"></div>
+        </form>
+    </div>
+
+    <script>
+        // Comunas por región (simplificado)
+        const comunasPorRegion = {
+            'Región Metropolitana': ['Santiago', 'Las Condes', 'Providencia', 'Ñuñoa', 'Vitacura', 'La Reina', 'Maipú', 'Otro'],
+            'Región de Valparaíso': ['Valparaíso', 'Viña del Mar', 'Concón', 'Otro'],
+            'Región del Biobío': ['Concepción', 'Talcahuano', 'Chillán', 'Otro'],
+            'Región de La Araucanía': ['Temuco', 'Villarrica', 'Pucón', 'Otro'],
+            'Región de Los Lagos': ['Puerto Montt', 'Osorno', 'Puerto Varas', 'Otro'],
+            'Otra': ['Otra comuna']
+        };
+        
+        // Actualizar comunas cuando cambie la región
+        document.getElementById('region').addEventListener('change', function() {
+            const regionSelect = this;
+            const comunaSelect = document.getElementById('comuna');
+            const comunas = comunasPorRegion[regionSelect.value] || [];
+            
+            comunaSelect.innerHTML = '<option value="">Seleccione comuna</option>';
+            comunas.forEach(comuna => {
+                const option = document.createElement('option');
+                option.value = comuna;
+                option.textContent = comuna;
+                comunaSelect.appendChild(option);
+            });
+        });
+        
+        // Obtener email de URL o localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const email = urlParams.get('email') || localStorage.getItem('userEmail') || '';
+            if (email) {
+                document.getElementById('email').value = email;
+            }
+        });
+        
+        // Manejar envío del formulario
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const successDiv = document.getElementById('success');
+            
+            // Reset states
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/completar-perfil', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Error guardando perfil');
+                }
+                
+                successDiv.textContent = '✅ ¡Perfil completado! Redirigiendo al portal...';
+                successDiv.style.display = 'block';
+                
+                // Guardar email y redirigir
+                localStorage.setItem('userEmail', data.email);
+                setTimeout(() => {
+                    window.location.href = '/portal';
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                errorDiv.textContent = '❌ ' + error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 

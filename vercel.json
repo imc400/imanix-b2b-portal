@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "name": "imanix-b2b-portal",
   "builds": [
     {
       "src": "server-auth.js",
@@ -9,10 +10,15 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "server-auth.js"
+      "dest": "/server-auth.js"
     }
   ],
   "env": {
     "NODE_ENV": "production"
+  },
+  "functions": {
+    "server-auth.js": {
+      "maxDuration": 30
+    }
   }
 } 

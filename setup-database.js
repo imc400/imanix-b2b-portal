@@ -22,12 +22,25 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   email VARCHAR(255) UNIQUE NOT NULL,
   shopify_customer_id BIGINT,
-  company_name VARCHAR(255),
+  -- Datos personales
+  first_name VARCHAR(100),
+  last_name VARCHAR(100),
   contact_name VARCHAR(255),
-  phone VARCHAR(50),
+  mobile_phone VARCHAR(50),
+  -- Datos empresariales
+  company_name VARCHAR(255),
+  company_rut VARCHAR(20),
+  company_giro VARCHAR(255),
+  company_address VARCHAR(500),
+  region VARCHAR(100),
+  comuna VARCHAR(100),
+  -- Sistema B2B
   discount_percentage INTEGER DEFAULT 0,
   discount_tag VARCHAR(50),
   is_active BOOLEAN DEFAULT true,
+  -- Control de perfil completo
+  profile_completed BOOLEAN DEFAULT false,
+  -- Metadatos
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -81,6 +94,44 @@ CREATE TABLE IF NOT EXISTS order_items (
   sku VARCHAR(100),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Script para agregar las nuevas columnas si no existen
+DO $$ 
+BEGIN
+    -- Agregar columna region si no existe
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='user_profiles' AND column_name='region') THEN
+        ALTER TABLE user_profiles ADD COLUMN region VARCHAR(100);
+    END IF;
+    
+    -- Agregar columnas que pueden faltar del sistema anterior
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='user_profiles' AND column_name='first_name') THEN
+        ALTER TABLE user_profiles ADD COLUMN first_name VARCHAR(100);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='user_profiles' AND column_name='last_name') THEN
+        ALTER TABLE user_profiles ADD COLUMN last_name VARCHAR(100);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='user_profiles' AND column_name='mobile_phone') THEN
+        ALTER TABLE user_profiles ADD COLUMN mobile_phone VARCHAR(50);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='user_profiles' AND column_name='company_rut') THEN
+        ALTER TABLE user_profiles ADD COLUMN company_rut VARCHAR(20);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='user_profiles' AND column_name='company_giro') THEN
+        ALTER TABLE user_profiles ADD COLUMN company_giro VARCHAR(255);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='user_profiles' AND column_name='company_address') THEN
+        ALTER TABLE user_profiles ADD COLUMN company_address VARCHAR(500);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='user_profiles' AND column_name='profile_completed') THEN
+        ALTER TABLE user_profiles ADD COLUMN profile_completed BOOLEAN DEFAULT false;
+    END IF;
+END $$;
 
 -- Índices para mejor rendimiento
 CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON user_profiles(email);
