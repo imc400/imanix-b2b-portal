@@ -1,23 +1,17 @@
 {
   "version": 2,
   "name": "imanix-b2b-portal",
-  "builds": [
+  "rewrites": [
     {
-      "src": "server-auth.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/server-auth.js"
+      "source": "/(.*)",
+      "destination": "/api/server-auth"
     }
   ],
   "env": {
     "NODE_ENV": "production"
   },
   "functions": {
-    "server-auth.js": {
+    "api/server-auth.js": {
       "maxDuration": 30
     }
   }
