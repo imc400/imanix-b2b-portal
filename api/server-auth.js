@@ -3761,7 +3761,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
     "Región Metropolitana": ["Cerrillos", "Cerro Navia", "Conchalí", "El Bosque", "Estación Central", "Huechuraba", "Independencia", "La Cisterna", "La Florida", "La Granja", "La Pintana", "La Reina", "Las Condes", "Lo Barnechea", "Lo Espejo", "Lo Prado", "Macul", "Maipú", "Ñuñoa", "Pedro Aguirre Cerda", "Peñalolén", "Providencia", "Pudahuel", "Quilicura", "Quinta Normal", "Recoleta", "Renca", "Santiago", "San Joaquín", "San Miguel", "San Ramón", "Vitacura", "Puente Alto", "Pirque", "San José de Maipo", "Colina", "Lampa", "Tiltil", "San Bernardo", "Buin", "Calera de Tango", "Paine", "Melipilla", "Alhué", "Curacaví", "María Pinto", "San Pedro", "Talagante", "El Monte", "Isla de Maipo", "Padre Hurtado", "Peñaflor"],
     "Región del Libertador Bernardo O'Higgins": ["Rancagua", "Codegua", "Coinco", "Coltauco", "Doñihue", "Graneros", "Las Cabras", "Machalí", "Malloa", "Mostazal", "Olivar", "Peumo", "Pichidegua", "Quinta de Tilcoco", "Rengo", "Requínoa", "San Vicente", "Pichilemu", "La Estrella", "Litueche", "Marchihue", "Navidad", "Paredones", "San Fernando", "Chépica", "Chimbarongo", "Lolol", "Nancagua", "Palmilla", "Peralillo", "Placilla", "Pumanque", "Santa Cruz"],
     "Región del Maule": ["Talca", "Constitución", "Curepto", "Empedrado", "Maule", "Pelarco", "Pencahue", "Río Claro", "San Clemente", "San Rafael", "Cauquenes", "Chanco", "Pelluhue", "Curicó", "Hualañé", "Licantén", "Molina", "Rauco", "Romeral", "Sagrada Familia", "Teno", "Vichuquén", "Linares", "Colbún", "Longaví", "Parral", "Retiro", "San Javier", "Villa Alegre", "Yerbas Buenas"],
-    "Región del Ñuble": ["Chillán", "Bulnes", "Cobquecura", "Coelemu", "Coihueco", "Chillán Viejo", "El Carmen", "Ninhue", "Ñiquén", "Pemuco", "Pinto", "Portezuelo", "Quillón", "Quirihue", "Ránquil", "San Carlos", "San Fabián", "San Ignacio", "San Nicolás", "Treguaco", "Yungay"],
+    "Región de Ñuble": ["Chillán", "Bulnes", "Cobquecura", "Coelemu", "Coihueco", "Chillán Viejo", "El Carmen", "Ninhue", "Ñiquén", "Pemuco", "Pinto", "Portezuelo", "Quillón", "Quirihue", "Ránquil", "San Carlos", "San Fabián", "San Ignacio", "San Nicolás", "Treguaco", "Yungay"],
     "Región del Biobío": ["Concepción", "Coronel", "Chiguayante", "Florida", "Hualqui", "Lota", "Penco", "San Pedro de la Paz", "Santa Juana", "Talcahuano", "Tomé", "Hualpén", "Lebu", "Arauco", "Cañete", "Contulmo", "Curanilahue", "Los Álamos", "Tirúa", "Los Ángeles", "Antuco", "Cabrero", "Laja", "Mulchén", "Nacimiento", "Negrete", "Quilaco", "Quilleco", "San Rosendo", "Santa Bárbara", "Tucapel", "Yumbel", "Alto Biobío"],
     "Región de La Araucanía": ["Temuco", "Carahue", "Cunco", "Curarrehue", "Freire", "Galvarino", "Gorbea", "Lautaro", "Loncoche", "Melipeuco", "Nueva Imperial", "Padre Las Casas", "Perquenco", "Pitrufquén", "Pucón", "Saavedra", "Teodoro Schmidt", "Toltén", "Vilcún", "Villarrica", "Cholchol", "Angol", "Collipulli", "Curacautín", "Ercilla", "Lonquimay", "Los Sauces", "Lumaco", "Purén", "Renaico", "Traiguén", "Victoria"],
     "Región de Los Ríos": ["Valdivia", "Corral", "Lanco", "Los Lagos", "Máfil", "Mariquina", "Paillaco", "Panguipulli", "La Unión", "Futrono", "Lago Ranco", "Río Bueno"],
@@ -4710,8 +4710,16 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
 // ========== RUTAS DEL PERFIL DE USUARIO ==========
 
-// Middleware para verificar autenticación
+// Middleware para verificar autenticación (para páginas HTML)
 function requireAuth(req, res, next) {
+  if (!req.session.customer) {
+    return res.redirect('/');
+  }
+  next();
+}
+
+// Middleware para verificar autenticación (para APIs)
+function requireAuthAPI(req, res, next) {
   if (!req.session.customer) {
     return res.status(401).json({ 
       success: false, 
@@ -4739,7 +4747,7 @@ app.get('/perfil', requireAuth, async (req, res) => {
 });
 
 // API - Obtener perfil
-app.get('/api/profile', requireAuth, async (req, res) => {
+app.get('/api/profile', requireAuthAPI, async (req, res) => {
   try {
     const customer = req.session.customer;
     const profile = await database.getProfile(customer.email);
@@ -4760,7 +4768,7 @@ app.get('/api/profile', requireAuth, async (req, res) => {
 });
 
 // API - Actualizar perfil
-app.put('/api/profile', requireAuth, async (req, res) => {
+app.put('/api/profile', requireAuthAPI, async (req, res) => {
   try {
     const customer = req.session.customer;
     const updates = req.body;
@@ -4789,7 +4797,7 @@ app.put('/api/profile', requireAuth, async (req, res) => {
 });
 
 // API - Obtener direcciones
-app.get('/api/addresses', requireAuth, async (req, res) => {
+app.get('/api/addresses', requireAuthAPI, async (req, res) => {
   try {
     const customer = req.session.customer;
     const addresses = await database.getUserAddresses(customer.email);
@@ -4802,7 +4810,7 @@ app.get('/api/addresses', requireAuth, async (req, res) => {
 });
 
 // API - Agregar dirección
-app.post('/api/addresses', requireAuth, async (req, res) => {
+app.post('/api/addresses', requireAuthAPI, async (req, res) => {
   try {
     const customer = req.session.customer;
     const addressData = req.body;
@@ -4839,7 +4847,7 @@ app.post('/api/addresses', requireAuth, async (req, res) => {
 });
 
 // API - Actualizar dirección
-app.put('/api/addresses/:id', requireAuth, async (req, res) => {
+app.put('/api/addresses/:id', requireAuthAPI, async (req, res) => {
   try {
     const addressId = req.params.id;
     const updates = req.body;
@@ -4858,7 +4866,7 @@ app.put('/api/addresses/:id', requireAuth, async (req, res) => {
 });
 
 // API - Eliminar dirección
-app.delete('/api/addresses/:id', requireAuth, async (req, res) => {
+app.delete('/api/addresses/:id', requireAuthAPI, async (req, res) => {
   try {
     const addressId = req.params.id;
     const success = await database.deleteAddress(addressId);
@@ -4875,7 +4883,7 @@ app.delete('/api/addresses/:id', requireAuth, async (req, res) => {
 });
 
 // API - Obtener historial de pedidos
-app.get('/api/orders', requireAuth, async (req, res) => {
+app.get('/api/orders', requireAuthAPI, async (req, res) => {
   try {
     const customer = req.session.customer;
     const page = parseInt(req.query.page) || 1;
@@ -4892,7 +4900,7 @@ app.get('/api/orders', requireAuth, async (req, res) => {
 });
 
 // API - Obtener detalles de un pedido
-app.get('/api/orders/:id', requireAuth, async (req, res) => {
+app.get('/api/orders/:id', requireAuthAPI, async (req, res) => {
   try {
     const orderId = req.params.id;
     const order = await database.getOrderDetails(orderId);
@@ -4955,6 +4963,528 @@ app.post('/webhooks/products/update', express.raw({ type: 'application/json' }),
     res.status(500).send('Error');
   }
 });
+
+// Página Mi Cuenta
+app.get('/cuenta', requireAuth, async (req, res) => {
+  try {
+    const customer = {
+      ...req.session.customer,
+      discountPercentage: req.session.customer.discount
+    };
+    const profile = await database.getUserProfile(customer.email);
+    const addresses = await database.getUserAddresses(customer.email);
+    const stats = await database.getUserStats(customer.email);
+    
+    res.send(getAccountHTML(customer, profile, addresses, stats));
+  } catch (error) {
+    console.error('Error obteniendo datos de cuenta:', error);
+    res.status(500).send('Error interno del servidor');
+  }
+});
+
+// Página Historial de Pedidos
+app.get('/pedidos', requireAuth, async (req, res) => {
+  try {
+    const customer = {
+      ...req.session.customer,
+      discountPercentage: req.session.customer.discount
+    };
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const offset = (page - 1) * limit;
+    
+    const orders = await database.getUserOrders(customer.email, limit, offset);
+    const totalOrders = await database.getUserOrdersCount(customer.email);
+    const totalPages = Math.ceil(totalOrders / limit);
+    
+    res.send(getOrdersHTML(customer, orders, page, totalPages));
+  } catch (error) {
+    console.error('Error obteniendo historial de pedidos:', error);
+    res.status(500).send('Error interno del servidor');
+  }
+});
+
+// Página Detalles de Pedido
+app.get('/pedidos/:id', requireAuth, async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const customer = {
+      ...req.session.customer,
+      discountPercentage: req.session.customer.discount
+    };
+    
+    const order = await database.getOrderDetails(orderId);
+    
+    if (!order || order.customer_email !== customer.email) {
+      return res.status(404).send('Pedido no encontrado');
+    }
+    
+    res.send(getOrderDetailHTML(customer, order));
+  } catch (error) {
+    console.error('Error obteniendo detalles del pedido:', error);
+    res.status(500).send('Error interno del servidor');
+  }
+});
+
+// ========== FUNCIONES HTML PARA NUEVAS PÁGINAS ==========
+
+// Función para generar HTML de Mi Cuenta
+function getAccountHTML(customer, profile, addresses, stats) {
+  const hasProfile = profile && Object.keys(profile).length > 0;
+  const totalOrders = stats?.totalOrders || 0;
+  const totalSpent = stats?.totalSpent || 0;
+  const avgOrderValue = stats?.avgOrderValue || 0;
+  
+  return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mi Cuenta - Portal B2B IMANIX</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                line-height: 1.6; 
+                color: #333; 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+            }
+            .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+            .header {
+                background: rgba(255, 255, 255, 0.95);
+                padding: 1rem 2rem;
+                margin-bottom: 2rem;
+                border-radius: 15px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                backdrop-filter: blur(10px);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .logo { font-size: 1.8rem; font-weight: bold; color: #2c3e50; text-decoration: none; }
+            .user-info { display: flex; align-items: center; gap: 15px; }
+            .discount-badge { 
+                background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+                color: white; padding: 8px 16px; border-radius: 20px;
+                font-weight: bold; font-size: 0.9rem;
+            }
+            .logout-btn {
+                background: #e74c3c; color: white; padding: 8px 16px;
+                border: none; border-radius: 8px; cursor: pointer;
+                text-decoration: none; font-size: 0.9rem;
+            }
+            .logout-btn:hover { background: #c0392b; }
+            .nav-menu {
+                background: rgba(255, 255, 255, 0.95);
+                padding: 1rem; margin-bottom: 2rem; border-radius: 15px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                backdrop-filter: blur(10px);
+            }
+            .nav-menu ul { list-style: none; display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+            .nav-menu a {
+                color: #2c3e50; text-decoration: none; padding: 10px 20px;
+                border-radius: 8px; transition: all 0.3s ease; font-weight: 500;
+            }
+            .nav-menu a:hover, .nav-menu a.active {
+                background: linear-gradient(45deg, #667eea, #764ba2);
+                color: white; transform: translateY(-2px);
+            }
+            .account-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 2rem; margin-bottom: 2rem;
+            }
+            .card {
+                background: rgba(255, 255, 255, 0.95);
+                padding: 2rem; border-radius: 15px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                backdrop-filter: blur(10px);
+            }
+            .card h2 {
+                color: #2c3e50; margin-bottom: 1rem;
+                display: flex; align-items: center; gap: 10px;
+            }
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 1rem; margin-top: 1rem;
+            }
+            .stat-item {
+                text-align: center; padding: 1rem;
+                background: linear-gradient(45deg, #667eea, #764ba2);
+                color: white; border-radius: 10px;
+            }
+            .stat-value { font-size: 2rem; font-weight: bold; display: block; }
+            .stat-label { font-size: 0.9rem; opacity: 0.9; }
+            .profile-item {
+                display: flex; justify-content: space-between;
+                padding: 10px 0; border-bottom: 1px solid #eee;
+            }
+            .profile-item:last-child { border-bottom: none; }
+            .profile-label { font-weight: 500; color: #666; }
+            .profile-value { color: #2c3e50; font-weight: 500; }
+            .btn {
+                background: linear-gradient(45deg, #667eea, #764ba2);
+                color: white; padding: 12px 24px; border: none;
+                border-radius: 8px; cursor: pointer; text-decoration: none;
+                font-weight: 500; transition: all 0.3s ease;
+                display: inline-block; margin-top: 1rem;
+            }
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <a href="/" class="logo">🧲 IMANIX B2B</a>
+                <div class="user-info">
+                    <span class="discount-badge">${customer.discountPercentage}% Descuento B2B</span>
+                    <span>👤 ${customer.email}</span>
+                    <a href="/api/auth/logout" class="logout-btn">Cerrar Sesión</a>
+                </div>
+            </div>
+            <div class="nav-menu">
+                <ul>
+                    <li><a href="/">🏠 Inicio</a></li>
+                    <li><a href="/cuenta" class="active">👤 Mi Cuenta</a></li>
+                    <li><a href="/pedidos">📦 Mis Pedidos</a></li>
+                    <li><a href="/perfil">⚙️ Perfil Empresarial</a></li>
+                    <li><a href="/carrito">🛒 Carrito</a></li>
+                </ul>
+            </div>
+            <div class="account-grid">
+                <div class="card">
+                    <h2>📊 Resumen de Cuenta</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-value">${totalOrders}</span>
+                            <span class="stat-label">Pedidos</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">$${totalSpent.toLocaleString()}</span>
+                            <span class="stat-label">Total Gastado</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">${avgOrderValue}</span>
+                            <span class="stat-label">Promedio</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>👤 Información Personal</h2>
+                    ${hasProfile ? `
+                        <div class="profile-item">
+                            <span class="profile-label">Nombre:</span>
+                            <span class="profile-value">${profile.first_name || 'No especificado'} ${profile.last_name || ''}</span>
+                        </div>
+                        <div class="profile-item">
+                            <span class="profile-label">Email:</span>
+                            <span class="profile-value">${customer.email}</span>
+                        </div>
+                        <div class="profile-item">
+                            <span class="profile-label">Teléfono:</span>
+                            <span class="profile-value">${profile.mobile_phone || 'No especificado'}</span>
+                        </div>
+                        <div class="profile-item">
+                            <span class="profile-label">Empresa:</span>
+                            <span class="profile-value">${profile.company_name || 'No especificado'}</span>
+                        </div>
+                        <div class="profile-item">
+                            <span class="profile-label">RUT:</span>
+                            <span class="profile-value">${profile.company_rut || 'No especificado'}</span>
+                        </div>
+                    ` : `
+                        <p>No hay información de perfil disponible.</p>
+                    `}
+                    <a href="/perfil" class="btn">✏️ Editar Perfil</a>
+                </div>
+                <div class="card">
+                    <h2>📦 Pedidos Recientes</h2>
+                    <p>Consulta tu historial completo en la sección de pedidos.</p>
+                    <a href="/pedidos" class="btn">📦 Ver Todos los Pedidos</a>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+}
+
+// Función para generar HTML del Historial de Pedidos
+function getOrdersHTML(customer, orders, currentPage, totalPages) {
+  const ordersHTML = orders && orders.length > 0 ? 
+    orders.map(order => `
+        <div class="order-card">
+            <div class="order-header">
+                <div class="order-info">
+                    <h3>Pedido #${order.id}</h3>
+                    <div class="order-date">${new Date(order.created_at).toLocaleDateString('es-ES')}</div>
+                </div>
+                <div class="order-status">Pendiente</div>
+            </div>
+            <div class="order-details">
+                <div class="detail-item">
+                    <span class="detail-label">Total:</span>
+                    <span class="detail-value">$${order.total.toLocaleString()}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Items:</span>
+                    <span class="detail-value">${order.item_count || 1}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Descuento:</span>
+                    <span class="detail-value">${customer.discountPercentage}%</span>
+                </div>
+            </div>
+            <div class="order-actions">
+                <a href="/pedidos/${order.id}" class="btn">👁️ Ver Detalles</a>
+            </div>
+        </div>
+    `).join('') : `
+        <div class="empty-state">
+            <h3>📦 No tienes pedidos aún</h3>
+            <p>¡Explora nuestro catálogo y haz tu primer pedido!</p>
+            <a href="/" class="btn">🛒 Ir al Catálogo</a>
+        </div>
+    `;
+
+  return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mis Pedidos - Portal B2B IMANIX</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                line-height: 1.6; color: #333; 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+            }
+            .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+            .header {
+                background: rgba(255, 255, 255, 0.95);
+                padding: 1rem 2rem; margin-bottom: 2rem; border-radius: 15px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                backdrop-filter: blur(10px);
+                display: flex; justify-content: space-between; align-items: center;
+            }
+            .logo { font-size: 1.8rem; font-weight: bold; color: #2c3e50; text-decoration: none; }
+            .user-info { display: flex; align-items: center; gap: 15px; }
+            .discount-badge { 
+                background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+                color: white; padding: 8px 16px; border-radius: 20px;
+                font-weight: bold; font-size: 0.9rem;
+            }
+            .logout-btn {
+                background: #e74c3c; color: white; padding: 8px 16px;
+                border: none; border-radius: 8px; text-decoration: none; font-size: 0.9rem;
+            }
+            .logout-btn:hover { background: #c0392b; }
+            .nav-menu {
+                background: rgba(255, 255, 255, 0.95);
+                padding: 1rem; margin-bottom: 2rem; border-radius: 15px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                backdrop-filter: blur(10px);
+            }
+            .nav-menu ul { list-style: none; display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+            .nav-menu a {
+                color: #2c3e50; text-decoration: none; padding: 10px 20px;
+                border-radius: 8px; transition: all 0.3s ease; font-weight: 500;
+            }
+            .nav-menu a:hover, .nav-menu a.active {
+                background: linear-gradient(45deg, #667eea, #764ba2);
+                color: white; transform: translateY(-2px);
+            }
+            .orders-container {
+                background: rgba(255, 255, 255, 0.95);
+                padding: 2rem; border-radius: 15px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                backdrop-filter: blur(10px);
+            }
+            .orders-header {
+                display: flex; justify-content: space-between; align-items: center;
+                margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #eee;
+            }
+            .orders-title { color: #2c3e50; font-size: 1.8rem; margin: 0; }
+            .order-card {
+                background: #f8f9fa; padding: 1.5rem; margin-bottom: 1rem;
+                border-radius: 10px; border-left: 4px solid #667eea;
+                transition: all 0.3s ease;
+            }
+            .order-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            }
+            .order-header {
+                display: flex; justify-content: space-between;
+                align-items: flex-start; margin-bottom: 1rem;
+            }
+            .order-info h3 { color: #2c3e50; margin: 0 0 5px 0; }
+            .order-date { color: #666; font-size: 0.9rem; }
+            .order-status {
+                padding: 6px 12px; border-radius: 20px; color: white;
+                font-size: 0.8rem; font-weight: bold; background: #f39c12;
+            }
+            .order-details {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 1rem; margin-bottom: 1rem;
+            }
+            .detail-item { display: flex; justify-content: space-between; }
+            .detail-label { color: #666; font-weight: 500; }
+            .detail-value { color: #2c3e50; font-weight: bold; }
+            .order-actions { display: flex; gap: 10px; justify-content: flex-end; }
+            .btn {
+                background: linear-gradient(45deg, #667eea, #764ba2);
+                color: white; padding: 8px 16px; border: none;
+                border-radius: 6px; cursor: pointer; text-decoration: none;
+                font-size: 0.9rem; font-weight: 500; transition: all 0.3s ease;
+            }
+            .btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
+            }
+            .empty-state { text-align: center; padding: 3rem; color: #666; }
+            .empty-state h3 { margin-bottom: 1rem; color: #2c3e50; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <a href="/" class="logo">🧲 IMANIX B2B</a>
+                <div class="user-info">
+                    <span class="discount-badge">${customer.discountPercentage}% Descuento B2B</span>
+                    <span>👤 ${customer.email}</span>
+                    <a href="/api/auth/logout" class="logout-btn">Cerrar Sesión</a>
+                </div>
+            </div>
+            <div class="nav-menu">
+                <ul>
+                    <li><a href="/">🏠 Inicio</a></li>
+                    <li><a href="/cuenta">👤 Mi Cuenta</a></li>
+                    <li><a href="/pedidos" class="active">📦 Mis Pedidos</a></li>
+                    <li><a href="/perfil">⚙️ Perfil Empresarial</a></li>
+                    <li><a href="/carrito">🛒 Carrito</a></li>
+                </ul>
+            </div>
+            <div class="orders-container">
+                <div class="orders-header">
+                    <h1 class="orders-title">📦 Mis Pedidos</h1>
+                    <a href="/" class="btn">🛒 Seguir Comprando</a>
+                </div>
+                ${ordersHTML}
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+}
+
+// Función para generar HTML de Detalle de Pedido
+function getOrderDetailHTML(customer, order) {
+  return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Pedido #${order.id} - Portal B2B IMANIX</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                line-height: 1.6; color: #333; 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+            }
+            .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+            .header {
+                background: rgba(255, 255, 255, 0.95);
+                padding: 1rem 2rem; margin-bottom: 2rem; border-radius: 15px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                backdrop-filter: blur(10px);
+                display: flex; justify-content: space-between; align-items: center;
+            }
+            .logo { font-size: 1.8rem; font-weight: bold; color: #2c3e50; text-decoration: none; }
+            .back-btn {
+                background: #6c757d; color: white; padding: 8px 16px;
+                border: none; border-radius: 8px; text-decoration: none; font-size: 0.9rem;
+            }
+            .back-btn:hover { background: #5a6268; }
+            .order-detail {
+                background: rgba(255, 255, 255, 0.95);
+                padding: 2rem; border-radius: 15px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                backdrop-filter: blur(10px);
+            }
+            .order-header {
+                display: flex; justify-content: space-between; align-items: flex-start;
+                margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #eee;
+            }
+            .order-title { color: #2c3e50; font-size: 1.8rem; margin: 0; }
+            .order-status {
+                padding: 10px 20px; border-radius: 25px; color: white;
+                font-weight: bold; background: #f39c12;
+            }
+            .info-card {
+                background: #f8f9fa; padding: 1.5rem; border-radius: 10px;
+                border-left: 4px solid #667eea; margin-bottom: 1rem;
+            }
+            .info-card h3 { color: #2c3e50; margin-bottom: 1rem; }
+            .info-item {
+                display: flex; justify-content: space-between;
+                padding: 8px 0; border-bottom: 1px solid #dee2e6;
+            }
+            .info-item:last-child { border-bottom: none; }
+            .info-label { color: #666; font-weight: 500; }
+            .info-value { color: #2c3e50; font-weight: 600; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <a href="/" class="logo">🧲 IMANIX B2B</a>
+                <a href="/pedidos" class="back-btn">← Volver a Pedidos</a>
+            </div>
+            <div class="order-detail">
+                <div class="order-header">
+                    <div>
+                        <h1 class="order-title">Pedido #${order.id}</h1>
+                        <p style="color: #666; margin-top: 5px;">
+                            Realizado el ${new Date(order.created_at).toLocaleDateString('es-ES')}
+                        </p>
+                    </div>
+                    <div class="order-status">Pendiente</div>
+                </div>
+                <div class="info-card">
+                    <h3>📋 Información del Pedido</h3>
+                    <div class="info-item">
+                        <span class="info-label">ID del Pedido:</span>
+                        <span class="info-value">#${order.id}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Total:</span>
+                        <span class="info-value">$${order.total.toLocaleString()}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Descuento B2B:</span>
+                        <span class="info-value">${customer.discountPercentage}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+}
 
 // Export the app for Vercel
 module.exports = app; 
