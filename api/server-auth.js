@@ -4372,10 +4372,17 @@ function getPortalHTML(products, customer) {
                     }
                 }
                 
-                // Filtro por Edades
+                // Filtro por Edades (mejorado)
                 if (activeFilters.ages.length > 0 && shouldShow) {
                     var hasEdad = activeFilters.ages.some(function(edad) {
-                        return metaValues.includes(edad);
+                        // Buscar coincidencia exacta o parcial
+                        return metaValues.some(function(metaValue) {
+                            if (!metaValue) return false;
+                            // Limpiar IDs de Shopify
+                            if (metaValue.startsWith('gid://shopify/')) return false;
+                            // Coincidencia exacta o contiene
+                            return metaValue === edad || metaValue.toLowerCase().includes(edad.toLowerCase());
+                        });
                     });
                     if (!hasEdad) {
                         shouldShow = false;
@@ -4442,6 +4449,36 @@ function getPortalHTML(products, customer) {
             console.log('✅ removeFilter ejecutada:', type, value);
         };
         
+        // Función para limpiar y extraer valor legible de IDs de Shopify
+        function cleanShopifyValue(value, key) {
+            if (!value) return null;
+            
+            // Si es un ID de Shopify, intentar extraer información útil
+            if (value.startsWith('gid://shopify/')) {
+                console.log('🔧 Procesando ID de Shopify:', value, 'para key:', key);
+                
+                // Para edades, podríamos mapear IDs conocidos a valores legibles
+                var ageMapping = {
+                    '122522435859': '3-5 años',
+                    '98466890003': '5-9 años',
+                    '35341876855059': '9+ años',
+                    '39573422145811': 'Experto'
+                };
+                
+                // Extraer el ID numérico del final
+                var idMatch = value.match(/\/(\d+)$/);
+                if (idMatch && ageMapping[idMatch[1]]) {
+                    console.log('✅ ID mapeado:', idMatch[1], '->', ageMapping[idMatch[1]]);
+                    return ageMapping[idMatch[1]];
+                }
+                
+                // Si no tenemos mapeo, usar el ID como valor temporal
+                return 'ID-' + (idMatch ? idMatch[1] : 'unknown');
+            }
+            
+            return value;
+        }
+        
         // Función para inicializar los filtros con METACAMPOS de Shopify
         window.initializeFilters = function() {
             console.log('🔍 Inicializando filtros con metacampos de Shopify...');
@@ -4468,26 +4505,36 @@ function getPortalHTML(products, customer) {
                         Object.keys(metafields).forEach(function(key) {
                             var value = metafields[key];
                             if (value) {
+                                // Limpiar el valor usando la función especializada
+                                var cleanValue = cleanShopifyValue(value, key);
+                                if (!cleanValue) return; // Saltar valores nulos
+                                
                                 // Agregar a la colección general
                                 if (!allMetafields[key]) {
                                     allMetafields[key] = new Set();
                                 }
-                                allMetafields[key].add(value);
+                                allMetafields[key].add(cleanValue);
                                 
                                 // Clasificar por tipo de metacampo
                                 var keyLower = key.toLowerCase();
                                 
                                 if (keyLower.includes('subcategor') || keyLower.includes('sub-categor') || keyLower.includes('categoria')) {
-                                    subCategorias.add(value);
+                                    subCategorias.add(cleanValue);
                                 }
                                 else if (keyLower.includes('marca') || keyLower.includes('brand')) {
-                                    marcas.add(value);
+                                    marcas.add(cleanValue);
                                 }
-                                else if (keyLower.includes('edad') || keyLower.includes('age') || keyLower.includes('años')) {
-                                    edades.add(value);
+                                else if (keyLower.includes('edad') || keyLower.includes('age') || keyLower.includes('años') || 
+                                         key === 'filtros.productos.edades' || key.includes('edades')) {
+                                    console.log('🎯 Edad encontrada:', key, '=', cleanValue);
+                                    edades.add(cleanValue);
                                 }
                                 else if (keyLower.includes('pieza') || keyLower.includes('piece') || keyLower.includes('cantidad')) {
-                                    cantidadPiezas.add(value);
+                                    cantidadPiezas.add(cleanValue);
+                                }
+                                else {
+                                    // Agregar a categorías por defecto si no encaja en ninguna
+                                    console.log('📋 Metacampo no clasificado:', key, '=', cleanValue);
                                 }
                             }
                         });
