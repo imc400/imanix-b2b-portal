@@ -5054,7 +5054,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
                 line-height: 1.6; 
                 color: #333; 
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
                 min-height: 100vh;
             }
             .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
@@ -5094,7 +5094,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
                 border-radius: 8px; transition: all 0.3s ease; font-weight: 500;
             }
             .nav-menu a:hover, .nav-menu a.active {
-                background: linear-gradient(45deg, #667eea, #764ba2);
+                background: linear-gradient(45deg, #FFCE36, #FF7B85);
                 color: white; transform: translateY(-2px);
             }
             .account-grid {
@@ -5119,7 +5119,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
             }
             .stat-item {
                 text-align: center; padding: 1rem;
-                background: linear-gradient(45deg, #667eea, #764ba2);
+                background: linear-gradient(45deg, #FFCE36, #FF7B85);
                 color: white; border-radius: 10px;
             }
             .stat-value { font-size: 2rem; font-weight: bold; display: block; }
@@ -5132,7 +5132,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
             .profile-label { font-weight: 500; color: #666; }
             .profile-value { color: #2c3e50; font-weight: 500; }
             .btn {
-                background: linear-gradient(45deg, #667eea, #764ba2);
+                background: linear-gradient(45deg, #FFCE36, #FF7B85);
                 color: white; padding: 12px 24px; border: none;
                 border-radius: 8px; cursor: pointer; text-decoration: none;
                 font-weight: 500; transition: all 0.3s ease;
@@ -5271,7 +5271,7 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             body { 
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
                 line-height: 1.6; color: #333; 
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
                 min-height: 100vh;
             }
             .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
@@ -5306,7 +5306,7 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
                 border-radius: 8px; transition: all 0.3s ease; font-weight: 500;
             }
             .nav-menu a:hover, .nav-menu a.active {
-                background: linear-gradient(45deg, #667eea, #764ba2);
+                background: linear-gradient(45deg, #FFCE36, #FF7B85);
                 color: white; transform: translateY(-2px);
             }
             .orders-container {
@@ -5322,7 +5322,7 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             .orders-title { color: #2c3e50; font-size: 1.8rem; margin: 0; }
             .order-card {
                 background: #f8f9fa; padding: 1.5rem; margin-bottom: 1rem;
-                border-radius: 10px; border-left: 4px solid #667eea;
+                border-radius: 10px; border-left: 4px solid #FFCE36;
                 transition: all 0.3s ease;
             }
             .order-card:hover {
@@ -5349,7 +5349,7 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             .detail-value { color: #2c3e50; font-weight: bold; }
             .order-actions { display: flex; gap: 10px; justify-content: flex-end; }
             .btn {
-                background: linear-gradient(45deg, #667eea, #764ba2);
+                background: linear-gradient(45deg, #FFCE36, #FF7B85);
                 color: white; padding: 8px 16px; border: none;
                 border-radius: 6px; cursor: pointer; text-decoration: none;
                 font-size: 0.9rem; font-weight: 500; transition: all 0.3s ease;
@@ -5408,7 +5408,7 @@ function getOrderDetailHTML(customer, order) {
             body { 
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
                 line-height: 1.6; color: #333; 
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
                 min-height: 100vh;
             }
             .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
@@ -5442,7 +5442,7 @@ function getOrderDetailHTML(customer, order) {
             }
             .info-card {
                 background: #f8f9fa; padding: 1.5rem; border-radius: 10px;
-                border-left: 4px solid #667eea; margin-bottom: 1rem;
+                border-left: 4px solid #FFCE36; margin-bottom: 1rem;
             }
             .info-card h3 { color: #2c3e50; margin-bottom: 1rem; }
             .info-item {
