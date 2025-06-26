@@ -177,7 +177,7 @@ const database = {
       const { data, error } = await supabase
         .from('user_addresses')
         .select('*')
-        .eq('email', email);
+        .eq('customer_email', email);
       
       if (error) {
         throw error;
@@ -205,12 +205,14 @@ const database = {
       
       const totalOrders = orders?.length || 0;
       const totalSpent = orders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
+      const totalSaved = orders?.reduce((sum, order) => sum + (order.discount_amount || 0), 0) || 0;
       const avgOrderValue = totalOrders > 0 ? Math.round(totalSpent / totalOrders) : 0;
       const recentOrders = orders?.slice(-5) || [];
       
       return {
         totalOrders,
         totalSpent,
+        totalSaved,
         avgOrderValue,
         recentOrders
       };
@@ -219,6 +221,7 @@ const database = {
       return {
         totalOrders: 0,
         totalSpent: 0,
+        totalSaved: 0,
         avgOrderValue: 0,
         recentOrders: []
       };
@@ -290,7 +293,7 @@ const database = {
     try {
       const fullAddressData = {
         ...addressData,
-        email: email,
+        customer_email: email,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -435,23 +438,19 @@ const database = {
     }
   },
 
-  // Obtener estadísticas generales (función legacy)
+  // Obtener estadísticas generales (función legacy actualizada)
   async getStats(email) {
     try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('stats')
-        .eq('email', email)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
-      
-      return data?.stats || {};
+      // Redirigir a getUserStats que calcula dinámicamente desde draft_orders
+      return await this.getUserStats(email);
     } catch (error) {
       console.error('Error obteniendo estadísticas:', error);
-      return {};
+      return {
+        totalOrders: 0,
+        totalSpent: 0,
+        avgOrderValue: 0,
+        recentOrders: []
+      };
     }
   },
 
