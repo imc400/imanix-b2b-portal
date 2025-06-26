@@ -290,6 +290,10 @@ app.post('/api/profile/update', async (req, res) => {
     const profileData = req.body; // <-- FIX: Leer datos directamente de req.body
     const email = req.session.customer.email;
 
+    // DEBUG: Ver qué datos llegan
+    console.log('🔍 DATOS RECIBIDOS:', JSON.stringify(profileData, null, 2));
+    console.log('🔍 KEYS:', Object.keys(profileData));
+
     if (!profileData) {
       return res.status(400).json({ 
         success: false, 
