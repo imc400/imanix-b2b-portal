@@ -4698,7 +4698,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             if (!confirm('¿Estás seguro de que quieres eliminar esta dirección?')) return;
             
             try {
-                const response = await fetch(\`/api/addresses/\${addressId}\`, {
+                const response = await fetch('/api/addresses/' + addressId, {
                     method: 'DELETE'
                 });
                 
@@ -4723,20 +4723,19 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         function showNotification(message, type) {
             const notification = document.createElement('div');
-            notification.style.cssText = \`
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: \${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
-                color: white;
-                padding: 1rem 1.5rem;
-                border-radius: 12px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-                z-index: 10000;
-                font-weight: 600;
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
-            \`;
+            const bgColor = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6';
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.background = bgColor;
+            notification.style.color = 'white';
+            notification.style.padding = '1rem 1.5rem';
+            notification.style.borderRadius = '12px';
+            notification.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+            notification.style.zIndex = '10000';
+            notification.style.fontWeight = '600';
+            notification.style.transform = 'translateX(100%)';
+            notification.style.transition = 'transform 0.3s ease';
             notification.textContent = message;
             
             document.body.appendChild(notification);
