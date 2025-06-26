@@ -2841,16 +2841,12 @@ function getPortalHTML(products, customer) {
                         <h3 class="product-title">${product.title}</h3>
                         <div class="product-pricing">
                             <div class="price-row">
-                                <div class="original-price-block">
-                                    <span class="original-price">${formatPrice(originalPrice)}</span>
-                                    <div class="price-breakdown">Neto: ${formatPrice(originalPriceNeto)} + IVA: ${formatPrice(originalPriceIVA)}</div>
-                                </div>
                                 <div class="discounted-price-block">
                                     <span class="discounted-price">${formatPrice(discountedPrice)}</span>
                                     <div class="price-breakdown highlight">Neto: ${formatPrice(discountedPriceNeto)} + IVA: ${formatPrice(discountedPriceIVA)}</div>
                                 </div>
                             </div>
-                            <div class="savings">Ahorras ${formatPrice(savings)}</div>
+                            <div class="savings">Precio original: ${formatPrice(originalPrice)} • Ahorras ${formatPrice(savings)}</div>
                         </div>
                         <div class="product-meta">
                             <span class="sku">SKU: ${variant?.sku || 'N/A'}</span>
@@ -3351,52 +3347,31 @@ function getPortalHTML(products, customer) {
         }
 
         .price-row {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
             margin-bottom: 0.5rem;
         }
 
-        .original-price-block,
         .discounted-price-block {
-            padding: 0.75rem;
-            border-radius: 8px;
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-        }
-
-        .discounted-price-block {
+            padding: 1rem;
+            border-radius: 12px;
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
             border: 1px solid #059669;
-        }
-
-        .original-price {
-            color: #9ca3af;
-            text-decoration: line-through;
-            font-size: 0.875rem;
-            display: block;
-            margin-bottom: 0.25rem;
+            text-align: center;
         }
 
         .discounted-price {
             color: white;
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             font-weight: 800;
             display: block;
-            margin-bottom: 0.25rem;
-        }
-
-        .price-breakdown {
-            font-size: 0.75rem;
-            color: #6b7280;
-            line-height: 1.3;
-            font-weight: 500;
+            margin-bottom: 0.5rem;
         }
 
         .price-breakdown.highlight {
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(255, 255, 255, 0.95);
             font-weight: 600;
+            font-size: 0.85rem;
+            line-height: 1.3;
         }
 
         .savings {
