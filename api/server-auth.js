@@ -847,6 +847,153 @@ function getCartHTML(customer) {
                     <title>Carrito de Compras - Portal B2B IMANIX Chile</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- 🎨 IMANIX Professional Design System -->
+    <style>
+        :root {
+            --imanix-yellow: #FFCE36;
+            --imanix-yellow-dark: #E6B800;
+            --imanix-yellow-light: #FFF8E1;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-600: #4B5563;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* FONDOS PROFESIONALES */
+        body { background: var(--gray-50) !important; color: var(--gray-800) !important; }
+        
+        /* NAVBAR EMPRESARIAL */
+        .navbar { 
+            background: #FFFFFF !important; 
+            border-bottom: 3px solid var(--imanix-yellow) !important;
+            box-shadow: var(--shadow-md) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        
+        /* CARDS PROFESIONALES */
+        .cart-header, .cart-items, .cart-summary, .login-container, .profile-container,
+        .content-card, .stat-card, .product-card, .catalog-section, .customer-welcome,
+        .profile-header, .profile-tabs {
+            background: #FFFFFF !important;
+            border: 1px solid var(--gray-200) !important;
+            box-shadow: var(--shadow-md) !important;
+        }
+        
+        /* STATS MEJORADAS */
+        .stat-card { 
+            border-left: 4px solid var(--imanix-yellow) !important;
+            transition: all 0.3s ease !important;
+        }
+        .stat-card:hover { 
+            box-shadow: var(--shadow-lg) !important;
+            transform: translateY(-2px) !important;
+        }
+        
+        /* BOTONES PROFESIONALES */
+        .login-button, .submit-button, .checkout-btn, .add-to-cart-btn, 
+        .cart-navbar-btn, .btn-primary, .quantity-btn {
+            background: linear-gradient(135deg, var(--imanix-yellow) 0%, var(--imanix-yellow-dark) 100%) !important;
+            color: var(--gray-800) !important;
+            border: 1px solid var(--imanix-yellow-dark) !important;
+            box-shadow: var(--shadow-sm) !important;
+            font-weight: 600 !important;
+        }
+        
+        .login-button:hover, .submit-button:hover, .checkout-btn:hover, 
+        .add-to-cart-btn:hover, .cart-navbar-btn:hover, .btn-primary:hover, .quantity-btn:hover {
+            background: linear-gradient(135deg, var(--imanix-yellow-dark) 0%, #D4A500 100%) !important;
+            box-shadow: var(--shadow-md) !important;
+            transform: translateY(-1px) !important;
+        }
+        
+        /* PRODUCTS GRID MEJORADO */
+        .product-card { border: 1px solid var(--gray-200) !important; transition: all 0.3s ease !important; }
+        .product-card:hover {
+            border-color: var(--imanix-yellow) !important;
+            box-shadow: var(--shadow-lg) !important;
+            transform: translateY(-3px) !important;
+        }
+        
+        /* ELEMENTOS SEMÁNTICOS */
+        .discount-badge { background: #10B981 !important; color: white !important; }
+        .cart-navbar-badge { background: #EF4444 !important; color: white !important; }
+        
+        /* FORMULARIOS MEJORADOS */
+        .form-input, .form-select, .search-box {
+            border: 1px solid var(--gray-200) !important;
+            background: #FFFFFF !important;
+            transition: all 0.2s ease !important;
+        }
+        .form-input:focus, .form-select:focus, .search-box:focus {
+            border-color: var(--imanix-yellow) !important;
+            box-shadow: 0 0 0 3px rgba(255, 206, 54, 0.1) !important;
+        }
+        
+        /* DROPDOWN ELEGANTE */
+        .dropdown-header {
+            background: linear-gradient(135deg, var(--imanix-yellow-light) 0%, var(--imanix-yellow) 100%) !important;
+            color: var(--gray-800) !important;
+        }
+        
+        /* TIPOGRAFÍA PROFESIONAL */
+        .cart-title, .catalog-title, .profile-title { color: var(--gray-900) !important; }
+        .cart-subtitle, .profile-subtitle { color: var(--gray-600) !important; }
+        
+        /* WELCOME SECTION ESPECIAL */
+        .customer-welcome {
+            background: linear-gradient(135deg, #FFFFFF 0%, var(--gray-50) 100%) !important;
+            border-left: 4px solid var(--imanix-yellow) !important;
+        }
+        
+        /* CATALOG SECTION MEJORADA */
+        .catalog-section { border-radius: 12px !important; }
+        
+        /* RESPONSIVE PROFESIONAL */
+        @media (max-width: 768px) {
+            .navbar { background: #FFFFFF !important; border-bottom: 3px solid var(--imanix-yellow) !important; }
+            .stat-card, .product-card { margin-bottom: 1rem !important; }
+        }
+    
+        /* MICRO-INTERACCIONES PROFESIONALES */
+        .product-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; }
+        .product-card:hover .product-image img { transform: scale(1.02) !important; }
+        
+        .stat-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; }
+        .stat-card:hover .stat-icon { transform: scale(1.1) !important; }
+        
+        .nav-button, .user-account { transition: all 0.2s ease !important; }
+        .nav-button:hover, .user-account:hover { background: var(--gray-100) !important; }
+        
+        /* BADGES MEJORADOS */
+        .discount-overlay { 
+            background: #10B981 !important; 
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3) !important;
+        }
+        
+        /* SEARCH BOX ELEGANTE */
+        .search-box { 
+            border-radius: 8px !important;
+            padding: 0.75rem 1rem !important;
+            font-size: 0.875rem !important;
+        }
+        
+        /* TABS MEJORADAS */
+        .tab-button.active {
+            background: var(--imanix-yellow) !important;
+            color: var(--gray-800) !important;
+            border-bottom: 3px solid var(--imanix-yellow-dark) !important;
+            box-shadow: var(--shadow-sm) !important;
+        }
+
+        </style>
+
     <style>
         * {
             margin: 0;
@@ -856,9 +1003,9 @@ function getCartHTML(customer) {
 
         body {
             font-family: 'Inter', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #FFFFFF;
+            background: #F8FAFC;
             min-height: 100vh;
-            color: #000000;
+            color: #1A202C;
             line-height: 1.6;
             font-smooth: always;
             -webkit-font-smoothing: antialiased;
@@ -867,7 +1014,7 @@ function getCartHTML(customer) {
         }
 
         .navbar {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             
             -webkit-
             border-bottom: 1px solid rgba(255, 255, 255, 0.18);
@@ -906,11 +1053,11 @@ function getCartHTML(customer) {
             justify-content: center;
             font-weight: 800;
             font-size: 1.2rem;
-            color: #000000;
+            color: #1A202C;
         }
 
         .brand-text h1 {
-            color: #000000;
+            color: #1A202C;
             font-size: 1.5rem;
             font-weight: 800;
             margin: 0;
@@ -939,7 +1086,7 @@ function getCartHTML(customer) {
             background: rgba(0, 0, 0, 0.05);
             border-radius: 10px;
             text-decoration: none;
-            color: #000000;
+            color: #1A202C;
             font-weight: 600;
             font-size: 0.875rem;
             transition: all 0.3s ease;
@@ -984,8 +1131,8 @@ function getCartHTML(customer) {
 
         .dropdown-header {
             padding: 1rem;
-            background: #FFCE36;
-            color: #000000;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
+            color: #1A202C;
         }
 
         .dropdown-header .user-name {
@@ -1021,7 +1168,7 @@ function getCartHTML(customer) {
 
         .dropdown-item:hover {
             background: rgba(255, 206, 54, 0.1);
-            color: #000000;
+            color: #1A202C;
         }
 
         .dropdown-item i {
@@ -1057,7 +1204,7 @@ function getCartHTML(customer) {
 
         .cart-navbar-btn i {
             font-size: 1.2rem;
-            color: #000000;
+            color: #1A202C;
         }
 
         .cart-navbar-badge {
@@ -1065,7 +1212,7 @@ function getCartHTML(customer) {
             top: -8px;
             right: -8px;
             background: #000000;
-            color: #000000;
+            color: #1A202C;
             border-radius: 50%;
             min-width: 22px;
             height: 22px;
@@ -1085,7 +1232,7 @@ function getCartHTML(customer) {
         }
 
         .cart-header {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             
             -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
@@ -1113,7 +1260,7 @@ function getCartHTML(customer) {
         .cart-title {
             font-size: 2.5rem;
             font-weight: 900;
-            color: #000000;
+            color: #1A202C;
             margin-bottom: 0.75rem;
             letter-spacing: -0.025em;
             background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
@@ -1147,7 +1294,7 @@ function getCartHTML(customer) {
         }
 
         .cart-items {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             
             -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
@@ -1196,7 +1343,7 @@ function getCartHTML(customer) {
         .item-details h3 {
             font-size: 1.1rem;
             font-weight: 700;
-            color: #000000;
+            color: #1A202C;
             margin-bottom: 0.5rem;
         }
 
@@ -1219,12 +1366,12 @@ function getCartHTML(customer) {
         }
 
         .quantity-btn {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             border: none;
             width: 36px;
             height: 36px;
             border-radius: 12px;
-            color: #000000;
+            color: #1A202C;
             font-weight: 700;
             cursor: pointer;
             display: flex;
@@ -1253,7 +1400,7 @@ function getCartHTML(customer) {
         .item-total-price {
             font-size: 1.1rem;
             font-weight: 700;
-            color: #000000;
+            color: #1A202C;
         }
 
         .item-total-breakdown {
@@ -1264,7 +1411,7 @@ function getCartHTML(customer) {
 
         .remove-btn {
             background: #ef4444;
-            color: #000000;
+            color: #1A202C;
             border: none;
             padding: 0.5rem;
             border-radius: 8px;
@@ -1273,7 +1420,7 @@ function getCartHTML(customer) {
         }
 
         .cart-summary {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             
             -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
@@ -1304,7 +1451,7 @@ function getCartHTML(customer) {
             font-size: 2rem;
             font-weight: 900;
             margin-bottom: 2rem;
-            color: #000000;
+            color: #1A202C;
             letter-spacing: -0.025em;
         }
 
@@ -1328,12 +1475,12 @@ function getCartHTML(customer) {
 
         .summary-value {
             font-weight: 600;
-            color: #000000;
+            color: #1A202C;
         }
 
         .discount-badge {
             background: linear-gradient(135deg, #10b981, #059669);
-            color: #000000;
+            color: #1A202C;
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
             font-size: 0.875rem;
@@ -1342,8 +1489,8 @@ function getCartHTML(customer) {
 
         .checkout-btn {
             width: 100%;
-            background: #FFCE36;
-            color: #000000;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
+            color: #1A202C;
             border: none;
             padding: 1.25rem 2.5rem;
             border-radius: 20px;
@@ -1396,7 +1543,7 @@ function getCartHTML(customer) {
         .empty-cart-title {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #000000;
+            color: #1A202C;
             margin-bottom: 0.5rem;
         }
 
@@ -1406,8 +1553,8 @@ function getCartHTML(customer) {
         }
 
         .continue-shopping {
-            background: #FFCE36;
-            color: #000000;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
+            color: #1A202C;
             text-decoration: none;
             padding: 1rem 2rem;
             border-radius: 12px;
@@ -1437,6 +1584,62 @@ function getCartHTML(customer) {
                 text-align: left;
             }
         }
+        /* ANIMACIONES DE ENTRADA SUTILES */
+        .stat-card, .product-card, .cart-item {
+            animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* LOADING STATES ELEGANTES */
+        .loading-spinner {
+            border: 2px solid var(--gray-200) !important;
+            border-top: 2px solid var(--imanix-yellow) !important;
+        }
+        
+        /* PRECIO DESTACADO */
+        .discounted-price {
+            color: #10B981 !important;
+            font-weight: 800 !important;
+            font-size: 1.25rem !important;
+        }
+        
+        /* NAVBAR LOGO MEJORADO */
+        .brand-logo {
+            transition: all 0.3s ease !important;
+        }
+        .brand-logo:hover {
+            transform: scale(1.05) !important;
+            box-shadow: 0 4px 12px rgba(255, 206, 54, 0.3) !important;
+        }
+        
+        /* CART SUMMARY ELEGANTE */
+        .cart-summary {
+            border-top: 3px solid var(--imanix-yellow) !important;
+        }
+        
+        /* QUANTITY CONTROLS REFINADOS */
+        .quantity-controls {
+            background: var(--gray-50) !important;
+            border: 1px solid var(--gray-200) !important;
+        }
+        
+        /* NOTIFICACIONES PROFESIONALES */
+        .notification {
+            border-radius: 8px !important;
+            backdrop-filter: blur(10px) !important;
+        }
+        
+        /* ACCESIBILIDAD MEJORADA */
+        .btn:focus, .form-input:focus, .form-select:focus {
+            outline: 2px solid var(--imanix-yellow) !important;
+            outline-offset: 2px !important;
+        }
+
+
     </style>
 </head>
 <body>
@@ -1846,11 +2049,11 @@ function getCartHTML(customer) {
                     
                     <div style="display: flex; gap: 1rem; justify-content: center;">
                         <button onclick="this.parentElement.parentElement.parentElement.remove()" 
-                                style="background: #6366f1; color: #000000; border: none; padding: 0.8rem 2rem; border-radius: 10px; cursor: pointer; font-weight: 600;">
+                                style="background: #6366f1; color: #1A202C; border: none; padding: 0.8rem 2rem; border-radius: 10px; cursor: pointer; font-weight: 600;">
                             Cerrar
                         </button>
                         <button onclick="window.location.href='/perfil'" 
-                                style="background: #10b981; color: #000000; border: none; padding: 0.8rem 2rem; border-radius: 10px; cursor: pointer; font-weight: 600;">
+                                style="background: #10b981; color: #1A202C; border: none; padding: 0.8rem 2rem; border-radius: 10px; cursor: pointer; font-weight: 600;">
                             Ver Mis Pedidos
                         </button>
                     </div>
@@ -1898,7 +2101,7 @@ function getCartHTML(customer) {
                 top: 20px;
                 right: 20px;
                 background: \${type === 'success' ? '#10b981' : '#ef4444'};
-                color: #000000;
+                color: #1A202C;
                 padding: 1rem 1.5rem;
                 border-radius: 12px;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -1998,6 +2201,121 @@ function getLoginHTML() {
                     <title>Portal B2B - Acceso Cliente - IMANIX Chile</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- 🎨 IMANIX Professional Design System -->
+    <style>
+        :root {
+            --imanix-yellow: #FFCE36;
+            --imanix-yellow-dark: #E6B800;
+            --imanix-yellow-light: #FFF8E1;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-600: #4B5563;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* FONDOS PROFESIONALES */
+        body { background: var(--gray-50) !important; color: var(--gray-800) !important; }
+        
+        /* NAVBAR EMPRESARIAL */
+        .navbar { 
+            background: #FFFFFF !important; 
+            border-bottom: 3px solid var(--imanix-yellow) !important;
+            box-shadow: var(--shadow-md) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        
+        /* CARDS PROFESIONALES */
+        .cart-header, .cart-items, .cart-summary, .login-container, .profile-container,
+        .content-card, .stat-card, .product-card, .catalog-section, .customer-welcome,
+        .profile-header, .profile-tabs {
+            background: #FFFFFF !important;
+            border: 1px solid var(--gray-200) !important;
+            box-shadow: var(--shadow-md) !important;
+        }
+        
+        /* STATS MEJORADAS */
+        .stat-card { 
+            border-left: 4px solid var(--imanix-yellow) !important;
+            transition: all 0.3s ease !important;
+        }
+        .stat-card:hover { 
+            box-shadow: var(--shadow-lg) !important;
+            transform: translateY(-2px) !important;
+        }
+        
+        /* BOTONES PROFESIONALES */
+        .login-button, .submit-button, .checkout-btn, .add-to-cart-btn, 
+        .cart-navbar-btn, .btn-primary, .quantity-btn {
+            background: linear-gradient(135deg, var(--imanix-yellow) 0%, var(--imanix-yellow-dark) 100%) !important;
+            color: var(--gray-800) !important;
+            border: 1px solid var(--imanix-yellow-dark) !important;
+            box-shadow: var(--shadow-sm) !important;
+            font-weight: 600 !important;
+        }
+        
+        .login-button:hover, .submit-button:hover, .checkout-btn:hover, 
+        .add-to-cart-btn:hover, .cart-navbar-btn:hover, .btn-primary:hover, .quantity-btn:hover {
+            background: linear-gradient(135deg, var(--imanix-yellow-dark) 0%, #D4A500 100%) !important;
+            box-shadow: var(--shadow-md) !important;
+            transform: translateY(-1px) !important;
+        }
+        
+        /* PRODUCTS GRID MEJORADO */
+        .product-card { border: 1px solid var(--gray-200) !important; transition: all 0.3s ease !important; }
+        .product-card:hover {
+            border-color: var(--imanix-yellow) !important;
+            box-shadow: var(--shadow-lg) !important;
+            transform: translateY(-3px) !important;
+        }
+        
+        /* ELEMENTOS SEMÁNTICOS */
+        .discount-badge { background: #10B981 !important; color: white !important; }
+        .cart-navbar-badge { background: #EF4444 !important; color: white !important; }
+        
+        /* FORMULARIOS MEJORADOS */
+        .form-input, .form-select, .search-box {
+            border: 1px solid var(--gray-200) !important;
+            background: #FFFFFF !important;
+            transition: all 0.2s ease !important;
+        }
+        .form-input:focus, .form-select:focus, .search-box:focus {
+            border-color: var(--imanix-yellow) !important;
+            box-shadow: 0 0 0 3px rgba(255, 206, 54, 0.1) !important;
+        }
+        
+        /* DROPDOWN ELEGANTE */
+        .dropdown-header {
+            background: linear-gradient(135deg, var(--imanix-yellow-light) 0%, var(--imanix-yellow) 100%) !important;
+            color: var(--gray-800) !important;
+        }
+        
+        /* TIPOGRAFÍA PROFESIONAL */
+        .cart-title, .catalog-title, .profile-title { color: var(--gray-900) !important; }
+        .cart-subtitle, .profile-subtitle { color: var(--gray-600) !important; }
+        
+        /* WELCOME SECTION ESPECIAL */
+        .customer-welcome {
+            background: linear-gradient(135deg, #FFFFFF 0%, var(--gray-50) 100%) !important;
+            border-left: 4px solid var(--imanix-yellow) !important;
+        }
+        
+        /* CATALOG SECTION MEJORADA */
+        .catalog-section { border-radius: 12px !important; }
+        
+        /* RESPONSIVE PROFESIONAL */
+        @media (max-width: 768px) {
+            .navbar { background: #FFFFFF !important; border-bottom: 3px solid var(--imanix-yellow) !important; }
+            .stat-card, .product-card { margin-bottom: 1rem !important; }
+        }
+    </style>
+
     <style>
         * {
             margin: 0;
@@ -2107,7 +2425,7 @@ function getLoginHTML() {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 600;
-            color: #000000;
+            color: #1A202C;
             font-size: 0.875rem;
         }
 
@@ -2240,7 +2558,7 @@ function getLoginHTML() {
         .info-title {
             font-size: 1.2rem;
             font-weight: 700;
-            color: #000000;
+            color: #1A202C;
             margin-bottom: 1rem;
             display: flex;
             align-items: center;
@@ -2291,7 +2609,7 @@ function getLoginHTML() {
         }
 
         .contact-link {
-            color: #000000;
+            color: #1A202C;
             text-decoration: none;
             font-weight: 600;
             font-size: 0.95rem;
@@ -2333,7 +2651,7 @@ function getLoginHTML() {
             opacity: 0;
             transform: translateX(100%);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            color: #000000;
+            color: #1A202C;
             font-weight: 500;
         }
 
@@ -2362,7 +2680,7 @@ function getLoginHTML() {
         .notification-close {
             background: none;
             border: none;
-            color: #000000;
+            color: #1A202C;
             cursor: pointer;
             font-size: 16px;
             padding: 4px;
@@ -2389,6 +2707,62 @@ function getLoginHTML() {
                 font-size: 13px;
             }
         }
+        /* ANIMACIONES DE ENTRADA SUTILES */
+        .stat-card, .product-card, .cart-item {
+            animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* LOADING STATES ELEGANTES */
+        .loading-spinner {
+            border: 2px solid var(--gray-200) !important;
+            border-top: 2px solid var(--imanix-yellow) !important;
+        }
+        
+        /* PRECIO DESTACADO */
+        .discounted-price {
+            color: #10B981 !important;
+            font-weight: 800 !important;
+            font-size: 1.25rem !important;
+        }
+        
+        /* NAVBAR LOGO MEJORADO */
+        .brand-logo {
+            transition: all 0.3s ease !important;
+        }
+        .brand-logo:hover {
+            transform: scale(1.05) !important;
+            box-shadow: 0 4px 12px rgba(255, 206, 54, 0.3) !important;
+        }
+        
+        /* CART SUMMARY ELEGANTE */
+        .cart-summary {
+            border-top: 3px solid var(--imanix-yellow) !important;
+        }
+        
+        /* QUANTITY CONTROLS REFINADOS */
+        .quantity-controls {
+            background: var(--gray-50) !important;
+            border: 1px solid var(--gray-200) !important;
+        }
+        
+        /* NOTIFICACIONES PROFESIONALES */
+        .notification {
+            border-radius: 8px !important;
+            backdrop-filter: blur(10px) !important;
+        }
+        
+        /* ACCESIBILIDAD MEJORADA */
+        .btn:focus, .form-input:focus, .form-select:focus {
+            outline: 2px solid var(--imanix-yellow) !important;
+            outline-offset: 2px !important;
+        }
+
+
     </style>
 </head>
 <body>
@@ -2638,6 +3012,121 @@ function getCompleteProfileHTML(customer) {
     <title>Completa tu Perfil Empresarial - Portal B2B IMANIX</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- 🎨 IMANIX Professional Design System -->
+    <style>
+        :root {
+            --imanix-yellow: #FFCE36;
+            --imanix-yellow-dark: #E6B800;
+            --imanix-yellow-light: #FFF8E1;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-600: #4B5563;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* FONDOS PROFESIONALES */
+        body { background: var(--gray-50) !important; color: var(--gray-800) !important; }
+        
+        /* NAVBAR EMPRESARIAL */
+        .navbar { 
+            background: #FFFFFF !important; 
+            border-bottom: 3px solid var(--imanix-yellow) !important;
+            box-shadow: var(--shadow-md) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        
+        /* CARDS PROFESIONALES */
+        .cart-header, .cart-items, .cart-summary, .login-container, .profile-container,
+        .content-card, .stat-card, .product-card, .catalog-section, .customer-welcome,
+        .profile-header, .profile-tabs {
+            background: #FFFFFF !important;
+            border: 1px solid var(--gray-200) !important;
+            box-shadow: var(--shadow-md) !important;
+        }
+        
+        /* STATS MEJORADAS */
+        .stat-card { 
+            border-left: 4px solid var(--imanix-yellow) !important;
+            transition: all 0.3s ease !important;
+        }
+        .stat-card:hover { 
+            box-shadow: var(--shadow-lg) !important;
+            transform: translateY(-2px) !important;
+        }
+        
+        /* BOTONES PROFESIONALES */
+        .login-button, .submit-button, .checkout-btn, .add-to-cart-btn, 
+        .cart-navbar-btn, .btn-primary, .quantity-btn {
+            background: linear-gradient(135deg, var(--imanix-yellow) 0%, var(--imanix-yellow-dark) 100%) !important;
+            color: var(--gray-800) !important;
+            border: 1px solid var(--imanix-yellow-dark) !important;
+            box-shadow: var(--shadow-sm) !important;
+            font-weight: 600 !important;
+        }
+        
+        .login-button:hover, .submit-button:hover, .checkout-btn:hover, 
+        .add-to-cart-btn:hover, .cart-navbar-btn:hover, .btn-primary:hover, .quantity-btn:hover {
+            background: linear-gradient(135deg, var(--imanix-yellow-dark) 0%, #D4A500 100%) !important;
+            box-shadow: var(--shadow-md) !important;
+            transform: translateY(-1px) !important;
+        }
+        
+        /* PRODUCTS GRID MEJORADO */
+        .product-card { border: 1px solid var(--gray-200) !important; transition: all 0.3s ease !important; }
+        .product-card:hover {
+            border-color: var(--imanix-yellow) !important;
+            box-shadow: var(--shadow-lg) !important;
+            transform: translateY(-3px) !important;
+        }
+        
+        /* ELEMENTOS SEMÁNTICOS */
+        .discount-badge { background: #10B981 !important; color: white !important; }
+        .cart-navbar-badge { background: #EF4444 !important; color: white !important; }
+        
+        /* FORMULARIOS MEJORADOS */
+        .form-input, .form-select, .search-box {
+            border: 1px solid var(--gray-200) !important;
+            background: #FFFFFF !important;
+            transition: all 0.2s ease !important;
+        }
+        .form-input:focus, .form-select:focus, .search-box:focus {
+            border-color: var(--imanix-yellow) !important;
+            box-shadow: 0 0 0 3px rgba(255, 206, 54, 0.1) !important;
+        }
+        
+        /* DROPDOWN ELEGANTE */
+        .dropdown-header {
+            background: linear-gradient(135deg, var(--imanix-yellow-light) 0%, var(--imanix-yellow) 100%) !important;
+            color: var(--gray-800) !important;
+        }
+        
+        /* TIPOGRAFÍA PROFESIONAL */
+        .cart-title, .catalog-title, .profile-title { color: var(--gray-900) !important; }
+        .cart-subtitle, .profile-subtitle { color: var(--gray-600) !important; }
+        
+        /* WELCOME SECTION ESPECIAL */
+        .customer-welcome {
+            background: linear-gradient(135deg, #FFFFFF 0%, var(--gray-50) 100%) !important;
+            border-left: 4px solid var(--imanix-yellow) !important;
+        }
+        
+        /* CATALOG SECTION MEJORADA */
+        .catalog-section { border-radius: 12px !important; }
+        
+        /* RESPONSIVE PROFESIONAL */
+        @media (max-width: 768px) {
+            .navbar { background: #FFFFFF !important; border-bottom: 3px solid var(--imanix-yellow) !important; }
+            .stat-card, .product-card { margin-bottom: 1rem !important; }
+        }
+    </style>
+
     <style>
         * {
             margin: 0;
@@ -2649,12 +3138,12 @@ function getCompleteProfileHTML(customer) {
             font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #F8F9FA;
             min-height: 100vh;
-            color: #000000;
+            color: #1A202C;
             padding: 2rem;
         }
 
         .profile-container {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             backdrop-filter: blur(20px);
             border-radius: 24px;
             padding: 3rem;
@@ -2679,14 +3168,14 @@ function getCompleteProfileHTML(customer) {
             justify-content: center;
             font-weight: 800;
             font-size: 2rem;
-            color: #000000;
+            color: #1A202C;
             margin: 0 auto 1.5rem;
         }
 
         .profile-title {
             font-size: 2.2rem;
             font-weight: 800;
-            color: #000000;
+            color: #1A202C;
             margin-bottom: 0.5rem;
         }
 
@@ -2706,7 +3195,7 @@ function getCompleteProfileHTML(customer) {
         }
 
         .profile-description h3 {
-            color: #000000;
+            color: #1A202C;
             font-weight: 700;
             margin-bottom: 0.5rem;
         }
@@ -2732,7 +3221,7 @@ function getCompleteProfileHTML(customer) {
         .section-title {
             font-size: 1.3rem;
             font-weight: 700;
-            color: #000000;
+            color: #1A202C;
             margin-bottom: 1.5rem;
             display: flex;
             align-items: center;
@@ -2758,7 +3247,7 @@ function getCompleteProfileHTML(customer) {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 600;
-            color: #000000;
+            color: #1A202C;
             font-size: 0.875rem;
         }
 
@@ -2775,7 +3264,7 @@ function getCompleteProfileHTML(customer) {
             font-size: 1rem;
             transition: all 0.3s ease;
             background: white;
-            color: #000000;
+            color: #1A202C;
         }
 
         .form-input:focus, .form-select:focus {
@@ -2791,7 +3280,7 @@ function getCompleteProfileHTML(customer) {
 
         .submit-button {
             background: linear-gradient(135deg, #FFCE36, #FFC107);
-            color: #000000;
+            color: #1A202C;
             border: none;
             padding: 1.25rem 3rem;
             border-radius: 12px;
@@ -2850,7 +3339,7 @@ function getCompleteProfileHTML(customer) {
             opacity: 0;
             transform: translateX(100%);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            color: #000000;
+            color: #1A202C;
             font-weight: 500;
         }
 
@@ -2879,7 +3368,7 @@ function getCompleteProfileHTML(customer) {
         .notification-close {
             background: none;
             border: none;
-            color: #000000;
+            color: #1A202C;
             cursor: pointer;
             font-size: 16px;
             padding: 4px;
@@ -2910,6 +3399,62 @@ function getCompleteProfileHTML(customer) {
                 max-width: none;
             }
         }
+        /* ANIMACIONES DE ENTRADA SUTILES */
+        .stat-card, .product-card, .cart-item {
+            animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* LOADING STATES ELEGANTES */
+        .loading-spinner {
+            border: 2px solid var(--gray-200) !important;
+            border-top: 2px solid var(--imanix-yellow) !important;
+        }
+        
+        /* PRECIO DESTACADO */
+        .discounted-price {
+            color: #10B981 !important;
+            font-weight: 800 !important;
+            font-size: 1.25rem !important;
+        }
+        
+        /* NAVBAR LOGO MEJORADO */
+        .brand-logo {
+            transition: all 0.3s ease !important;
+        }
+        .brand-logo:hover {
+            transform: scale(1.05) !important;
+            box-shadow: 0 4px 12px rgba(255, 206, 54, 0.3) !important;
+        }
+        
+        /* CART SUMMARY ELEGANTE */
+        .cart-summary {
+            border-top: 3px solid var(--imanix-yellow) !important;
+        }
+        
+        /* QUANTITY CONTROLS REFINADOS */
+        .quantity-controls {
+            background: var(--gray-50) !important;
+            border: 1px solid var(--gray-200) !important;
+        }
+        
+        /* NOTIFICACIONES PROFESIONALES */
+        .notification {
+            border-radius: 8px !important;
+            backdrop-filter: blur(10px) !important;
+        }
+        
+        /* ACCESIBILIDAD MEJORADA */
+        .btn:focus, .form-input:focus, .form-select:focus {
+            outline: 2px solid var(--imanix-yellow) !important;
+            outline-offset: 2px !important;
+        }
+
+
     </style>
 </head>
 <body>
@@ -3309,6 +3854,121 @@ function getPortalHTML(products, customer) {
                     <title>Portal B2B Profesional - IMANIX Chile</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- 🎨 IMANIX Professional Design System -->
+    <style>
+        :root {
+            --imanix-yellow: #FFCE36;
+            --imanix-yellow-dark: #E6B800;
+            --imanix-yellow-light: #FFF8E1;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-600: #4B5563;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* FONDOS PROFESIONALES */
+        body { background: var(--gray-50) !important; color: var(--gray-800) !important; }
+        
+        /* NAVBAR EMPRESARIAL */
+        .navbar { 
+            background: #FFFFFF !important; 
+            border-bottom: 3px solid var(--imanix-yellow) !important;
+            box-shadow: var(--shadow-md) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        
+        /* CARDS PROFESIONALES */
+        .cart-header, .cart-items, .cart-summary, .login-container, .profile-container,
+        .content-card, .stat-card, .product-card, .catalog-section, .customer-welcome,
+        .profile-header, .profile-tabs {
+            background: #FFFFFF !important;
+            border: 1px solid var(--gray-200) !important;
+            box-shadow: var(--shadow-md) !important;
+        }
+        
+        /* STATS MEJORADAS */
+        .stat-card { 
+            border-left: 4px solid var(--imanix-yellow) !important;
+            transition: all 0.3s ease !important;
+        }
+        .stat-card:hover { 
+            box-shadow: var(--shadow-lg) !important;
+            transform: translateY(-2px) !important;
+        }
+        
+        /* BOTONES PROFESIONALES */
+        .login-button, .submit-button, .checkout-btn, .add-to-cart-btn, 
+        .cart-navbar-btn, .btn-primary, .quantity-btn {
+            background: linear-gradient(135deg, var(--imanix-yellow) 0%, var(--imanix-yellow-dark) 100%) !important;
+            color: var(--gray-800) !important;
+            border: 1px solid var(--imanix-yellow-dark) !important;
+            box-shadow: var(--shadow-sm) !important;
+            font-weight: 600 !important;
+        }
+        
+        .login-button:hover, .submit-button:hover, .checkout-btn:hover, 
+        .add-to-cart-btn:hover, .cart-navbar-btn:hover, .btn-primary:hover, .quantity-btn:hover {
+            background: linear-gradient(135deg, var(--imanix-yellow-dark) 0%, #D4A500 100%) !important;
+            box-shadow: var(--shadow-md) !important;
+            transform: translateY(-1px) !important;
+        }
+        
+        /* PRODUCTS GRID MEJORADO */
+        .product-card { border: 1px solid var(--gray-200) !important; transition: all 0.3s ease !important; }
+        .product-card:hover {
+            border-color: var(--imanix-yellow) !important;
+            box-shadow: var(--shadow-lg) !important;
+            transform: translateY(-3px) !important;
+        }
+        
+        /* ELEMENTOS SEMÁNTICOS */
+        .discount-badge { background: #10B981 !important; color: white !important; }
+        .cart-navbar-badge { background: #EF4444 !important; color: white !important; }
+        
+        /* FORMULARIOS MEJORADOS */
+        .form-input, .form-select, .search-box {
+            border: 1px solid var(--gray-200) !important;
+            background: #FFFFFF !important;
+            transition: all 0.2s ease !important;
+        }
+        .form-input:focus, .form-select:focus, .search-box:focus {
+            border-color: var(--imanix-yellow) !important;
+            box-shadow: 0 0 0 3px rgba(255, 206, 54, 0.1) !important;
+        }
+        
+        /* DROPDOWN ELEGANTE */
+        .dropdown-header {
+            background: linear-gradient(135deg, var(--imanix-yellow-light) 0%, var(--imanix-yellow) 100%) !important;
+            color: var(--gray-800) !important;
+        }
+        
+        /* TIPOGRAFÍA PROFESIONAL */
+        .cart-title, .catalog-title, .profile-title { color: var(--gray-900) !important; }
+        .cart-subtitle, .profile-subtitle { color: var(--gray-600) !important; }
+        
+        /* WELCOME SECTION ESPECIAL */
+        .customer-welcome {
+            background: linear-gradient(135deg, #FFFFFF 0%, var(--gray-50) 100%) !important;
+            border-left: 4px solid var(--imanix-yellow) !important;
+        }
+        
+        /* CATALOG SECTION MEJORADA */
+        .catalog-section { border-radius: 12px !important; }
+        
+        /* RESPONSIVE PROFESIONAL */
+        @media (max-width: 768px) {
+            .navbar { background: #FFFFFF !important; border-bottom: 3px solid var(--imanix-yellow) !important; }
+            .stat-card, .product-card { margin-bottom: 1rem !important; }
+        }
+    </style>
+
     <style>
         * {
             margin: 0;
@@ -3318,9 +3978,9 @@ function getPortalHTML(products, customer) {
 
         body {
             font-family: 'Inter', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #FFFFFF;
+            background: #F8FAFC;
             min-height: 100vh;
-            color: #000000;
+            color: #1A202C;
             line-height: 1.6;
             font-smooth: always;
             -webkit-font-smoothing: antialiased;
@@ -3329,7 +3989,7 @@ function getPortalHTML(products, customer) {
         }
 
         .navbar {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             
             -webkit-
             border-bottom: 1px solid rgba(255, 255, 255, 0.18);
@@ -3368,11 +4028,11 @@ function getPortalHTML(products, customer) {
             justify-content: center;
             font-weight: 800;
             font-size: 1.2rem;
-            color: #000000;
+            color: #1A202C;
         }
 
         .brand-text h1 {
-            color: #000000;
+            color: #1A202C;
             font-size: 1.5rem;
             font-weight: 800;
             margin: 0;
@@ -3401,7 +4061,7 @@ function getPortalHTML(products, customer) {
             background: rgba(0, 0, 0, 0.05);
             border-radius: 10px;
             text-decoration: none;
-            color: #000000;
+            color: #1A202C;
             font-weight: 600;
             font-size: 0.875rem;
             transition: all 0.3s ease;
@@ -3446,8 +4106,8 @@ function getPortalHTML(products, customer) {
 
         .dropdown-header {
             padding: 1rem;
-            background: #FFCE36;
-            color: #000000;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
+            color: #1A202C;
         }
 
         .dropdown-header .user-name {
@@ -3483,7 +4143,7 @@ function getPortalHTML(products, customer) {
 
         .dropdown-item:hover {
             background: rgba(255, 206, 54, 0.1);
-            color: #000000;
+            color: #1A202C;
         }
 
         .dropdown-item i {
@@ -3519,7 +4179,7 @@ function getPortalHTML(products, customer) {
 
         .cart-navbar-btn i {
             font-size: 1.2rem;
-            color: #000000;
+            color: #1A202C;
         }
 
         .cart-navbar-badge {
@@ -3527,7 +4187,7 @@ function getPortalHTML(products, customer) {
             top: -8px;
             right: -8px;
             background: #000000;
-            color: #000000;
+            color: #1A202C;
             border-radius: 50%;
             min-width: 22px;
             height: 22px;
@@ -3553,7 +4213,7 @@ function getPortalHTML(products, customer) {
         }
 
         .stat-card {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             
             -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
@@ -3626,27 +4286,27 @@ function getPortalHTML(products, customer) {
         }
 
         .stat-icon.products {
-            background: #FFCE36;
-            color: #000000;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
+            color: #1A202C;
             box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
         }
 
         .stat-icon.discount {
             background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: #000000;
+            color: #1A202C;
             box-shadow: 0 8px 32px rgba(17, 153, 142, 0.4);
         }
 
         .stat-icon.access {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: #000000;
+            color: #1A202C;
             box-shadow: 0 8px 32px rgba(240, 147, 251, 0.4);
         }
 
         .stat-content h3 {
             font-size: 2.5rem;
             font-weight: 900;
-            color: #000000;
+            color: #1A202C;
             margin-bottom: 0.5rem;
             letter-spacing: -0.025em;
             background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
@@ -3663,7 +4323,7 @@ function getPortalHTML(products, customer) {
         }
 
         .catalog-section {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             
             -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
@@ -3700,7 +4360,7 @@ function getPortalHTML(products, customer) {
         .catalog-title {
             font-size: 2.25rem;
             font-weight: 900;
-            color: #000000;
+            color: #1A202C;
             display: flex;
             align-items: center;
             gap: 1rem;
@@ -3708,7 +4368,7 @@ function getPortalHTML(products, customer) {
         }
 
         .catalog-title i {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -3730,7 +4390,7 @@ function getPortalHTML(products, customer) {
             backdrop-filter: blur(10px);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             font-weight: 500;
-            color: #000000;
+            color: #1A202C;
         }
 
         .search-box::placeholder {
@@ -3744,7 +4404,7 @@ function getPortalHTML(products, customer) {
             box-shadow: 
                 0 0 0 4px rgba(102, 126, 234, 0.1),
                 0 4px 12px rgba(102, 126, 234, 0.15);
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             transform: translateY(-1px);
         }
 
@@ -3756,7 +4416,7 @@ function getPortalHTML(products, customer) {
         }
 
         .product-card {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 24px;
@@ -3818,7 +4478,7 @@ function getPortalHTML(products, customer) {
             top: 12px;
             left: 12px;
             background: linear-gradient(135deg, #10b981, #059669);
-            color: #000000;
+            color: #1A202C;
             padding: 0.5rem 0.75rem;
             border-radius: 8px;
             font-size: 0.75rem;
@@ -3840,13 +4500,13 @@ function getPortalHTML(products, customer) {
 
         .stock-badge.out-of-stock {
             background: rgba(239, 68, 68, 0.9);
-            color: #000000;
+            color: #1A202C;
         }
 
         .product-title {
             font-size: 1.1rem;
             font-weight: 700;
-            color: #000000;
+            color: #1A202C;
             margin-bottom: 1rem;
             line-height: 1.3;
             display: -webkit-box;
@@ -3867,13 +4527,13 @@ function getPortalHTML(products, customer) {
             padding: 1rem;
             border-radius: 12px;
             background: linear-gradient(135deg, #10b981, #059669);
-            color: #000000;
+            color: #1A202C;
             border: 1px solid #059669;
             text-align: center;
         }
 
         .discounted-price {
-            color: #000000;
+            color: #1A202C;
             font-size: 1.5rem;
             font-weight: 800;
             display: block;
@@ -3908,7 +4568,7 @@ function getPortalHTML(products, customer) {
             background: linear-gradient(135deg, #FFCE36, #FFC107);
             border: none;
             border-radius: 12px;
-            color: #000000;
+            color: #1A202C;
             font-weight: 700;
             font-size: 0.875rem;
             cursor: pointer;
@@ -4029,6 +4689,62 @@ function getPortalHTML(products, customer) {
                 font-size: 1.875rem;
             }
         }
+        /* ANIMACIONES DE ENTRADA SUTILES */
+        .stat-card, .product-card, .cart-item {
+            animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* LOADING STATES ELEGANTES */
+        .loading-spinner {
+            border: 2px solid var(--gray-200) !important;
+            border-top: 2px solid var(--imanix-yellow) !important;
+        }
+        
+        /* PRECIO DESTACADO */
+        .discounted-price {
+            color: #10B981 !important;
+            font-weight: 800 !important;
+            font-size: 1.25rem !important;
+        }
+        
+        /* NAVBAR LOGO MEJORADO */
+        .brand-logo {
+            transition: all 0.3s ease !important;
+        }
+        .brand-logo:hover {
+            transform: scale(1.05) !important;
+            box-shadow: 0 4px 12px rgba(255, 206, 54, 0.3) !important;
+        }
+        
+        /* CART SUMMARY ELEGANTE */
+        .cart-summary {
+            border-top: 3px solid var(--imanix-yellow) !important;
+        }
+        
+        /* QUANTITY CONTROLS REFINADOS */
+        .quantity-controls {
+            background: var(--gray-50) !important;
+            border: 1px solid var(--gray-200) !important;
+        }
+        
+        /* NOTIFICACIONES PROFESIONALES */
+        .notification {
+            border-radius: 8px !important;
+            backdrop-filter: blur(10px) !important;
+        }
+        
+        /* ACCESIBILIDAD MEJORADA */
+        .btn:focus, .form-input:focus, .form-select:focus {
+            outline: 2px solid var(--imanix-yellow) !important;
+            outline-offset: 2px !important;
+        }
+
+
     </style>
 </head>
 <body>
@@ -4234,7 +4950,7 @@ function getPortalHTML(products, customer) {
                 top: 20px;
                 right: 20px;
                 background: \${type === 'success' ? '#10b981' : '#ef4444'};
-                color: #000000;
+                color: #1A202C;
                 padding: 1rem 1.5rem;
                 border-radius: 12px;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -4334,6 +5050,121 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
     <title>Mi Perfil Empresarial - Portal B2B IMANIX Chile</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- 🎨 IMANIX Professional Design System -->
+    <style>
+        :root {
+            --imanix-yellow: #FFCE36;
+            --imanix-yellow-dark: #E6B800;
+            --imanix-yellow-light: #FFF8E1;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-600: #4B5563;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* FONDOS PROFESIONALES */
+        body { background: var(--gray-50) !important; color: var(--gray-800) !important; }
+        
+        /* NAVBAR EMPRESARIAL */
+        .navbar { 
+            background: #FFFFFF !important; 
+            border-bottom: 3px solid var(--imanix-yellow) !important;
+            box-shadow: var(--shadow-md) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        
+        /* CARDS PROFESIONALES */
+        .cart-header, .cart-items, .cart-summary, .login-container, .profile-container,
+        .content-card, .stat-card, .product-card, .catalog-section, .customer-welcome,
+        .profile-header, .profile-tabs {
+            background: #FFFFFF !important;
+            border: 1px solid var(--gray-200) !important;
+            box-shadow: var(--shadow-md) !important;
+        }
+        
+        /* STATS MEJORADAS */
+        .stat-card { 
+            border-left: 4px solid var(--imanix-yellow) !important;
+            transition: all 0.3s ease !important;
+        }
+        .stat-card:hover { 
+            box-shadow: var(--shadow-lg) !important;
+            transform: translateY(-2px) !important;
+        }
+        
+        /* BOTONES PROFESIONALES */
+        .login-button, .submit-button, .checkout-btn, .add-to-cart-btn, 
+        .cart-navbar-btn, .btn-primary, .quantity-btn {
+            background: linear-gradient(135deg, var(--imanix-yellow) 0%, var(--imanix-yellow-dark) 100%) !important;
+            color: var(--gray-800) !important;
+            border: 1px solid var(--imanix-yellow-dark) !important;
+            box-shadow: var(--shadow-sm) !important;
+            font-weight: 600 !important;
+        }
+        
+        .login-button:hover, .submit-button:hover, .checkout-btn:hover, 
+        .add-to-cart-btn:hover, .cart-navbar-btn:hover, .btn-primary:hover, .quantity-btn:hover {
+            background: linear-gradient(135deg, var(--imanix-yellow-dark) 0%, #D4A500 100%) !important;
+            box-shadow: var(--shadow-md) !important;
+            transform: translateY(-1px) !important;
+        }
+        
+        /* PRODUCTS GRID MEJORADO */
+        .product-card { border: 1px solid var(--gray-200) !important; transition: all 0.3s ease !important; }
+        .product-card:hover {
+            border-color: var(--imanix-yellow) !important;
+            box-shadow: var(--shadow-lg) !important;
+            transform: translateY(-3px) !important;
+        }
+        
+        /* ELEMENTOS SEMÁNTICOS */
+        .discount-badge { background: #10B981 !important; color: white !important; }
+        .cart-navbar-badge { background: #EF4444 !important; color: white !important; }
+        
+        /* FORMULARIOS MEJORADOS */
+        .form-input, .form-select, .search-box {
+            border: 1px solid var(--gray-200) !important;
+            background: #FFFFFF !important;
+            transition: all 0.2s ease !important;
+        }
+        .form-input:focus, .form-select:focus, .search-box:focus {
+            border-color: var(--imanix-yellow) !important;
+            box-shadow: 0 0 0 3px rgba(255, 206, 54, 0.1) !important;
+        }
+        
+        /* DROPDOWN ELEGANTE */
+        .dropdown-header {
+            background: linear-gradient(135deg, var(--imanix-yellow-light) 0%, var(--imanix-yellow) 100%) !important;
+            color: var(--gray-800) !important;
+        }
+        
+        /* TIPOGRAFÍA PROFESIONAL */
+        .cart-title, .catalog-title, .profile-title { color: var(--gray-900) !important; }
+        .cart-subtitle, .profile-subtitle { color: var(--gray-600) !important; }
+        
+        /* WELCOME SECTION ESPECIAL */
+        .customer-welcome {
+            background: linear-gradient(135deg, #FFFFFF 0%, var(--gray-50) 100%) !important;
+            border-left: 4px solid var(--imanix-yellow) !important;
+        }
+        
+        /* CATALOG SECTION MEJORADA */
+        .catalog-section { border-radius: 12px !important; }
+        
+        /* RESPONSIVE PROFESIONAL */
+        @media (max-width: 768px) {
+            .navbar { background: #FFFFFF !important; border-bottom: 3px solid var(--imanix-yellow) !important; }
+            .stat-card, .product-card { margin-bottom: 1rem !important; }
+        }
+    </style>
+
     <style>
         * {
             margin: 0;
@@ -4343,9 +5174,9 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         body {
             font-family: 'Inter', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #FFFFFF;
+            background: #F8FAFC;
             min-height: 100vh;
-            color: #000000;
+            color: #1A202C;
             line-height: 1.6;
             font-smooth: always;
             -webkit-font-smoothing: antialiased;
@@ -4354,7 +5185,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .navbar {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             
             -webkit-
             border-bottom: 1px solid rgba(255, 255, 255, 0.18);
@@ -4381,7 +5212,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             display: flex;
             align-items: center;
             gap: 1rem;
-            color: #000000;
+            color: #1A202C;
             text-decoration: none;
             font-weight: 800;
             font-size: 1.5rem;
@@ -4398,7 +5229,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             border: none;
             padding: 0.75rem 1.5rem;
             border-radius: 12px;
-            color: #000000;
+            color: #1A202C;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -4421,7 +5252,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .profile-header {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             
             -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
@@ -4449,7 +5280,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         .profile-title {
             font-size: 2.5rem;
             font-weight: 900;
-            color: #000000;
+            color: #1A202C;
             margin-bottom: 0.75rem;
             letter-spacing: -0.025em;
             background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
@@ -4467,7 +5298,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         .profile-tabs {
             display: flex;
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             
             -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
@@ -4505,15 +5336,15 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             left: 0;
             right: 0;
             bottom: 0;
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             opacity: 0;
             transition: opacity 0.3s ease;
             border-radius: 16px;
         }
 
         .tab-button.active {
-            background: #FFCE36;
-            color: #000000;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
+            color: #1A202C;
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
@@ -4557,7 +5388,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .stat-card {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             
             -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
@@ -4606,7 +5437,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             justify-content: center;
             margin: 0 auto 1.5rem;
             font-size: 1.75rem;
-            color: #000000;
+            color: #1A202C;
             position: relative;
             overflow: hidden;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -4630,7 +5461,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .stat-icon.orders { 
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
         }
         .stat-icon.spent { 
@@ -4642,12 +5473,12 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             box-shadow: 0 8px 32px rgba(17, 153, 142, 0.4);
         }
         .stat-icon.discount { 
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             box-shadow: 0 8px 32px rgba(255, 206, 54, 0.4);
         }
 
         .content-card {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             
             -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
@@ -4684,7 +5515,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             font-size: 2rem;
             font-weight: 900;
             margin-bottom: 2rem;
-            color: #000000;
+            color: #1A202C;
             display: flex;
             align-items: center;
             gap: 1rem;
@@ -4727,7 +5558,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             backdrop-filter: blur(10px);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             font-weight: 500;
-            color: #000000;
+            color: #1A202C;
         }
 
         .form-input::placeholder {
@@ -4741,7 +5572,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             box-shadow: 
                 0 0 0 4px rgba(102, 126, 234, 0.1),
                 0 4px 12px rgba(102, 126, 234, 0.15);
-            background: #FFCE36;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             transform: translateY(-1px);
         }
 
@@ -4780,8 +5611,8 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .btn-primary {
-            background: #FFCE36;
-            color: #000000;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
+            color: #1A202C;
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
@@ -4822,7 +5653,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         .address-type {
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            color: #000000;
+            color: #1A202C;
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
             font-size: 0.875rem;
@@ -4920,11 +5751,11 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             justify-content: center;
             font-weight: 800;
             font-size: 1.2rem;
-            color: #000000;
+            color: #1A202C;
         }
 
         .brand-text h1 {
-            color: #000000;
+            color: #1A202C;
             font-size: 1.5rem;
             font-weight: 800;
             margin: 0;
@@ -4953,7 +5784,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             background: rgba(0, 0, 0, 0.05);
             border-radius: 10px;
             text-decoration: none;
-            color: #000000;
+            color: #1A202C;
             font-weight: 600;
             font-size: 0.875rem;
             transition: all 0.3s ease;
@@ -4998,8 +5829,8 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         .dropdown-header {
             padding: 1rem;
-            background: #FFCE36;
-            color: #000000;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
+            color: #1A202C;
         }
 
         .dropdown-header .user-name {
@@ -5035,7 +5866,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         .dropdown-item:hover {
             background: rgba(255, 206, 54, 0.1);
-            color: #000000;
+            color: #1A202C;
         }
 
         .dropdown-item i {
@@ -5071,7 +5902,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         .cart-navbar-btn i {
             font-size: 1.2rem;
-            color: #000000;
+            color: #1A202C;
         }
 
         .cart-navbar-badge {
@@ -5079,7 +5910,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             top: -8px;
             right: -8px;
             background: #000000;
-            color: #000000;
+            color: #1A202C;
             border-radius: 50%;
             min-width: 22px;
             height: 22px;
@@ -5114,6 +5945,62 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                 gap: 0.5rem;
             }
         }
+        /* ANIMACIONES DE ENTRADA SUTILES */
+        .stat-card, .product-card, .cart-item {
+            animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* LOADING STATES ELEGANTES */
+        .loading-spinner {
+            border: 2px solid var(--gray-200) !important;
+            border-top: 2px solid var(--imanix-yellow) !important;
+        }
+        
+        /* PRECIO DESTACADO */
+        .discounted-price {
+            color: #10B981 !important;
+            font-weight: 800 !important;
+            font-size: 1.25rem !important;
+        }
+        
+        /* NAVBAR LOGO MEJORADO */
+        .brand-logo {
+            transition: all 0.3s ease !important;
+        }
+        .brand-logo:hover {
+            transform: scale(1.05) !important;
+            box-shadow: 0 4px 12px rgba(255, 206, 54, 0.3) !important;
+        }
+        
+        /* CART SUMMARY ELEGANTE */
+        .cart-summary {
+            border-top: 3px solid var(--imanix-yellow) !important;
+        }
+        
+        /* QUANTITY CONTROLS REFINADOS */
+        .quantity-controls {
+            background: var(--gray-50) !important;
+            border: 1px solid var(--gray-200) !important;
+        }
+        
+        /* NOTIFICACIONES PROFESIONALES */
+        .notification {
+            border-radius: 8px !important;
+            backdrop-filter: blur(10px) !important;
+        }
+        
+        /* ACCESIBILIDAD MEJORADA */
+        .btn:focus, .form-input:focus, .form-select:focus {
+            outline: 2px solid var(--imanix-yellow) !important;
+            outline-offset: 2px !important;
+        }
+
+
     </style>
 </head>
 <body>
@@ -5231,7 +6118,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                 <form id="profileForm" onsubmit="updateProfile(event)">
                     <!-- Datos Personales -->
                     <div style="margin-bottom: 2rem;">
-                        <h3 style="color: #000000; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <h3 style="color: #1A202C; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fas fa-user"></i>
                             Datos Personales
                         </h3>
@@ -5263,7 +6150,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
                     <!-- Datos Empresariales -->
                     <div style="margin-bottom: 2rem;">
-                        <h3 style="color: #000000; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <h3 style="color: #1A202C; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fas fa-building"></i>
                             Datos Empresariales
                         </h3>
@@ -6147,7 +7034,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
             }
             .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
             .header {
-                background: #FFCE36;
+                background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
                 padding: 1rem 2rem;
                 margin-bottom: 2rem;
                 border-radius: 15px;
@@ -6161,17 +7048,17 @@ function getAccountHTML(customer, profile, addresses, stats) {
             .user-info { display: flex; align-items: center; gap: 15px; }
             .discount-badge { 
                 background: linear-gradient(45deg, #ff6b6b, #ff8e53);
-                color: #000000; padding: 8px 16px; border-radius: 20px;
+                color: #1A202C; padding: 8px 16px; border-radius: 20px;
                 font-weight: bold; font-size: 0.9rem;
             }
             .logout-btn {
-                background: #e74c3c; color: #000000; padding: 8px 16px;
+                background: #e74c3c; color: #1A202C; padding: 8px 16px;
                 border: none; border-radius: 8px; cursor: pointer;
                 text-decoration: none; font-size: 0.9rem;
             }
             .logout-btn:hover { background: #c0392b; }
             .nav-menu {
-                background: #FFCE36;
+                background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
                 padding: 1rem; margin-bottom: 2rem; border-radius: 15px;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.1);
                 backdrop-filter: blur(10px);
@@ -6183,7 +7070,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
             }
             .nav-menu a:hover, .nav-menu a.active {
                 background: linear-gradient(45deg, #FFCE36, #000000);
-                color: #000000; transform: translateY(-2px);
+                color: #1A202C; transform: translateY(-2px);
             }
             .account-grid {
                 display: grid;
@@ -6191,7 +7078,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
                 gap: 2rem; margin-bottom: 2rem;
             }
             .card {
-                background: #FFCE36;
+                background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
                 padding: 2rem; border-radius: 15px;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.1);
                 backdrop-filter: blur(10px);
@@ -6208,7 +7095,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
             .stat-item {
                 text-align: center; padding: 1rem;
                 background: linear-gradient(45deg, #FFCE36, #000000);
-                color: #000000; border-radius: 10px;
+                color: #1A202C; border-radius: 10px;
             }
             .stat-value { font-size: 2rem; font-weight: bold; display: block; }
             .stat-label { font-size: 0.9rem; opacity: 0.9; }
@@ -6221,7 +7108,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
             .profile-value { color: #2c3e50; font-weight: 500; }
             .btn {
                 background: linear-gradient(45deg, #FFCE36, #000000);
-                color: #000000; padding: 12px 24px; border: none;
+                color: #1A202C; padding: 12px 24px; border: none;
                 border-radius: 8px; cursor: pointer; text-decoration: none;
                 font-weight: 500; transition: all 0.3s ease;
                 display: inline-block; margin-top: 1rem;
@@ -6230,6 +7117,62 @@ function getAccountHTML(customer, profile, addresses, stats) {
                 transform: translateY(-2px);
                 box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
             }
+        /* ANIMACIONES DE ENTRADA SUTILES */
+        .stat-card, .product-card, .cart-item {
+            animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* LOADING STATES ELEGANTES */
+        .loading-spinner {
+            border: 2px solid var(--gray-200) !important;
+            border-top: 2px solid var(--imanix-yellow) !important;
+        }
+        
+        /* PRECIO DESTACADO */
+        .discounted-price {
+            color: #10B981 !important;
+            font-weight: 800 !important;
+            font-size: 1.25rem !important;
+        }
+        
+        /* NAVBAR LOGO MEJORADO */
+        .brand-logo {
+            transition: all 0.3s ease !important;
+        }
+        .brand-logo:hover {
+            transform: scale(1.05) !important;
+            box-shadow: 0 4px 12px rgba(255, 206, 54, 0.3) !important;
+        }
+        
+        /* CART SUMMARY ELEGANTE */
+        .cart-summary {
+            border-top: 3px solid var(--imanix-yellow) !important;
+        }
+        
+        /* QUANTITY CONTROLS REFINADOS */
+        .quantity-controls {
+            background: var(--gray-50) !important;
+            border: 1px solid var(--gray-200) !important;
+        }
+        
+        /* NOTIFICACIONES PROFESIONALES */
+        .notification {
+            border-radius: 8px !important;
+            backdrop-filter: blur(10px) !important;
+        }
+        
+        /* ACCESIBILIDAD MEJORADA */
+        .btn:focus, .form-input:focus, .form-select:focus {
+            outline: 2px solid var(--imanix-yellow) !important;
+            outline-offset: 2px !important;
+        }
+
+
         </style>
     </head>
     <body>
@@ -6364,7 +7307,7 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             }
             .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
             .header {
-                background: #FFCE36;
+                background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
                 padding: 1rem 2rem; margin-bottom: 2rem; border-radius: 15px;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.1);
                 backdrop-filter: blur(10px);
@@ -6374,16 +7317,16 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             .user-info { display: flex; align-items: center; gap: 15px; }
             .discount-badge { 
                 background: linear-gradient(45deg, #ff6b6b, #ff8e53);
-                color: #000000; padding: 8px 16px; border-radius: 20px;
+                color: #1A202C; padding: 8px 16px; border-radius: 20px;
                 font-weight: bold; font-size: 0.9rem;
             }
             .logout-btn {
-                background: #e74c3c; color: #000000; padding: 8px 16px;
+                background: #e74c3c; color: #1A202C; padding: 8px 16px;
                 border: none; border-radius: 8px; text-decoration: none; font-size: 0.9rem;
             }
             .logout-btn:hover { background: #c0392b; }
             .nav-menu {
-                background: #FFCE36;
+                background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
                 padding: 1rem; margin-bottom: 2rem; border-radius: 15px;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.1);
                 backdrop-filter: blur(10px);
@@ -6395,10 +7338,10 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             }
             .nav-menu a:hover, .nav-menu a.active {
                 background: linear-gradient(45deg, #FFCE36, #000000);
-                color: #000000; transform: translateY(-2px);
+                color: #1A202C; transform: translateY(-2px);
             }
             .orders-container {
-                background: #FFCE36;
+                background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
                 padding: 2rem; border-radius: 15px;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.1);
                 backdrop-filter: blur(10px);
@@ -6424,7 +7367,7 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             .order-info h3 { color: #2c3e50; margin: 0 0 5px 0; }
             .order-date { color: #666; font-size: 0.9rem; }
             .order-status {
-                padding: 6px 12px; border-radius: 20px; color: #000000;
+                padding: 6px 12px; border-radius: 20px; color: #1A202C;
                 font-size: 0.8rem; font-weight: bold; background: #f39c12;
             }
             .order-details {
@@ -6438,7 +7381,7 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             .order-actions { display: flex; gap: 10px; justify-content: flex-end; }
             .btn {
                 background: linear-gradient(45deg, #FFCE36, #000000);
-                color: #000000; padding: 8px 16px; border: none;
+                color: #1A202C; padding: 8px 16px; border: none;
                 border-radius: 6px; cursor: pointer; text-decoration: none;
                 font-size: 0.9rem; font-weight: 500; transition: all 0.3s ease;
             }
@@ -6448,6 +7391,62 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             }
             .empty-state { text-align: center; padding: 3rem; color: #666; }
             .empty-state h3 { margin-bottom: 1rem; color: #2c3e50; }
+        /* ANIMACIONES DE ENTRADA SUTILES */
+        .stat-card, .product-card, .cart-item {
+            animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* LOADING STATES ELEGANTES */
+        .loading-spinner {
+            border: 2px solid var(--gray-200) !important;
+            border-top: 2px solid var(--imanix-yellow) !important;
+        }
+        
+        /* PRECIO DESTACADO */
+        .discounted-price {
+            color: #10B981 !important;
+            font-weight: 800 !important;
+            font-size: 1.25rem !important;
+        }
+        
+        /* NAVBAR LOGO MEJORADO */
+        .brand-logo {
+            transition: all 0.3s ease !important;
+        }
+        .brand-logo:hover {
+            transform: scale(1.05) !important;
+            box-shadow: 0 4px 12px rgba(255, 206, 54, 0.3) !important;
+        }
+        
+        /* CART SUMMARY ELEGANTE */
+        .cart-summary {
+            border-top: 3px solid var(--imanix-yellow) !important;
+        }
+        
+        /* QUANTITY CONTROLS REFINADOS */
+        .quantity-controls {
+            background: var(--gray-50) !important;
+            border: 1px solid var(--gray-200) !important;
+        }
+        
+        /* NOTIFICACIONES PROFESIONALES */
+        .notification {
+            border-radius: 8px !important;
+            backdrop-filter: blur(10px) !important;
+        }
+        
+        /* ACCESIBILIDAD MEJORADA */
+        .btn:focus, .form-input:focus, .form-select:focus {
+            outline: 2px solid var(--imanix-yellow) !important;
+            outline-offset: 2px !important;
+        }
+
+
         </style>
     </head>
     <body>
@@ -6501,7 +7500,7 @@ function getOrderDetailHTML(customer, order) {
             }
             .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
             .header {
-                background: #FFCE36;
+                background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
                 padding: 1rem 2rem; margin-bottom: 2rem; border-radius: 15px;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.1);
                 backdrop-filter: blur(10px);
@@ -6509,12 +7508,12 @@ function getOrderDetailHTML(customer, order) {
             }
             .logo { font-size: 1.8rem; font-weight: bold; color: #2c3e50; text-decoration: none; }
             .back-btn {
-                background: #6c757d; color: #000000; padding: 8px 16px;
+                background: #6c757d; color: #1A202C; padding: 8px 16px;
                 border: none; border-radius: 8px; text-decoration: none; font-size: 0.9rem;
             }
             .back-btn:hover { background: #5a6268; }
             .order-detail {
-                background: #FFCE36;
+                background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
                 padding: 2rem; border-radius: 15px;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.1);
                 backdrop-filter: blur(10px);
@@ -6525,7 +7524,7 @@ function getOrderDetailHTML(customer, order) {
             }
             .order-title { color: #2c3e50; font-size: 1.8rem; margin: 0; }
             .order-status {
-                padding: 10px 20px; border-radius: 25px; color: #000000;
+                padding: 10px 20px; border-radius: 25px; color: #1A202C;
                 font-weight: bold; background: #f39c12;
             }
             .info-card {
@@ -6540,6 +7539,62 @@ function getOrderDetailHTML(customer, order) {
             .info-item:last-child { border-bottom: none; }
             .info-label { color: #666; font-weight: 500; }
             .info-value { color: #2c3e50; font-weight: 600; }
+        /* ANIMACIONES DE ENTRADA SUTILES */
+        .stat-card, .product-card, .cart-item {
+            animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* LOADING STATES ELEGANTES */
+        .loading-spinner {
+            border: 2px solid var(--gray-200) !important;
+            border-top: 2px solid var(--imanix-yellow) !important;
+        }
+        
+        /* PRECIO DESTACADO */
+        .discounted-price {
+            color: #10B981 !important;
+            font-weight: 800 !important;
+            font-size: 1.25rem !important;
+        }
+        
+        /* NAVBAR LOGO MEJORADO */
+        .brand-logo {
+            transition: all 0.3s ease !important;
+        }
+        .brand-logo:hover {
+            transform: scale(1.05) !important;
+            box-shadow: 0 4px 12px rgba(255, 206, 54, 0.3) !important;
+        }
+        
+        /* CART SUMMARY ELEGANTE */
+        .cart-summary {
+            border-top: 3px solid var(--imanix-yellow) !important;
+        }
+        
+        /* QUANTITY CONTROLS REFINADOS */
+        .quantity-controls {
+            background: var(--gray-50) !important;
+            border: 1px solid var(--gray-200) !important;
+        }
+        
+        /* NOTIFICACIONES PROFESIONALES */
+        .notification {
+            border-radius: 8px !important;
+            backdrop-filter: blur(10px) !important;
+        }
+        
+        /* ACCESIBILIDAD MEJORADA */
+        .btn:focus, .form-input:focus, .form-select:focus {
+            outline: 2px solid var(--imanix-yellow) !important;
+            outline-offset: 2px !important;
+        }
+
+
         </style>
     </head>
     <body>
