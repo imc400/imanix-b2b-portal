@@ -6836,6 +6836,164 @@ function getPortalHTML(products, customer) {
             updateCartBadge();
         });
     </script>
+    
+    <!-- 🚀 FUNCIONES GLOBALES CRÍTICAS - CARGADAS AL FINAL PARA EVITAR ERRORES -->
+    <script>
+        // FUNCIONES GLOBALES DEFINIDAS DESPUÉS DE QUE EL DOM ESTÉ LISTO
+        function toggleUserDropdown() {
+            console.log('✅ toggleUserDropdown ejecutada');
+            var dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        }
+        
+        function toggleFilters() {
+            console.log('✅ toggleFilters ejecutada');
+            var panel = document.getElementById('filtersPanel');
+            if (panel) {
+                panel.classList.toggle('show');
+                
+                // Si se está mostrando el panel, inicializar filtros
+                if (panel.classList.contains('show')) {
+                    setTimeout(function() {
+                        if (typeof initializeFilters === 'function') {
+                            initializeFilters();
+                        } else if (typeof window.initializeFilters === 'function') {
+                            window.initializeFilters();
+                        }
+                    }, 100);
+                }
+            }
+        }
+        
+        function addToCart(productId, variantId, title, price, image) {
+            console.log('✅ addToCart ejecutada:', title);
+            try {
+                var cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
+                var existingItem = cart.find(function(item) { 
+                    return item.productId === productId || item.title === title; 
+                });
+                
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    cart.push({
+                        productId: productId || 'product_' + Date.now(),
+                        variantId: variantId || 'variant_' + Date.now(),
+                        title: title,
+                        price: price,
+                        image: image,
+                        quantity: 1
+                    });
+                }
+                
+                localStorage.setItem('b2bCart', JSON.stringify(cart));
+                
+                // Actualizar badge y mostrar notificación
+                updateCartBadge();
+                showNotification(title + ' agregado al carrito', 'success');
+                
+            } catch (error) {
+                console.error('❌ Error adding to cart:', error);
+                showNotification('Error agregando producto', 'error');
+            }
+        }
+        
+        function updateCartBadge() {
+            try {
+                var cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
+                var totalItems = cart.reduce(function(sum, item) { return sum + item.quantity; }, 0);
+                var badge = document.getElementById('cartNavbarBadge');
+                if (badge) {
+                    badge.textContent = totalItems;
+                    badge.style.display = totalItems > 0 ? 'inline' : 'none';
+                }
+            } catch (error) {
+                console.error('❌ Error updating cart badge:', error);
+            }
+        }
+        
+        function showNotification(message, type) {
+            try {
+                // Crear elemento de notificación
+                var notification = document.createElement('div');
+                var bgColor = type === 'success' ? '#10b981' : '#ef4444';
+                notification.style.cssText = 
+                    'position: fixed;' +
+                    'top: 20px;' +
+                    'right: 20px;' +
+                    'background: ' + bgColor + ';' +
+                    'color: white;' +
+                    'padding: 1rem 1.5rem;' +
+                    'border-radius: 12px;' +
+                    'box-shadow: 0 10px 30px rgba(0,0,0,0.2);' +
+                    'z-index: 10000;' +
+                    'font-weight: 600;' +
+                    'transform: translateX(100%);' +
+                    'transition: transform 0.3s ease;';
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                // Animar entrada
+                setTimeout(function() {
+                    notification.style.transform = 'translateX(0)';
+                }, 100);
+                
+                // Remover después de 3 segundos
+                setTimeout(function() {
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(function() {
+                        if (document.body.contains(notification)) {
+                            document.body.removeChild(notification);
+                        }
+                    }, 300);
+                }, 3000);
+                
+            } catch (error) {
+                console.error('❌ Error showing notification:', error);
+            }
+        }
+        
+        function showCart() {
+            console.log('✅ showCart ejecutada');
+            window.location.href = '/carrito';
+        }
+        
+        function logout() {
+            console.log('✅ logout ejecutada');
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                fetch('/api/auth/logout', { method: 'POST' })
+                    .then(function(response) { return response.json(); })
+                    .then(function(data) {
+                        localStorage.removeItem('b2bCart');
+                        window.location.reload();
+                    })
+                    .catch(function(error) {
+                        console.error('Error:', error);
+                        window.location.reload();
+                    });
+            }
+        }
+        
+        // Asignar funciones al objeto window para acceso global
+        window.toggleUserDropdown = toggleUserDropdown;
+        window.toggleFilters = toggleFilters;
+        window.addToCart = addToCart;
+        window.updateCartBadge = updateCartBadge;
+        window.showNotification = showNotification;
+        window.showCart = showCart;
+        window.logout = logout;
+        
+        // Inicializar cuando el DOM esté completamente cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 DOM cargado, inicializando funciones...');
+            updateCartBadge();
+        });
+        
+        console.log('✅ Funciones globales cargadas correctamente');
+    </script>
 </body>
 </html>`;
 }
