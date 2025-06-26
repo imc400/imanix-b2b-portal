@@ -3,7 +3,7 @@ require('dotenv').config();
 
 // Configuración de Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.warn('⚠️ Supabase no configurado. Perfil de usuario deshabilitado.');
