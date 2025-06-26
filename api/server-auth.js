@@ -2281,10 +2281,11 @@ function getCartHTML(customer) {
 function getLoginHTML() {
   return `
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="login-page">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preload" as="image" href="/fondo-login.png">
                     <title>Portal B2B - Acceso Cliente - IMANIX Chile</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2401,7 +2402,18 @@ function getLoginHTML() {
             .navbar { background: #FFFFFF !important; border-bottom: 3px solid var(--imanix-yellow) !important; }
             .stat-card, .product-card { margin-bottom: 1rem !important; }
         }
-    </style>
+    
+        /* PÁGINA DE LOGIN - FONDO ESPECÍFICO */
+        html.login-page {
+            background: url('/fondo-login.png') center center/cover no-repeat fixed !important;
+            background-color: #F8FAFC !important;
+        }
+        
+        html.login-page body {
+            background: transparent !important;
+        }
+
+        </style>
 
     <style>
         * {
@@ -2412,7 +2424,7 @@ function getLoginHTML() {
 
         body {
             font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: url('/fondo-login.png') center center/cover no-repeat;
+            background: transparent;
             position: relative;
             min-height: 100vh;
             display: flex;
