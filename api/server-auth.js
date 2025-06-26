@@ -4134,6 +4134,32 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
+        .order-card.clickeable {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .order-card.clickeable:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: #FFCE36;
+        }
+
+        .click-hint {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #FFCE36, #FFC107);
+            color: #000;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
         .order-header {
             display: flex;
             justify-content: space-between;
@@ -4460,7 +4486,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                 <div id="ordersList">
                     ${orders && orders.length > 0 ? 
                         orders.map(order => `
-                            <div class="order-card">
+                            <div class="order-card clickeable" onclick="showOrderDetails('${order.id}', '${order.order_number || order.id.substring(0, 8)}', '${order.total_amount}', '${order.discount_amount || 0}', '${order.status}', '${new Date(order.created_at || order.order_date).toLocaleDateString('es-CL')}', '${order.shopify_order_id}')">
                                 <div class="order-header">
                                     <div>
                                         <h4>Pedido #${order.order_number || order.id.substring(0, 8)}</h4>
@@ -4482,17 +4508,10 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                                     }
                                 </div>
                                 
-                                ${order.order_items && order.order_items.length > 0 ? `
-                                    <div>
-                                        <p style="font-weight: 600; margin-bottom: 0.5rem;">Productos:</p>
-                                        ${order.order_items.map(item => `
-                                            <p style="color: #718096; margin-left: 1rem;">
-                                                • ${item.product_title} ${item.variant_title ? `(${item.variant_title})` : ''} 
-                                                x${item.quantity}
-                                            </p>
-                                        `).join('')}
-                                    </div>
-                                ` : ''}
+                                <div class="click-hint">
+                                    <i class="fas fa-eye"></i>
+                                    Click para ver detalles completos
+                                </div>
                             </div>
                         `).join('') :
                         `<div class="empty-state">
@@ -4731,6 +4750,26 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                 style: 'currency',
                 currency: 'CLP'
             }).format(price);
+        }
+
+        function showOrderDetails(orderId, orderNumber, totalAmount, discountAmount, status, date, shopifyOrderId) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000;backdrop-filter:blur(5px);';
+            
+            const statusBg = status === 'pendiente' ? '#feebc8' : '#c6f6d5';
+            const statusColor = status === 'pendiente' ? '#9c4221' : '#22543d';
+            const discountHtml = parseFloat(discountAmount) > 0 ? 
+                '<div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #e5e7eb;"><strong>Descuento Aplicado:</strong><br><span style="color:#10b981;font-weight:600;">- ' + formatPrice(parseFloat(discountAmount)) + '</span></div>' : '';
+            
+            modal.innerHTML = '<div style="background:white;padding:2rem;border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,0.2);max-width:500px;width:90%;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;"><h2 style="margin:0;color:#1f2937;font-weight:700;">Detalles del Pedido</h2><button onclick="this.closest(\'div\').parentElement.remove()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;">×</button></div><div style="background:#f8f9fa;padding:1.5rem;border-radius:12px;margin-bottom:1.5rem;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;"><div><strong>Número de Pedido:</strong><br><span style="color:#6366f1;font-weight:600;">#' + orderNumber + '</span></div><div><strong>Estado:</strong><br><span style="padding:0.25rem 0.75rem;border-radius:20px;font-size:0.875rem;font-weight:600;background:' + statusBg + ';color:' + statusColor + ';">' + status + '</span></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;"><div><strong>Fecha:</strong><br><span>' + date + '</span></div><div><strong>Total:</strong><br><span style="color:#059669;font-weight:700;font-size:1.1rem;">' + formatPrice(parseFloat(totalAmount)) + '</span></div></div>' + discountHtml + '</div><div style="background:#fff3cd;padding:1rem;border-radius:8px;border-left:4px solid #ffc107;margin-bottom:1.5rem;"><div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;"><i class="fas fa-info-circle" style="color:#856404;"></i><strong style="color:#856404;">Estado del Pedido</strong></div><p style="margin:0;color:#856404;font-size:0.9rem;">Tu pedido está siendo revisado por nuestro equipo. Te contactaremos pronto para confirmar los detalles de envío y pago.</p></div><div style="display:flex;gap:1rem;"><button onclick="this.closest(\'div\').parentElement.remove()" style="flex:1;padding:0.75rem;background:#6b7280;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Cerrar</button></div></div>';
+            
+            document.body.appendChild(modal);
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
         }
 
         async function logout() {

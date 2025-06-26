@@ -427,10 +427,19 @@ class DatabaseManager {
       if (!profile) return null;
 
       // Obtener estadísticas del usuario desde draft_orders (donde se guardan realmente los pedidos)
-      const { data: orders } = await supabase
+      console.log('🔍 Consultando estadísticas para email:', userEmail);
+      const { data: orders, error: statsError } = await supabase
         .from('draft_orders')
         .select('total_amount, discount_amount, status')
         .eq('customer_email', userEmail);
+
+      if (statsError) {
+        console.error('❌ Error consultando estadísticas:', statsError);
+        throw statsError;
+      }
+
+      console.log('📊 Pedidos encontrados:', orders?.length || 0);
+      console.log('💰 Datos de pedidos:', orders);
 
       const totalOrders = orders?.length || 0;
       const totalSpent = orders?.reduce((sum, order) => sum + parseFloat(order.total_amount || 0), 0) || 0;
