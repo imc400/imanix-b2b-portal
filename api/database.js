@@ -52,19 +52,19 @@ const database = {
 
       // Si el perfil está marcado como completado, verificar que realmente lo esté
       if (data.profile_completed) {
-        // Verificar campos requeridos
-        const requiredFields = [
-          'first_name', 'last_name', 'company_name', 'company_rut',
-          'company_giro', 'company_address', 'region', 'comuna', 'mobile_phone'
-        ];
+      // Verificar campos requeridos
+      const requiredFields = [
+        'first_name', 'last_name', 'company_name', 'company_rut',
+        'company_giro', 'company_address', 'region', 'comuna', 'mobile_phone'
+      ];
 
-        const completedFields = requiredFields.filter(field => 
-          data[field] && data[field].toString().trim().length > 0
-        );
+      const completedFields = requiredFields.filter(field => 
+        data[field] && data[field].toString().trim().length > 0
+      );
 
         const isComplete = completedFields.length === requiredFields.length;
         console.log(`✅ Perfil ${email}: ${completedFields.length}/${requiredFields.length} campos completados - Marcado como completo: ${isComplete}`);
-        
+      
         return isComplete;
       }
 
@@ -417,7 +417,7 @@ const database = {
         .insert(fullOrderData)
         .select()
         .single();
-
+      
       if (error) {
         console.error('❌ Error de Supabase:', error);
         console.error('🔍 Código de error:', error.code);
@@ -425,7 +425,7 @@ const database = {
         console.error('🔍 Detalles:', error.details);
         throw error;
       }
-
+      
       console.log('✅ Pedido guardado exitosamente en historial para:', email);
       console.log('🆔 ID del pedido guardado:', data.id);
       console.log('📊 Datos guardados:', data);
