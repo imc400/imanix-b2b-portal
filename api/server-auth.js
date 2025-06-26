@@ -4269,11 +4269,256 @@ function getPortalHTML(products, customer) {
         };
         
         window.applyFilters = function() {
-            console.log('✅ applyFilters ejecutada');
+            console.log('🔍 Aplicando filtros...');
+            
+            // Variables globales para filtros
+            var activeFilters = {
+                collections: [],
+                categories: [],
+                ages: [],
+                availability: [],
+                priceRange: { min: null, max: null }
+            };
+            
+            // Recopilar filtros activos
+            activeFilters.collections = Array.from(document.querySelectorAll('#collectionFilters input:checked')).map(function(cb) { return cb.value; });
+            activeFilters.categories = Array.from(document.querySelectorAll('#categoryFilters input:checked')).map(function(cb) { return cb.value; });
+            activeFilters.ages = Array.from(document.querySelectorAll('#ageFilters input:checked')).map(function(cb) { return cb.value; });
+            activeFilters.availability = Array.from(document.querySelectorAll('.filter-options input:checked')).map(function(cb) { return cb.value; });
+            
+            var minPriceEl = document.getElementById('minPrice');
+            var maxPriceEl = document.getElementById('maxPrice');
+            var minPrice = minPriceEl ? minPriceEl.value : '';
+            var maxPrice = maxPriceEl ? maxPriceEl.value : '';
+            activeFilters.priceRange.min = minPrice ? parseInt(minPrice) : null;
+            activeFilters.priceRange.max = maxPrice ? parseInt(maxPrice) : null;
+            
+            // Aplicar filtros a productos
+            var productCards = document.querySelectorAll('.product-card');
+            var visibleCount = 0;
+            
+            productCards.forEach(function(card) {
+                var shouldShow = true;
+                
+                // Obtener etiquetas del producto
+                var productTags = card.getAttribute('data-tags') || '';
+                var productTagsArray = productTags.split(',').map(function(tag) { return tag.trim(); });
+                
+                // Filtro por texto de búsqueda
+                var searchInputEl = document.getElementById('searchInput');
+                var searchTerm = searchInputEl ? searchInputEl.value.toLowerCase() : '';
+                if (searchTerm) {
+                    var titleEl = card.querySelector('.product-title');
+                    var title = titleEl ? titleEl.textContent.toLowerCase() : '';
+                    var skuElement = card.querySelector('.sku');
+                    var sku = skuElement ? skuElement.textContent.toLowerCase() : '';
+                    if (!title.includes(searchTerm) && !sku.includes(searchTerm)) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Filtro por colecciones (etiquetas)
+                if (activeFilters.collections.length > 0 && shouldShow) {
+                    var hasCollection = activeFilters.collections.some(function(collection) {
+                        return productTagsArray.includes(collection);
+                    });
+                    if (!hasCollection) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Filtro por categorías (etiquetas)
+                if (activeFilters.categories.length > 0 && shouldShow) {
+                    var hasCategory = activeFilters.categories.some(function(category) {
+                        return productTagsArray.includes(category);
+                    });
+                    if (!hasCategory) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Filtro por edades (etiquetas)
+                if (activeFilters.ages.length > 0 && shouldShow) {
+                    var hasAge = activeFilters.ages.some(function(age) {
+                        return productTagsArray.includes(age);
+                    });
+                    if (!hasAge) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Filtro por disponibilidad
+                if (activeFilters.availability.length > 0 && shouldShow) {
+                    var stock = parseInt(card.getAttribute('data-stock')) || 0;
+                    var inStock = stock > 0;
+                    
+                    if (activeFilters.availability.includes('in-stock') && !inStock) {
+                        shouldShow = false;
+                    }
+                    if (activeFilters.availability.includes('out-of-stock') && inStock) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Filtro por precio
+                if ((activeFilters.priceRange.min || activeFilters.priceRange.max) && shouldShow) {
+                    var price = parseInt(card.getAttribute('data-price')) || 0;
+                    
+                    if (activeFilters.priceRange.min && price < activeFilters.priceRange.min) {
+                        shouldShow = false;
+                    }
+                    if (activeFilters.priceRange.max && price > activeFilters.priceRange.max) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Mostrar/ocultar producto
+                card.style.display = shouldShow ? 'block' : 'none';
+                if (shouldShow) visibleCount++;
+            });
+            
+            console.log('📊 Productos filtrados:', visibleCount + '/' + productCards.length);
+            
+            // Mostrar mensaje si no hay productos
+            var productsGrid = document.getElementById('productsGrid');
+            var noProductsMsg = productsGrid ? productsGrid.querySelector('.no-products-filtered') : null;
+            
+            if (visibleCount === 0) {
+                if (!noProductsMsg) {
+                    noProductsMsg = document.createElement('div');
+                    noProductsMsg.className = 'no-products-filtered';
+                    noProductsMsg.innerHTML = 
+                        '<div style="text-align: center; padding: 3rem; color: #666;">' +
+                            '<i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem; color: #d1d5db;"></i>' +
+                            '<h3>No se encontraron productos</h3>' +
+                            '<p>Intenta ajustar los filtros para ver más resultados</p>' +
+                        '</div>';
+                    productsGrid.appendChild(noProductsMsg);
+                }
+                noProductsMsg.style.display = 'block';
+            } else {
+                if (noProductsMsg) {
+                    noProductsMsg.style.display = 'none';
+                }
+            }
         };
         
         window.removeFilter = function(type, value) {
             console.log('✅ removeFilter ejecutada:', type, value);
+        };
+        
+        // Función para inicializar los filtros con las etiquetas REALES de los productos
+        window.initializeFilters = function() {
+            console.log('🔍 Inicializando filtros con etiquetas reales de Shopify...');
+            
+            var products = Array.from(document.querySelectorAll('.product-card'));
+            var allTags = new Set();
+            var collections = new Set();
+            var categories = new Set();
+            var ages = new Set();
+            
+            console.log('📦 Productos encontrados:', products.length);
+            
+            // Extraer todas las etiquetas reales de los productos
+            products.forEach(function(card) {
+                var tagsAttr = card.getAttribute('data-tags');
+                console.log('🏷️ Etiquetas del producto:', tagsAttr);
+                if (tagsAttr) {
+                    var tags = tagsAttr.split(',').map(function(tag) { return tag.trim(); });
+                    tags.forEach(function(tag) {
+                        if (tag) {
+                            allTags.add(tag);
+                            
+                            // Clasificar etiquetas automáticamente
+                            var tagLower = tag.toLowerCase();
+                            
+                            // Colecciones (nombres de colecciones, marcas, etc.)
+                            if (tagLower.includes('home') || tagLower.includes('tobogán') || tagLower.includes('imanix') || 
+                                tagLower.includes('envío') || tagLower.includes('playday') || tagLower.includes('magnético') ||
+                                tagLower.includes('armables') || tagLower.includes('juegos') || tagLower.includes('cyberday') ||
+                                tagLower.includes('regalos') || tagLower.includes('best') || tagLower.includes('newest') ||
+                                tagLower.includes('productos') || tagLower.includes('destacados') || tagLower.includes('orderly') ||
+                                tagLower.includes('historia') || tagLower.includes('mundo') || tagLower.includes('express') ||
+                                tagLower.includes('plástico') || tagLower.includes('imán')) {
+                                collections.add(tag);
+                            }
+                            // Edades (etiquetas que contienen años o referencias de edad)
+                            else if (tagLower.includes('años') || tagLower.includes('año') || tagLower.includes('adelante') ||
+                                tagLower.includes('3-5') || tagLower.includes('5-9') || tagLower.includes('9-en') ||
+                                tagLower.includes('experto') || tagLower.includes('expert')) {
+                                ages.add(tag);
+                            }
+                            // Categorías (todo lo demás: stock, precios, tipos, etc.)
+                            else {
+                                categories.add(tag);
+                            }
+                        }
+                    });
+                }
+            });
+            
+            console.log('📊 Etiquetas extraídas:', {
+                total: allTags.size,
+                collections: collections.size,
+                categories: categories.size,
+                ages: ages.size,
+                allTagsList: Array.from(allTags)
+            });
+            
+            // Convertir a arrays y ordenar
+            var collectionsArray = Array.from(collections).sort();
+            var categoriesArray = Array.from(categories).sort();
+            var agesArray = Array.from(ages).sort();
+            
+            // Llenar filtros de colecciones
+            var collectionFilters = document.getElementById('collectionFilters');
+            if (collectionFilters) {
+                if (collectionsArray.length > 0) {
+                    collectionFilters.innerHTML = collectionsArray.map(function(collection) {
+                        return '<label class="filter-checkbox">' +
+                            '<input type="checkbox" value="' + collection + '" onchange="applyFilters()">' +
+                            '<span class="checkmark"></span>' +
+                            collection +
+                        '</label>';
+                    }).join('');
+                } else {
+                    collectionFilters.innerHTML = '<p style="color: #666; font-style: italic;">No hay colecciones disponibles</p>';
+                }
+            }
+            
+            // Llenar filtros de categorías
+            var categoryFilters = document.getElementById('categoryFilters');
+            if (categoryFilters) {
+                if (categoriesArray.length > 0) {
+                    categoryFilters.innerHTML = categoriesArray.map(function(category) {
+                        return '<label class="filter-checkbox">' +
+                            '<input type="checkbox" value="' + category + '" onchange="applyFilters()">' +
+                            '<span class="checkmark"></span>' +
+                            category +
+                        '</label>';
+                    }).join('');
+                } else {
+                    categoryFilters.innerHTML = '<p style="color: #666; font-style: italic;">No hay categorías disponibles</p>';
+                }
+            }
+            
+            // Llenar filtros de edad
+            var ageFilters = document.getElementById('ageFilters');
+            if (ageFilters) {
+                if (agesArray.length > 0) {
+                    ageFilters.innerHTML = agesArray.map(function(age) {
+                        return '<label class="filter-checkbox">' +
+                            '<input type="checkbox" value="' + age + '" onchange="applyFilters()">' +
+                            '<span class="checkmark"></span>' +
+                            age +
+                        '</label>';
+                    }).join('');
+                } else {
+                    ageFilters.innerHTML = '<p style="color: #666; font-style: italic;">No hay filtros de edad disponibles</p>';
+                }
+            }
+            
+            console.log('✅ Filtros poblados exitosamente');
         };
         
         // Inicializar cuando se carga la página
