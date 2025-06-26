@@ -6178,24 +6178,7 @@ function getPortalHTML(products, customer) {
             showNotification(title + ' agregado al carrito', 'success');
         };
         
-        window.toggleUserDropdown = function() {
-            var dropdown = document.getElementById('userDropdown');
-            if (dropdown) {
-                dropdown.classList.toggle('show');
-            }
-        };
-        
-        window.toggleFilters = function() {
-            var panel = document.getElementById('filtersPanel');
-            if (panel) {
-                panel.classList.toggle('show');
-                
-                // Si se está mostrando el panel, inicializar filtros
-                if (panel.classList.contains('show')) {
-                    initializeFilters();
-                }
-            }
-        };
+        // FUNCIONES DUPLICADAS ELIMINADAS - SOLO USAR LAS DEL HEAD
         
         window.applyFilters = function() {
             // Recopilar filtros activos
@@ -6292,38 +6275,7 @@ function getPortalHTML(products, customer) {
             }
         };
         
-        // Actualizar contador del carrito
-        function updateCartBadge() {
-            var badge = document.getElementById('cartNavbarBadge');
-            var totalItems = cart.reduce(function(sum, item) { return sum + item.quantity; }, 0);
-            if (badge) {
-                badge.textContent = totalItems;
-            }
-        }
-
-        // Agregar producto al carrito
-        function addToCart(productId, variantId, title, price, image) {
-            var existingItem = cart.find(function(item) { return item.productId === productId && item.variantId === variantId; });
-            
-            if (existingItem) {
-                existingItem.quantity += 1;
-            } else {
-                cart.push({
-                    productId: productId,
-                    variantId: variantId,
-                    title: title,
-                    price: price,
-                    image: image,
-                    quantity: 1
-                });
-            }
-            
-            localStorage.setItem('b2bCart', JSON.stringify(cart));
-            updateCartBadge();
-            
-            // Mostrar confirmación
-            showNotification(title + ' agregado al carrito', 'success');
-        }
+        // FUNCIONES DE CARRITO DUPLICADAS ELIMINADAS - USAR LAS DEL HEAD
 
         // Filtrar productos - versión simplificada que funciona siempre
         function filterProducts() {
@@ -6345,88 +6297,7 @@ function getPortalHTML(products, customer) {
             });
         }
 
-        // Toggle del dropdown del usuario
-        function toggleUserDropdown() {
-            var dropdown = document.getElementById('userDropdown');
-            if (dropdown) {
-                dropdown.classList.toggle('show');
-            }
-        }
-
-        // Cerrar dropdown al hacer clic fuera
-        document.addEventListener('click', function(event) {
-            var userAccount = document.querySelector('.user-account');
-            var dropdown = document.getElementById('userDropdown');
-            
-            if (userAccount && dropdown && !userAccount.contains(event.target)) {
-                dropdown.classList.remove('show');
-            }
-        });
-
-        // Mostrar carrito - redirigir a página dedicada
-        function showCart() {
-            window.location.href = '/carrito';
-        }
-
-        // Mostrar notificación
-        function showNotification(message, type) {
-            // Crear elemento de notificación
-            var notification = document.createElement('div');
-            var bgColor = type === 'success' ? '#10b981' : '#ef4444';
-            notification.style.cssText = 
-                'position: fixed;' +
-                'top: 20px;' +
-                'right: 20px;' +
-                'background: ' + bgColor + ';' +
-                'color: white;' +
-                'padding: 1rem 1.5rem;' +
-                'border-radius: 12px;' +
-                'box-shadow: 0 10px 30px rgba(0,0,0,0.2);' +
-                'z-index: 10000;' +
-                'font-weight: 600;' +
-                'transform: translateX(100%);' +
-                'transition: transform 0.3s ease;';
-            notification.textContent = message;
-            
-            document.body.appendChild(notification);
-            
-            // Animar entrada
-            setTimeout(function() {
-                notification.style.transform = 'translateX(0)';
-            }, 100);
-            
-            // Remover después de 3 segundos
-            setTimeout(function() {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(function() {
-                    document.body.removeChild(notification);
-                }, 300);
-            }, 3000);
-        }
-
-        // Cerrar sesión
-        async function logout() {
-            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-                try {
-                    var response = await fetch('/api/auth/logout', {
-                        method: 'POST'
-                    });
-                    
-                    var data = await response.json();
-                    
-                    if (data.success) {
-                        // Limpiar carrito local
-                        localStorage.removeItem('b2bCart');
-                        window.location.reload();
-                    } else {
-                        alert('Error al cerrar sesión');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('Error de conexión');
-                }
-            }
-        }
+        // MÁS FUNCIONES DUPLICADAS ELIMINADAS - USAR SOLO LAS DEL HEAD
 
         // Función auxiliar para formatear precios
         function formatPrice(price) {
