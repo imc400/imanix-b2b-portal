@@ -2672,28 +2672,15 @@ function getCompleteProfileHTML(customer) {
             const submitText = document.getElementById('submitText');
             const loadingSpinner = document.getElementById('loadingSpinner');
             
-            // Recopilar datos del formulario
-            const formData = new FormData(e.target);
-            const profileData = {};
-            
-            for (let [key, value] of formData.entries()) {
-                profileData[key] = value.trim();
-            }
-
-            // Validación básica
-            const requiredFields = ['first_name', 'last_name', 'mobile_phone', 'company_name', 'company_rut', 'company_giro', 'company_address', 'region', 'comuna'];
-            const missingFields = requiredFields.filter(field => !profileData[field]);
-            
-            if (missingFields.length > 0) {
-                showNotification('Por favor, completa todos los campos obligatorios marcados con *', 'warning');
-                return;
-            }
-
             // Mostrar estado de carga
             submitButton.disabled = true;
             submitIcon.style.display = 'none';
-            loadingSpinner.style.display = 'block';
-            submitText.textContent = 'Guardando datos...';
+            loadingSpinner.style.display = 'inline-block';
+            submitText.textContent = 'Guardando...';
+            
+            // Recopilar datos del formulario
+            const formData = new FormData(e.target);
+            const profileData = Object.fromEntries(formData.entries());
 
             try {
                 const response = await fetch('/api/profile/update', {
@@ -4487,7 +4474,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             event.preventDefault();
             
             const formData = new FormData(event.target);
-            const profileData = Object.fromEntries(formData);
+            const profileData = Object.fromEntries(formData.entries());
             
             try {
                 const response = await fetch('/api/profile/update', {
