@@ -863,7 +863,7 @@ function getCartHTML(customer) {
             font-smooth: always;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            padding-top: 100px;
+            padding-top: 120px;
         }
 
         .navbar {
@@ -3325,7 +3325,7 @@ function getPortalHTML(products, customer) {
             font-smooth: always;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            padding-top: 100px;
+            padding-top: 120px;
         }
 
         .navbar {
@@ -3542,8 +3542,7 @@ function getPortalHTML(products, customer) {
         .content-section {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 0 2rem 4rem;
-            animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 2rem 2rem;
         }
 
         .stats-cards {
@@ -4035,6 +4034,7 @@ function getPortalHTML(products, customer) {
 <body>
     <div class="navbar">
         <div class="navbar-content">
+            <a href="/" class="navbar-brand" style="text-decoration: none;">
                 <img src="/images/Logo%202160x1200%20(1).png" alt="IMANIX Portal B2B" style="height: 70px; width: auto;" />                </svg>            </a>
             <div class="navbar-actions">
                 <div class="user-account" onclick="toggleUserDropdown()">
@@ -4112,7 +4112,7 @@ function getPortalHTML(products, customer) {
             <div class="catalog-header">
                 <h2 class="catalog-title">
                     <i class="fas fa-store"></i>
-                    Catálogo B2B Exclusivo
+                    Catálogo B2B
                 </h2>
                 <div class="catalog-controls">
                     <input type="text" class="search-box" placeholder="Buscar productos..." 
@@ -4350,7 +4350,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             font-smooth: always;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            padding-top: 100px;
+            padding-top: 120px;
         }
 
         .navbar {
@@ -5119,7 +5119,9 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 <body>
     <nav class="navbar">
         <div class="navbar-content">
-                <img src="/images/Logo%202160x1200%20(1).png" alt="IMANIX Portal B2B" style="height: 70px; width: auto;" />                </svg>            </a>
+            <a href="/" class="navbar-brand" style="text-decoration: none;">
+                <img src="/images/Logo%202160x1200%20(1).png" alt="IMANIX Portal B2B" style="height: 70px; width: auto;" />
+            </a>
             <div class="navbar-actions">
                 <div class="user-account" onclick="toggleUserDropdown()">
                     <i class="fas fa-user-circle"></i>
