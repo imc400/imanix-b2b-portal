@@ -824,15 +824,18 @@ function getCartHTML(customer) {
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             min-height: 100vh;
             color: #1e293b;
+            padding-top: 80px;
         }
 
         .navbar {
             background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
             padding: 1rem 2rem;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            position: sticky;
+            position: fixed;
             top: 0;
-            z-index: 100;
+            left: 0;
+            right: 0;
+            z-index: 1000;
         }
 
         .navbar-content {
@@ -3790,15 +3793,18 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             min-height: 100vh;
             color: #1e293b;
+            padding-top: 80px;
         }
 
         .navbar {
             background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
             padding: 1rem 2rem;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            position: sticky;
+            position: fixed;
             top: 0;
-            z-index: 100;
+            left: 0;
+            right: 0;
+            z-index: 1000;
         }
 
         .navbar-content {
