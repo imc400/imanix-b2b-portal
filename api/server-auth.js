@@ -4642,7 +4642,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         // Inicializar comunas al cargar la página si hay región seleccionada
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Página cargada - iniciando debug');
-            console.log('📊 Datos de pedidos disponibles:', ${JSON.stringify(orders || [])});
+            console.log('📊 Datos de pedidos disponibles');
             console.log('📋 Total de pedidos:', ${orders?.length || 0});
             
             const regionSelect = document.querySelector('select[name="region"]');
