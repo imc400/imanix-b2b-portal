@@ -5610,14 +5610,16 @@ function getPortalHTML(products, customer) {
         
         // Actualizar contador del carrito
         function updateCartBadge() {
-            const badge = document.getElementById('cartNavbarBadge');
-            const totalItems = cart.reduce(function(sum, item) { return sum + item.quantity; }, 0);
-            badge.textContent = totalItems;
+            var badge = document.getElementById('cartNavbarBadge');
+            var totalItems = cart.reduce(function(sum, item) { return sum + item.quantity; }, 0);
+            if (badge) {
+                badge.textContent = totalItems;
+            }
         }
 
         // Agregar producto al carrito
         function addToCart(productId, variantId, title, price, image) {
-            const existingItem = cart.find(function(item) { return item.productId === productId && item.variantId === variantId; });
+            var existingItem = cart.find(function(item) { return item.productId === productId && item.variantId === variantId; });
             
             if (existingItem) {
                 existingItem.quantity += 1;
@@ -5639,41 +5641,40 @@ function getPortalHTML(products, customer) {
             showNotification(title + ' agregado al carrito', 'success');
         }
 
-        // Filtrar productos (ahora usa applyFilters para integrar con el sistema de filtros)
+        // Filtrar productos - versión simplificada que funciona siempre
         function filterProducts() {
-            if (typeof applyFilters === 'function') {
-                applyFilters(); // Usar la nueva función que maneja todos los filtros
-            } else {
-                // Fallback al método original si applyFilters no está disponible
-                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-                const productCards = document.querySelectorAll('.product-card');
+            var searchInputEl = document.getElementById('searchInput');
+            var searchTerm = searchInputEl ? searchInputEl.value.toLowerCase() : '';
+            var productCards = document.querySelectorAll('.product-card');
+            
+            productCards.forEach(function(card) {
+                var titleEl = card.querySelector('.product-title');
+                var title = titleEl ? titleEl.textContent.toLowerCase() : '';
+                var skuElement = card.querySelector('.sku');
+                var sku = skuElement ? skuElement.textContent.toLowerCase() : '';
                 
-                productCards.forEach(function(card) {
-                    const title = card.querySelector('.product-title').textContent.toLowerCase();
-                    const skuElement = card.querySelector('.sku');
-                    const sku = skuElement ? skuElement.textContent.toLowerCase() : '';
-                    
-                    if (title.includes(searchTerm) || sku.includes(searchTerm)) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            }
+                if (title.includes(searchTerm) || sku.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
         }
 
         // Toggle del dropdown del usuario
         function toggleUserDropdown() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.toggle('show');
+            var dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
         }
 
         // Cerrar dropdown al hacer clic fuera
         document.addEventListener('click', function(event) {
-            const userAccount = document.querySelector('.user-account');
-            const dropdown = document.getElementById('userDropdown');
+            var userAccount = document.querySelector('.user-account');
+            var dropdown = document.getElementById('userDropdown');
             
-            if (!userAccount.contains(event.target)) {
+            if (userAccount && dropdown && !userAccount.contains(event.target)) {
                 dropdown.classList.remove('show');
             }
         });
@@ -5686,8 +5687,8 @@ function getPortalHTML(products, customer) {
         // Mostrar notificación
         function showNotification(message, type) {
             // Crear elemento de notificación
-            const notification = document.createElement('div');
-            const bgColor = type === 'success' ? '#10b981' : '#ef4444';
+            var notification = document.createElement('div');
+            var bgColor = type === 'success' ? '#10b981' : '#ef4444';
             notification.style.cssText = 
                 'position: fixed;' +
                 'top: 20px;' +
@@ -5723,11 +5724,11 @@ function getPortalHTML(products, customer) {
         async function logout() {
             if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
                 try {
-                    const response = await fetch('/api/auth/logout', {
+                    var response = await fetch('/api/auth/logout', {
                         method: 'POST'
                     });
                     
-                    const data = await response.json();
+                    var data = await response.json();
                     
                     if (data.success) {
                         // Limpiar carrito local
@@ -5752,8 +5753,8 @@ function getPortalHTML(products, customer) {
         }
 
         // Variables globales para filtros
-        let allProducts = []; // Almacenar todos los productos para filtrado
-        let activeFilters = {
+        var allProducts = []; // Almacenar todos los productos para filtrado
+        var activeFilters = {
             collections: [],
             categories: [],
             ages: [],
@@ -5763,13 +5764,13 @@ function getPortalHTML(products, customer) {
 
         // Función para extraer etiquetas de productos y organizarlas
         function extractProductTags(products) {
-            const collections = new Set();
-            const categories = new Set();
-            const ages = new Set();
+            var collections = new Set();
+            var categories = new Set();
+            var ages = new Set();
             
             products.forEach(function(product) {
                 if (product.tags) {
-                    const tags = product.tags.split(',').map(function(tag) { return tag.trim().toLowerCase(); });
+                    var tags = product.tags.split(',').map(function(tag) { return tag.trim().toLowerCase(); });
                     
                     tags.forEach(function(tag) {
                         // Filtrar colecciones (etiquetas que parecen nombres de colecciones)
@@ -5806,27 +5807,29 @@ function getPortalHTML(products, customer) {
 
         // Función para mostrar/ocultar panel de filtros
         function toggleFilters() {
-            const panel = document.getElementById('filtersPanel');
-            panel.classList.toggle('show');
-            
-            // Si se está mostrando el panel, inicializar filtros
-            if (panel.classList.contains('show')) {
-                initializeFilters();
+            var panel = document.getElementById('filtersPanel');
+            if (panel) {
+                panel.classList.toggle('show');
+                
+                // Si se está mostrando el panel, inicializar filtros
+                if (panel.classList.contains('show')) {
+                    initializeFilters();
+                }
             }
         }
 
         // Función para inicializar los filtros con las etiquetas de los productos
         function initializeFilters() {
-            const products = Array.from(document.querySelectorAll('.product-card'));
-            const productData = [];
+            var products = Array.from(document.querySelectorAll('.product-card'));
+            var productData = [];
             
             // Extraer datos de productos del DOM
             products.forEach(function(card) {
-                const title = card.querySelector('.product-title').textContent;
-                const priceElement = card.querySelector('.discounted-price');
-                const price = priceElement ? parseInt(priceElement.textContent.replace(/[^0-9]/g, '')) : 0;
-                const stockBadge = card.querySelector('.stock-badge');
-                const inStock = !stockBadge.classList.contains('out-of-stock');
+                var title = card.querySelector('.product-title').textContent;
+                var priceElement = card.querySelector('.discounted-price');
+                var price = priceElement ? parseInt(priceElement.textContent.replace(/[^0-9]/g, '')) : 0;
+                var stockBadge = card.querySelector('.stock-badge');
+                var inStock = !stockBadge.classList.contains('out-of-stock');
                 
                 productData.push({ title: title, price: price, inStock: inStock, element: card });
             });
@@ -5834,7 +5837,7 @@ function getPortalHTML(products, customer) {
             allProducts = productData;
             
             // Generar filtros basados en las etiquetas de la imagen proporcionada
-            const filterData = {
+            var filterData = {
                 collections: [
                     'Home page', 'Tobogán', 'Imanix Temáticos', 'Ver Todo Mundo Imanix',
                     'Envío Express', 'iPlayDay!', 'Juguetes Magnéticos', 'Ver Todo IMANIX',
@@ -5853,62 +5856,72 @@ function getPortalHTML(products, customer) {
             };
             
             // Llenar filtros de colecciones
-            const collectionFilters = document.getElementById('collectionFilters');
-            collectionFilters.innerHTML = filterData.collections.map(function(collection) {
-                return '<label class="filter-checkbox">' +
-                    '<input type="checkbox" value="' + collection + '" onchange="applyFilters()">' +
-                    '<span class="checkmark"></span>' +
-                    collection +
-                '</label>';
-            }).join('');
+            var collectionFilters = document.getElementById('collectionFilters');
+            if (collectionFilters) {
+                collectionFilters.innerHTML = filterData.collections.map(function(collection) {
+                    return '<label class="filter-checkbox">' +
+                        '<input type="checkbox" value="' + collection + '" onchange="applyFilters()">' +
+                        '<span class="checkmark"></span>' +
+                        collection +
+                    '</label>';
+                }).join('');
+            }
             
             // Llenar filtros de categorías
-            const categoryFilters = document.getElementById('categoryFilters');
-            categoryFilters.innerHTML = filterData.categories.map(function(category) {
-                return '<label class="filter-checkbox">' +
-                    '<input type="checkbox" value="' + category + '" onchange="applyFilters()">' +
-                    '<span class="checkmark"></span>' +
-                    category +
-                '</label>';
-            }).join('');
+            var categoryFilters = document.getElementById('categoryFilters');
+            if (categoryFilters) {
+                categoryFilters.innerHTML = filterData.categories.map(function(category) {
+                    return '<label class="filter-checkbox">' +
+                        '<input type="checkbox" value="' + category + '" onchange="applyFilters()">' +
+                        '<span class="checkmark"></span>' +
+                        category +
+                    '</label>';
+                }).join('');
+            }
             
             // Llenar filtros de edad
-            const ageFilters = document.getElementById('ageFilters');
-            ageFilters.innerHTML = filterData.ages.map(function(age) {
-                return '<label class="filter-checkbox">' +
-                    '<input type="checkbox" value="' + age + '" onchange="applyFilters()">' +
-                    '<span class="checkmark"></span>' +
-                    age +
-                '</label>';
-            }).join('');
+            var ageFilters = document.getElementById('ageFilters');
+            if (ageFilters) {
+                ageFilters.innerHTML = filterData.ages.map(function(age) {
+                    return '<label class="filter-checkbox">' +
+                        '<input type="checkbox" value="' + age + '" onchange="applyFilters()">' +
+                        '<span class="checkmark"></span>' +
+                        age +
+                    '</label>';
+                }).join('');
+            }
         }
 
         // Función para aplicar filtros
         function applyFilters() {
             // Recopilar filtros activos
-            activeFilters.collections = Array.from(document.querySelectorAll('#collectionFilters input:checked')).map(cb => cb.value);
-            activeFilters.categories = Array.from(document.querySelectorAll('#categoryFilters input:checked')).map(cb => cb.value);
-            activeFilters.ages = Array.from(document.querySelectorAll('#ageFilters input:checked')).map(cb => cb.value);
-            activeFilters.availability = Array.from(document.querySelectorAll('.filter-options input:checked')).map(cb => cb.value);
+            activeFilters.collections = Array.from(document.querySelectorAll('#collectionFilters input:checked')).map(function(cb) { return cb.value; });
+            activeFilters.categories = Array.from(document.querySelectorAll('#categoryFilters input:checked')).map(function(cb) { return cb.value; });
+            activeFilters.ages = Array.from(document.querySelectorAll('#ageFilters input:checked')).map(function(cb) { return cb.value; });
+            activeFilters.availability = Array.from(document.querySelectorAll('.filter-options input:checked')).map(function(cb) { return cb.value; });
             
-            const minPrice = document.getElementById('minPrice').value;
-            const maxPrice = document.getElementById('maxPrice').value;
+            var minPriceEl = document.getElementById('minPrice');
+            var maxPriceEl = document.getElementById('maxPrice');
+            var minPrice = minPriceEl ? minPriceEl.value : '';
+            var maxPrice = maxPriceEl ? maxPriceEl.value : '';
             activeFilters.priceRange.min = minPrice ? parseInt(minPrice) : null;
             activeFilters.priceRange.max = maxPrice ? parseInt(maxPrice) : null;
             
             // Aplicar filtros a productos
-            const productCards = document.querySelectorAll('.product-card');
-            let visibleCount = 0;
+            var productCards = document.querySelectorAll('.product-card');
+            var visibleCount = 0;
             
             productCards.forEach(function(card) {
-                let shouldShow = true;
+                var shouldShow = true;
                 
                 // Filtro por texto de búsqueda
-                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                var searchInputEl = document.getElementById('searchInput');
+                var searchTerm = searchInputEl ? searchInputEl.value.toLowerCase() : '';
                 if (searchTerm) {
-                    const title = card.querySelector('.product-title').textContent.toLowerCase();
-                    const skuElement = card.querySelector('.sku');
-                    const sku = skuElement ? skuElement.textContent.toLowerCase() : '';
+                    var titleEl = card.querySelector('.product-title');
+                    var title = titleEl ? titleEl.textContent.toLowerCase() : '';
+                    var skuElement = card.querySelector('.sku');
+                    var sku = skuElement ? skuElement.textContent.toLowerCase() : '';
                     if (!title.includes(searchTerm) && !sku.includes(searchTerm)) {
                         shouldShow = false;
                     }
@@ -5916,8 +5929,8 @@ function getPortalHTML(products, customer) {
                 
                 // Filtro por disponibilidad
                 if (activeFilters.availability.length > 0) {
-                    const stockBadge = card.querySelector('.stock-badge');
-                    const inStock = !stockBadge.classList.contains('out-of-stock');
+                    var stockBadge = card.querySelector('.stock-badge');
+                    var inStock = stockBadge ? !stockBadge.classList.contains('out-of-stock') : true;
                     
                     if (activeFilters.availability.includes('in-stock') && !inStock) {
                         shouldShow = false;
@@ -5929,10 +5942,10 @@ function getPortalHTML(products, customer) {
                 
                 // Filtro por precio
                 if (activeFilters.priceRange.min || activeFilters.priceRange.max) {
-                    const priceElement = card.querySelector('.discounted-price');
+                    var priceElement = card.querySelector('.discounted-price');
                     if (priceElement) {
-                        const priceText = priceElement.textContent;
-                        const price = parseInt(priceText.replace(/[^0-9]/g, ''));
+                        var priceText = priceElement.textContent;
+                        var price = parseInt(priceText.replace(/[^0-9]/g, ''));
                         
                         if (activeFilters.priceRange.min && price < activeFilters.priceRange.min) {
                             shouldShow = false;
@@ -5952,8 +5965,8 @@ function getPortalHTML(products, customer) {
             updateActiveFilters();
             
             // Mostrar mensaje si no hay productos
-            const productsGrid = document.getElementById('productsGrid');
-            let noProductsMsg = productsGrid.querySelector('.no-products-filtered');
+            var productsGrid = document.getElementById('productsGrid');
+            var noProductsMsg = productsGrid ? productsGrid.querySelector('.no-products-filtered') : null;
             
             if (visibleCount === 0) {
                 if (!noProductsMsg) {
@@ -5977,18 +5990,20 @@ function getPortalHTML(products, customer) {
 
         // Función para actualizar filtros activos
         function updateActiveFilters() {
-            const activeFiltersDiv = document.getElementById('activeFilters');
-            const activeFiltersList = document.getElementById('activeFiltersList');
+            var activeFiltersDiv = document.getElementById('activeFilters');
+            var activeFiltersList = document.getElementById('activeFiltersList');
             
-            const allActiveFilters = []
+            if (!activeFiltersDiv || !activeFiltersList) return;
+            
+            var allActiveFilters = []
                 .concat(activeFilters.collections.map(function(f) { return { type: 'collection', value: f, label: f }; }))
                 .concat(activeFilters.categories.map(function(f) { return { type: 'category', value: f, label: f }; }))
                 .concat(activeFilters.ages.map(function(f) { return { type: 'age', value: f, label: f }; }))
                 .concat(activeFilters.availability.map(function(f) { return { type: 'availability', value: f, label: f === 'in-stock' ? 'En Stock' : 'Sin Stock' }; }));
             
             if (activeFilters.priceRange.min || activeFilters.priceRange.max) {
-                const minText = activeFilters.priceRange.min ? formatPrice(activeFilters.priceRange.min) : 'Min';
-                const maxText = activeFilters.priceRange.max ? formatPrice(activeFilters.priceRange.max) : 'Max';
+                var minText = activeFilters.priceRange.min ? formatPrice(activeFilters.priceRange.min) : 'Min';
+                var maxText = activeFilters.priceRange.max ? formatPrice(activeFilters.priceRange.max) : 'Max';
                 allActiveFilters.push({ type: 'price', value: 'price', label: minText + ' - ' + maxText });
             }
             
@@ -6040,9 +6055,9 @@ function getPortalHTML(products, customer) {
             document.querySelectorAll('.filter-checkbox input[type="checkbox"]').forEach(function(cb) { cb.checked = false; });
             
             // Limpiar campos de precio
-            const minPriceEl = document.getElementById('minPrice');
-            const maxPriceEl = document.getElementById('maxPrice');
-            const searchInputEl = document.getElementById('searchInput');
+            var minPriceEl = document.getElementById('minPrice');
+            var maxPriceEl = document.getElementById('maxPrice');
+            var searchInputEl = document.getElementById('searchInput');
             
             if (minPriceEl) minPriceEl.value = '';
             if (maxPriceEl) maxPriceEl.value = '';
@@ -6063,19 +6078,23 @@ function getPortalHTML(products, customer) {
             });
             
             // Ocultar filtros activos
-            const activeFiltersEl = document.getElementById('activeFilters');
+            var activeFiltersEl = document.getElementById('activeFilters');
             if (activeFiltersEl) activeFiltersEl.style.display = 'none';
             
             // Ocultar mensaje de no productos
-            const noProductsMsg = document.querySelector('.no-products-filtered');
+            var noProductsMsg = document.querySelector('.no-products-filtered');
             if (noProductsMsg) {
                 noProductsMsg.style.display = 'none';
             }
         }
 
-        // Mejorar la función de filtro de productos existente
-        function filterProducts() {
-            applyFilters(); // Usar la nueva función que maneja todos los filtros
+        // Función para integrar búsqueda con filtros (si están disponibles)
+        function integratedFilter() {
+            if (typeof applyFilters === 'function') {
+                applyFilters();
+            } else {
+                filterProducts();
+            }
         }
 
         // Inicializar al cargar la página
