@@ -4372,16 +4372,29 @@ function getPortalHTML(products, customer) {
                     }
                 }
                 
-                // Filtro por Edades (mejorado)
+                // Filtro por Edades (mejorado para múltiples líneas)
                 if (activeFilters.ages.length > 0 && shouldShow) {
                     var hasEdad = activeFilters.ages.some(function(edad) {
                         // Buscar coincidencia exacta o parcial
                         return metaValues.some(function(metaValue) {
                             if (!metaValue) return false;
                             // Limpiar IDs de Shopify
-                            if (metaValue.startsWith('gid://shopify/')) return false;
+                            if (typeof metaValue === 'string' && metaValue.startsWith('gid://shopify/')) return false;
+                            
+                            // Convertir a string si no lo es
+                            var valueStr = String(metaValue);
+                            
+                            // Si contiene saltos de línea, separar y buscar en cada línea
+                            if (valueStr.includes('\n') || valueStr.includes('\r')) {
+                                var lines = valueStr.split(/[\n\r]+/);
+                                return lines.some(function(line) {
+                                    var cleanLine = line.trim();
+                                    return cleanLine === edad || cleanLine.toLowerCase().includes(edad.toLowerCase());
+                                });
+                            }
+                            
                             // Coincidencia exacta o contiene
-                            return metaValue === edad || metaValue.toLowerCase().includes(edad.toLowerCase());
+                            return valueStr === edad || valueStr.toLowerCase().includes(edad.toLowerCase());
                         });
                     });
                     if (!hasEdad) {
@@ -4453,8 +4466,10 @@ function getPortalHTML(products, customer) {
         function cleanShopifyValue(value, key) {
             if (!value) return null;
             
+            console.log('🔍 cleanShopifyValue - Input:', value, 'Key:', key);
+            
             // Si es un ID de Shopify, intentar extraer información útil
-            if (value.startsWith('gid://shopify/')) {
+            if (typeof value === 'string' && value.startsWith('gid://shopify/')) {
                 console.log('🔧 Procesando ID de Shopify:', value, 'para key:', key);
                 
                 // Para edades, podríamos mapear IDs conocidos a valores legibles
@@ -4476,6 +4491,24 @@ function getPortalHTML(products, customer) {
                 return 'ID-' + (idMatch ? idMatch[1] : 'unknown');
             }
             
+            // Si es un array (múltiples valores), convertir a string separado por saltos de línea
+            if (Array.isArray(value)) {
+                console.log('📋 Array detectado:', value);
+                return value.join('\n');
+            }
+            
+            // Si es un objeto, intentar extraer información útil
+            if (typeof value === 'object' && value !== null) {
+                console.log('🔧 Objeto detectado:', value);
+                // Buscar propiedades comunes como 'value', 'text', 'name'
+                if (value.value) return value.value;
+                if (value.text) return value.text;
+                if (value.name) return value.name;
+                // Si no, convertir a JSON string
+                return JSON.stringify(value);
+            }
+            
+            console.log('✅ Valor limpio:', value);
             return value;
         }
         
@@ -4526,8 +4559,28 @@ function getPortalHTML(products, customer) {
                                 }
                                 else if (keyLower.includes('edad') || keyLower.includes('age') || keyLower.includes('años') || 
                                          key === 'filtros.productos.edades' || key.includes('edades')) {
-                                    console.log('🎯 Edad encontrada:', key, '=', cleanValue);
-                                    edades.add(cleanValue);
+                                    console.log('🎯 Edad encontrada (RAW):', key, '=', value);
+                                    console.log('🎯 Edad limpia:', key, '=', cleanValue);
+                                    console.log('🎯 Tipo de valor:', typeof cleanValue);
+                                    
+                                    // Si es múltiples líneas, separar por saltos de línea
+                                    if (cleanValue && typeof cleanValue === 'string') {
+                                        var edadValues = cleanValue.split(/[\n\r]+/).filter(function(v) { 
+                                            return v.trim().length > 0; 
+                                        });
+                                        
+                                        console.log('🎯 Edades separadas:', edadValues);
+                                        
+                                        edadValues.forEach(function(edad) {
+                                            var edadTrimmed = edad.trim();
+                                            if (edadTrimmed) {
+                                                edades.add(edadTrimmed);
+                                                console.log('✅ Edad agregada:', edadTrimmed);
+                                            }
+                                        });
+                                    } else {
+                                        edades.add(cleanValue);
+                                    }
                                 }
                                 else if (keyLower.includes('pieza') || keyLower.includes('piece') || keyLower.includes('cantidad')) {
                                     cantidadPiezas.add(cleanValue);
