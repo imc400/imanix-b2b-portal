@@ -4530,42 +4530,47 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
     </div>
 
     <script>
-        // Definir switchTab en el scope global inmediatamente
-        window.switchTab = function(tabName, buttonElement) {
+        // Definir switchTab inmediatamente cuando se carga el script
+        function switchTab(tabName, buttonElement) {
             console.log('🔄 switchTab llamado con:', tabName);
             
-            // Ocultar todas las tabs
-            const tabs = document.querySelectorAll('.tab-content');
-            console.log('📋 Tabs encontradas:', tabs.length);
-            tabs.forEach(tab => {
-                console.log('❌ Ocultando tab:', tab.id);
-                tab.classList.remove('active');
-            });
-            
-            // Mostrar tab seleccionada
-            const targetTab = document.getElementById(tabName + '-tab');
-            console.log('🎯 Tab objetivo:', targetTab ? targetTab.id : 'NO ENCONTRADA');
-            if (targetTab) {
-                targetTab.classList.add('active');
-                console.log('✅ Tab activada:', targetTab.id);
+            try {
+                // Ocultar todas las tabs
+                const tabs = document.querySelectorAll('.tab-content');
+                console.log('📋 Tabs encontradas:', tabs.length);
+                tabs.forEach(tab => {
+                    console.log('❌ Ocultando tab:', tab.id);
+                    tab.classList.remove('active');
+                });
+                
+                // Mostrar tab seleccionada
+                const targetTab = document.getElementById(tabName + '-tab');
+                console.log('🎯 Tab objetivo:', targetTab ? targetTab.id : 'NO ENCONTRADA');
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                    console.log('✅ Tab activada:', targetTab.id);
+                } else {
+                    console.error('❌ No se encontró la tab:', tabName + '-tab');
+                }
+                
+                // Actualizar botones
+                const buttons = document.querySelectorAll('.tab-button');
+                buttons.forEach(btn => btn.classList.remove('active'));
+                
+                // Marcar el botón clickeado como activo
+                if (buttonElement) {
+                    buttonElement.classList.add('active');
+                    console.log('✅ Botón activado:', buttonElement.textContent.trim());
+                } else {
+                    console.error('❌ No se recibió buttonElement');
+                }
+            } catch (error) {
+                console.error('❌ Error en switchTab:', error);
             }
-            
-            // Actualizar botones
-            const buttons = document.querySelectorAll('.tab-button');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            
-            // Marcar el botón clickeado como activo
-            if (buttonElement) {
-                buttonElement.classList.add('active');
-                console.log('✅ Botón activado:', buttonElement.textContent.trim());
-            }
-        };
-
-        
-        // También definir la función en el scope local para compatibilidad
-        function switchTab(tabName, buttonElement) {
-            window.switchTab(tabName, buttonElement);
         }
+        
+        // También asignar a window para acceso global
+        window.switchTab = switchTab;
 
         async function updateProfile(event) {
             event.preventDefault();
