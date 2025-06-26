@@ -4103,8 +4103,7 @@ function getPortalHTML(products, customer) {
                             <span class="sku">SKU: ${variant?.sku || 'N/A'}</span>
                             <span class="stock-count">${stock} unidades</span>
                         </div>
-                        <button class="add-to-cart-btn" ${stock === 0 ? 'disabled' : ''} 
-                                onclick="addToCart('${product.id}', '${variant?.id}', '${product.title}', ${discountedPrice}, '${image}')">
+                        <button class="add-to-cart-btn" ${stock === 0 ? 'disabled' : ''}>
                             <i class="fas fa-cart-plus"></i>
                             ${stock > 0 ? 'Agregar al Carrito' : 'Sin Stock'}
                         </button>
@@ -5473,7 +5472,7 @@ function getPortalHTML(products, customer) {
                 <div class="catalog-controls">
                     <input type="text" class="search-box" placeholder="Buscar productos..." 
                            id="searchInput" onkeyup="filterProducts()">
-                    <button class="filter-toggle-btn" onclick="toggleFilters()">
+                    <button class="filter-toggle-btn">
                         <i class="fas fa-filter"></i>
                         Filtros
                     </button>
@@ -6238,6 +6237,80 @@ function getPortalHTML(products, customer) {
         // Inicializar al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             updateCartBadge();
+            
+            // Configurar event listeners para los botones
+            var userAccountBtn = document.querySelector('.user-account');
+            if (userAccountBtn) {
+                userAccountBtn.addEventListener('click', function() {
+                    var dropdown = document.getElementById('userDropdown');
+                    if (dropdown) {
+                        dropdown.classList.toggle('show');
+                    }
+                });
+            }
+            
+            var filterToggleBtn = document.querySelector('.filter-toggle-btn');
+            if (filterToggleBtn) {
+                filterToggleBtn.addEventListener('click', function() {
+                    var panel = document.getElementById('filtersPanel');
+                    if (panel) {
+                        panel.classList.toggle('show');
+                        
+                        // Si se está mostrando el panel, inicializar filtros
+                        if (panel.classList.contains('show')) {
+                            initializeFilters();
+                        }
+                    }
+                });
+            }
+            
+            var cartBtn = document.querySelector('.cart-navbar-btn');
+            if (cartBtn) {
+                cartBtn.addEventListener('click', function() {
+                    window.location.href = '/carrito';
+                });
+            }
+            
+            // Configurar event listeners para botones de agregar al carrito
+            document.addEventListener('click', function(event) {
+                if (event.target.classList.contains('add-to-cart-btn') || event.target.closest('.add-to-cart-btn')) {
+                    var btn = event.target.classList.contains('add-to-cart-btn') ? event.target : event.target.closest('.add-to-cart-btn');
+                    var productCard = btn.closest('.product-card');
+                    if (productCard) {
+                        var title = productCard.querySelector('.product-title').textContent;
+                        var priceEl = productCard.querySelector('.discounted-price');
+                        var price = priceEl ? parseInt(priceEl.textContent.replace(/[^0-9]/g, '')) : 0;
+                        var img = productCard.querySelector('.product-image img');
+                        var image = img ? img.src : '';
+                        
+                        // Generar IDs únicos para el producto
+                        var productId = 'product_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                        var variantId = 'variant_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                        
+                        // Agregar al carrito
+                        var existingItem = cart.find(function(item) { return item.title === title; });
+                        
+                        if (existingItem) {
+                            existingItem.quantity += 1;
+                        } else {
+                            cart.push({
+                                productId: productId,
+                                variantId: variantId,
+                                title: title,
+                                price: price,
+                                image: image,
+                                quantity: 1
+                            });
+                        }
+                        
+                        localStorage.setItem('b2bCart', JSON.stringify(cart));
+                        updateCartBadge();
+                        
+                        // Mostrar confirmación
+                        showNotification(title + ' agregado al carrito', 'success');
+                    }
+                }
+            });
         });
     </script>
 </body>
