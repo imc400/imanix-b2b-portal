@@ -5580,12 +5580,12 @@ function getPortalHTML(products, customer) {
 
     <script>
         // Variables globales
-        let cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
+        var cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
 
         // Limpiar y migrar productos del carrito (productos añadidos antes de la actualización)
-        let cartChanged = false;
+        var cartChanged = false;
 
-        cart = cart.map(item => {
+        cart = cart.map(function(item) {
             // Si el item no tiene variantId pero tiene productId, intentamos solucionarlo
             if (!item.variantId && item.productId) {
                 console.log('🔧 Migrando producto sin variantId:', item.title);
@@ -5593,7 +5593,7 @@ function getPortalHTML(products, customer) {
                 cartChanged = true;
             }
             return item;
-        }).filter(item => {
+        }).filter(function(item) {
             // Eliminar items que no tienen ni variantId ni productId
             if (!item.variantId && !item.productId) {
                 console.log('🗑️ Eliminando producto inválido:', item);
@@ -5607,6 +5607,144 @@ function getPortalHTML(products, customer) {
             localStorage.setItem('b2bCart', JSON.stringify(cart));
             console.log('🧹 Carrito limpiado y migrado');
         }
+        
+        // Definir funciones en el ámbito global para que estén disponibles en onclick
+        window.addToCart = function(productId, variantId, title, price, image) {
+            var existingItem = cart.find(function(item) { return item.productId === productId && item.variantId === variantId; });
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    productId: productId,
+                    variantId: variantId,
+                    title: title,
+                    price: price,
+                    image: image,
+                    quantity: 1
+                });
+            }
+            
+            localStorage.setItem('b2bCart', JSON.stringify(cart));
+            updateCartBadge();
+            
+            // Mostrar confirmación
+            showNotification(title + ' agregado al carrito', 'success');
+        };
+        
+        window.toggleUserDropdown = function() {
+            var dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        };
+        
+        window.toggleFilters = function() {
+            var panel = document.getElementById('filtersPanel');
+            if (panel) {
+                panel.classList.toggle('show');
+                
+                // Si se está mostrando el panel, inicializar filtros
+                if (panel.classList.contains('show')) {
+                    initializeFilters();
+                }
+            }
+        };
+        
+        window.applyFilters = function() {
+            // Recopilar filtros activos
+            activeFilters.collections = Array.from(document.querySelectorAll('#collectionFilters input:checked')).map(function(cb) { return cb.value; });
+            activeFilters.categories = Array.from(document.querySelectorAll('#categoryFilters input:checked')).map(function(cb) { return cb.value; });
+            activeFilters.ages = Array.from(document.querySelectorAll('#ageFilters input:checked')).map(function(cb) { return cb.value; });
+            activeFilters.availability = Array.from(document.querySelectorAll('.filter-options input:checked')).map(function(cb) { return cb.value; });
+            
+            var minPriceEl = document.getElementById('minPrice');
+            var maxPriceEl = document.getElementById('maxPrice');
+            var minPrice = minPriceEl ? minPriceEl.value : '';
+            var maxPrice = maxPriceEl ? maxPriceEl.value : '';
+            activeFilters.priceRange.min = minPrice ? parseInt(minPrice) : null;
+            activeFilters.priceRange.max = maxPrice ? parseInt(maxPrice) : null;
+            
+            // Aplicar filtros a productos
+            var productCards = document.querySelectorAll('.product-card');
+            var visibleCount = 0;
+            
+            productCards.forEach(function(card) {
+                var shouldShow = true;
+                
+                // Filtro por texto de búsqueda
+                var searchInputEl = document.getElementById('searchInput');
+                var searchTerm = searchInputEl ? searchInputEl.value.toLowerCase() : '';
+                if (searchTerm) {
+                    var titleEl = card.querySelector('.product-title');
+                    var title = titleEl ? titleEl.textContent.toLowerCase() : '';
+                    var skuElement = card.querySelector('.sku');
+                    var sku = skuElement ? skuElement.textContent.toLowerCase() : '';
+                    if (!title.includes(searchTerm) && !sku.includes(searchTerm)) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Filtro por disponibilidad
+                if (activeFilters.availability.length > 0) {
+                    var stockBadge = card.querySelector('.stock-badge');
+                    var inStock = stockBadge ? !stockBadge.classList.contains('out-of-stock') : true;
+                    
+                    if (activeFilters.availability.includes('in-stock') && !inStock) {
+                        shouldShow = false;
+                    }
+                    if (activeFilters.availability.includes('out-of-stock') && inStock) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Filtro por precio
+                if (activeFilters.priceRange.min || activeFilters.priceRange.max) {
+                    var priceElement = card.querySelector('.discounted-price');
+                    if (priceElement) {
+                        var priceText = priceElement.textContent;
+                        var price = parseInt(priceText.replace(/[^0-9]/g, ''));
+                        
+                        if (activeFilters.priceRange.min && price < activeFilters.priceRange.min) {
+                            shouldShow = false;
+                        }
+                        if (activeFilters.priceRange.max && price > activeFilters.priceRange.max) {
+                            shouldShow = false;
+                        }
+                    }
+                }
+                
+                // Mostrar/ocultar producto
+                card.style.display = shouldShow ? 'block' : 'none';
+                if (shouldShow) visibleCount++;
+            });
+            
+            // Actualizar filtros activos
+            updateActiveFilters();
+            
+            // Mostrar mensaje si no hay productos
+            var productsGrid = document.getElementById('productsGrid');
+            var noProductsMsg = productsGrid ? productsGrid.querySelector('.no-products-filtered') : null;
+            
+            if (visibleCount === 0) {
+                if (!noProductsMsg) {
+                    noProductsMsg = document.createElement('div');
+                    noProductsMsg.className = 'no-products-filtered';
+                    noProductsMsg.innerHTML = 
+                        '<div style="text-align: center; padding: 3rem; color: #666;">' +
+                            '<i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem; color: #d1d5db;"></i>' +
+                            '<h3>No se encontraron productos</h3>' +
+                            '<p>Intenta ajustar los filtros para ver más resultados</p>' +
+                        '</div>';
+                    productsGrid.appendChild(noProductsMsg);
+                }
+                noProductsMsg.style.display = 'block';
+            } else {
+                if (noProductsMsg) {
+                    noProductsMsg.style.display = 'none';
+                }
+            }
+        };
         
         // Actualizar contador del carrito
         function updateCartBadge() {
