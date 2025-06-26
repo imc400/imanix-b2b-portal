@@ -3530,7 +3530,7 @@ function getPortalHTML(products, customer) {
                                 <i class="fas fa-shopping-cart"></i>
                                 Mi Carrito
                             </a>
-                            <a href="/historial" class="dropdown-item">
+                            <a href="/perfil" class="dropdown-item">
                                 <i class="fas fa-history"></i>
                                 Historial de Pedidos
                             </a>
@@ -4560,6 +4560,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                 console.log('✅ Botón activado:', buttonElement.textContent.trim());
             }
         };
+
         
         // También definir la función en el scope local para compatibilidad
         function switchTab(tabName, buttonElement) {
