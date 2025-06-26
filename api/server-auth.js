@@ -5493,5 +5493,4 @@ function getOrderDetailHTML(customer, order) {
 }
 
 // Export the app for Vercel
-module.exports = app; // Forced deployment Wed Jun 25 20:51:15 -04 2025
-console.log('IMANIX Branding Fix 1750899521');
+module.exports = app;
