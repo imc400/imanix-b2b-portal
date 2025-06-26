@@ -4530,7 +4530,8 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
     </div>
 
     <script>
-        function switchTab(tabName, buttonElement) {
+        // Definir switchTab en el scope global inmediatamente
+        window.switchTab = function(tabName, buttonElement) {
             console.log('🔄 switchTab llamado con:', tabName);
             
             // Ocultar todas las tabs
@@ -4558,6 +4559,11 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                 buttonElement.classList.add('active');
                 console.log('✅ Botón activado:', buttonElement.textContent.trim());
             }
+        };
+        
+        // También definir la función en el scope local para compatibilidad
+        function switchTab(tabName, buttonElement) {
+            window.switchTab(tabName, buttonElement);
         }
 
         async function updateProfile(event) {
