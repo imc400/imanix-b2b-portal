@@ -5100,10 +5100,290 @@ function getPortalHTML(products, customer) {
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
         }
 
+        /* SISTEMA DE FILTROS PROFESIONAL */
+        .catalog-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
 
+        .filter-toggle-btn {
+            background: linear-gradient(135deg, var(--imanix-yellow) 0%, var(--imanix-yellow-dark) 100%) !important;
+            color: var(--gray-800) !important;
+            border: 1px solid var(--imanix-yellow-dark) !important;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
+        .filter-toggle-btn:hover {
+            background: linear-gradient(135deg, var(--imanix-yellow-dark) 0%, #D4A500 100%) !important;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md) !important;
+        }
 
+        .filters-panel {
+            background: #FFFFFF !important;
+            border: 1px solid var(--gray-200) !important;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md) !important;
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
+        .filters-panel.show {
+            max-height: 800px;
+            opacity: 1;
+            margin-bottom: 2rem;
+        }
+
+        .filters-header {
+            background: linear-gradient(135deg, var(--imanix-yellow-light) 0%, var(--imanix-yellow) 100%) !important;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .filters-header h3 {
+            color: var(--gray-800) !important;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .clear-filters-btn {
+            background: transparent;
+            border: 1px solid var(--gray-300);
+            color: var(--gray-600);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .clear-filters-btn:hover {
+            background: #EF4444;
+            color: white;
+            border-color: #EF4444;
+        }
+
+        .filters-content {
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .filter-group {
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 1.25rem;
+            background: var(--gray-50);
+        }
+
+        .filter-title {
+            color: var(--gray-800) !important;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .filter-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+
+        .filter-checkbox:hover {
+            background: rgba(255, 206, 54, 0.1);
+        }
+
+        .filter-checkbox input[type="checkbox"] {
+            display: none;
+        }
+
+        .checkmark {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--gray-300);
+            border-radius: 4px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .filter-checkbox input[type="checkbox"]:checked + .checkmark {
+            background: var(--imanix-yellow);
+            border-color: var(--imanix-yellow-dark);
+        }
+
+        .filter-checkbox input[type="checkbox"]:checked + .checkmark::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--gray-800);
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .price-range-filter {
+            margin-top: 0.5rem;
+        }
+
+        .price-inputs {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .price-inputs input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .price-inputs span {
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .active-filters {
+            background: #FFFFFF !important;
+            border: 1px solid var(--gray-200) !important;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm) !important;
+        }
+
+        .active-filters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .clear-all-btn {
+            background: #EF4444;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .clear-all-btn:hover {
+            background: #DC2626;
+        }
+
+        .active-filters-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .active-filter-tag {
+            background: var(--imanix-yellow);
+            color: var(--gray-800);
+            padding: 0.375rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .active-filter-tag .remove-filter {
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--gray-800);
+            border: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .active-filter-tag .remove-filter:hover {
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        /* RESPONSIVE PARA FILTROS */
+        @media (max-width: 768px) {
+            .catalog-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-toggle-btn {
+                justify-content: center;
+            }
+
+            .filters-content {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .filters-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .active-filters-header {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: stretch;
+            }
+        }
 
     </style>
 </head>
@@ -5193,9 +5473,105 @@ function getPortalHTML(products, customer) {
                 <div class="catalog-controls">
                     <input type="text" class="search-box" placeholder="Buscar productos..." 
                            id="searchInput" onkeyup="filterProducts()">
+                    <button class="filter-toggle-btn" onclick="toggleFilters()">
+                        <i class="fas fa-filter"></i>
+                        Filtros
+                    </button>
+                </div>
+            </div>
+
+            <!-- Panel de Filtros -->
+            <div class="filters-panel" id="filtersPanel">
+                <div class="filters-header">
+                    <h3><i class="fas fa-sliders-h"></i> Filtrar Productos</h3>
+                    <button class="clear-filters-btn" onclick="clearAllFilters()">
+                        <i class="fas fa-times"></i>
+                        Limpiar Todo
+                    </button>
+                </div>
+                
+                <div class="filters-content">
+                    <!-- Filtros por Colecciones -->
+                    <div class="filter-group">
+                        <h4 class="filter-title">
+                            <i class="fas fa-layer-group"></i>
+                            Colecciones
+                        </h4>
+                        <div class="filter-options" id="collectionFilters">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                    </div>
+
+                    <!-- Filtros por Categorías -->
+                    <div class="filter-group">
+                        <h4 class="filter-title">
+                            <i class="fas fa-tags"></i>
+                            Categorías
+                        </h4>
+                        <div class="filter-options" id="categoryFilters">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                    </div>
+
+                    <!-- Filtros por Edad -->
+                    <div class="filter-group">
+                        <h4 class="filter-title">
+                            <i class="fas fa-child"></i>
+                            Edad Recomendada
+                        </h4>
+                        <div class="filter-options" id="ageFilters">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                    </div>
+
+                    <!-- Filtros por Disponibilidad -->
+                    <div class="filter-group">
+                        <h4 class="filter-title">
+                            <i class="fas fa-boxes"></i>
+                            Disponibilidad
+                        </h4>
+                        <div class="filter-options">
+                            <label class="filter-checkbox">
+                                <input type="checkbox" value="in-stock" onchange="applyFilters()">
+                                <span class="checkmark"></span>
+                                En Stock
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" value="out-of-stock" onchange="applyFilters()">
+                                <span class="checkmark"></span>
+                                Sin Stock
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Filtros por Precio -->
+                    <div class="filter-group">
+                        <h4 class="filter-title">
+                            <i class="fas fa-dollar-sign"></i>
+                            Rango de Precio
+                        </h4>
+                        <div class="price-range-filter">
+                            <div class="price-inputs">
+                                <input type="number" id="minPrice" placeholder="Mín" onchange="applyFilters()">
+                                <span>-</span>
+                                <input type="number" id="maxPrice" placeholder="Máx" onchange="applyFilters()">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
+            <!-- Filtros Activos -->
+            <div class="active-filters" id="activeFilters" style="display: none;">
+                <div class="active-filters-header">
+                    <span>Filtros activos:</span>
+                    <button class="clear-all-btn" onclick="clearAllFilters()">Limpiar todo</button>
+                </div>
+                <div class="active-filters-list" id="activeFiltersList">
+                    <!-- Se llenará dinámicamente -->
+                </div>
+            </div>
+
             <div class="products-grid" id="productsGrid">
                 ${renderProducts(products, customerDiscount)}
             </div>
@@ -5367,6 +5743,326 @@ function getPortalHTML(products, customer) {
                 style: 'currency',
                 currency: 'CLP'
             }).format(price);
+        }
+
+        // Variables globales para filtros
+        let allProducts = []; // Almacenar todos los productos para filtrado
+        let activeFilters = {
+            collections: [],
+            categories: [],
+            ages: [],
+            availability: [],
+            priceRange: { min: null, max: null }
+        };
+
+        // Función para extraer etiquetas de productos y organizarlas
+        function extractProductTags(products) {
+            const collections = new Set();
+            const categories = new Set();
+            const ages = new Set();
+            
+            products.forEach(product => {
+                if (product.tags) {
+                    const tags = product.tags.split(',').map(tag => tag.trim().toLowerCase());
+                    
+                    tags.forEach(tag => {
+                        // Filtrar colecciones (etiquetas que parecen nombres de colecciones)
+                        if (tag.includes('home') || tag.includes('tobogán') || tag.includes('imanix') || 
+                            tag.includes('envío') || tag.includes('playday') || tag.includes('magnético') ||
+                            tag.includes('armables') || tag.includes('juegos') || tag.includes('cyberday') ||
+                            tag.includes('regalos') || tag.includes('best') || tag.includes('newest')) {
+                            collections.add(tag);
+                        }
+                        
+                        // Filtrar edades (etiquetas que contienen años)
+                        if (tag.includes('años') || tag.includes('año') || tag.includes('adelante') ||
+                            tag.includes('3-5') || tag.includes('5-9') || tag.includes('9-en')) {
+                            ages.add(tag);
+                        }
+                        
+                        // Otras categorías
+                        if (tag.includes('stock') || tag.includes('recomendados') || tag.includes('over-') ||
+                            tag.includes('no-dropship') || tag.includes('clasicos') || tag.includes('experto') ||
+                            tag.includes('especiales') || tag.includes('complementos') || tag.includes('b2b') ||
+                            tag.includes('agrandatucoleccion') || tag.includes('piezas')) {
+                            categories.add(tag);
+                        }
+                    });
+                }
+            });
+            
+            return {
+                collections: Array.from(collections).sort(),
+                categories: Array.from(categories).sort(),
+                ages: Array.from(ages).sort()
+            };
+        }
+
+        // Función para mostrar/ocultar panel de filtros
+        function toggleFilters() {
+            const panel = document.getElementById('filtersPanel');
+            panel.classList.toggle('show');
+            
+            // Si se está mostrando el panel, inicializar filtros
+            if (panel.classList.contains('show')) {
+                initializeFilters();
+            }
+        }
+
+        // Función para inicializar los filtros con las etiquetas de los productos
+        function initializeFilters() {
+            const products = Array.from(document.querySelectorAll('.product-card'));
+            const productData = [];
+            
+            // Extraer datos de productos del DOM
+            products.forEach(card => {
+                const title = card.querySelector('.product-title').textContent;
+                const priceText = card.querySelector('.discounted-price').textContent;
+                const price = parseInt(priceText.replace(/[^0-9]/g, ''));
+                const stockBadge = card.querySelector('.stock-badge');
+                const inStock = !stockBadge.classList.contains('out-of-stock');
+                
+                productData.push({ title, price, inStock, element: card });
+            });
+            
+            allProducts = productData;
+            
+            // Generar filtros basados en las etiquetas de la imagen proporcionada
+            const filterData = {
+                collections: [
+                    'Home page', 'Tobogán', 'Imanix Temáticos', 'Ver Todo Mundo Imanix',
+                    'Envío Express', 'iPlayDay!', 'Juguetes Magnéticos', 'Ver Todo IMANIX',
+                    'OrderlyEmails - Recommended Products', 'Armables y 2D', 'Productos destacados',
+                    'Juegos plástico e imán', 'CyberDay2025', 'Regalos entre $40.000 - $60.000',
+                    'Haz de cada historia la mejor', 'Best Selling Products', 'Newest Products'
+                ],
+                categories: [
+                    'stock', 'RECOMENDADOS', 'over-16000', 'over-10000', 'NO-DROPSHIP',
+                    'Imanix-clasicos', 'imanix', 'experto', 'especiales', 'cyberday2025',
+                    'complementos', 'b2b', 'agrandatucoleccion', '50-70piezas', '30000-60000'
+                ],
+                ages: [
+                    '3 - 5 Años', '5 - 9 Años', '9 En Adelante', 'Experto', '3-5-anos', '5-9-anos'
+                ]
+            };
+            
+            // Llenar filtros de colecciones
+            const collectionFilters = document.getElementById('collectionFilters');
+            collectionFilters.innerHTML = filterData.collections.map(function(collection) {
+                return '<label class="filter-checkbox">' +
+                    '<input type="checkbox" value="' + collection + '" onchange="applyFilters()">' +
+                    '<span class="checkmark"></span>' +
+                    collection +
+                '</label>';
+            }).join('');
+            
+            // Llenar filtros de categorías
+            const categoryFilters = document.getElementById('categoryFilters');
+            categoryFilters.innerHTML = filterData.categories.map(function(category) {
+                return '<label class="filter-checkbox">' +
+                    '<input type="checkbox" value="' + category + '" onchange="applyFilters()">' +
+                    '<span class="checkmark"></span>' +
+                    category +
+                '</label>';
+            }).join('');
+            
+            // Llenar filtros de edad
+            const ageFilters = document.getElementById('ageFilters');
+            ageFilters.innerHTML = filterData.ages.map(function(age) {
+                return '<label class="filter-checkbox">' +
+                    '<input type="checkbox" value="' + age + '" onchange="applyFilters()">' +
+                    '<span class="checkmark"></span>' +
+                    age +
+                '</label>';
+            }).join('');
+        }
+
+        // Función para aplicar filtros
+        function applyFilters() {
+            // Recopilar filtros activos
+            activeFilters.collections = Array.from(document.querySelectorAll('#collectionFilters input:checked')).map(cb => cb.value);
+            activeFilters.categories = Array.from(document.querySelectorAll('#categoryFilters input:checked')).map(cb => cb.value);
+            activeFilters.ages = Array.from(document.querySelectorAll('#ageFilters input:checked')).map(cb => cb.value);
+            activeFilters.availability = Array.from(document.querySelectorAll('.filter-options input:checked')).map(cb => cb.value);
+            
+            const minPrice = document.getElementById('minPrice').value;
+            const maxPrice = document.getElementById('maxPrice').value;
+            activeFilters.priceRange.min = minPrice ? parseInt(minPrice) : null;
+            activeFilters.priceRange.max = maxPrice ? parseInt(maxPrice) : null;
+            
+            // Aplicar filtros a productos
+            const productCards = document.querySelectorAll('.product-card');
+            let visibleCount = 0;
+            
+            productCards.forEach(card => {
+                let shouldShow = true;
+                
+                // Filtro por texto de búsqueda
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                if (searchTerm) {
+                    const title = card.querySelector('.product-title').textContent.toLowerCase();
+                    const sku = card.querySelector('.sku') ? card.querySelector('.sku').textContent.toLowerCase() : '';
+                    if (!title.includes(searchTerm) && !sku.includes(searchTerm)) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Filtro por disponibilidad
+                if (activeFilters.availability.length > 0) {
+                    const stockBadge = card.querySelector('.stock-badge');
+                    const inStock = !stockBadge.classList.contains('out-of-stock');
+                    
+                    if (activeFilters.availability.includes('in-stock') && !inStock) {
+                        shouldShow = false;
+                    }
+                    if (activeFilters.availability.includes('out-of-stock') && inStock) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Filtro por precio
+                if (activeFilters.priceRange.min || activeFilters.priceRange.max) {
+                    const priceText = card.querySelector('.discounted-price').textContent;
+                    const price = parseInt(priceText.replace(/[^0-9]/g, ''));
+                    
+                    if (activeFilters.priceRange.min && price < activeFilters.priceRange.min) {
+                        shouldShow = false;
+                    }
+                    if (activeFilters.priceRange.max && price > activeFilters.priceRange.max) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Mostrar/ocultar producto
+                card.style.display = shouldShow ? 'block' : 'none';
+                if (shouldShow) visibleCount++;
+            });
+            
+            // Actualizar filtros activos
+            updateActiveFilters();
+            
+            // Mostrar mensaje si no hay productos
+            const productsGrid = document.getElementById('productsGrid');
+            let noProductsMsg = productsGrid.querySelector('.no-products-filtered');
+            
+            if (visibleCount === 0) {
+                if (!noProductsMsg) {
+                    noProductsMsg = document.createElement('div');
+                    noProductsMsg.className = 'no-products-filtered';
+                    noProductsMsg.innerHTML = 
+                        '<div style="text-align: center; padding: 3rem; color: #666;">' +
+                            '<i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem; color: #d1d5db;"></i>' +
+                            '<h3>No se encontraron productos</h3>' +
+                            '<p>Intenta ajustar los filtros para ver más resultados</p>' +
+                        '</div>';
+                    productsGrid.appendChild(noProductsMsg);
+                }
+                noProductsMsg.style.display = 'block';
+            } else {
+                if (noProductsMsg) {
+                    noProductsMsg.style.display = 'none';
+                }
+            }
+        }
+
+        // Función para actualizar filtros activos
+        function updateActiveFilters() {
+            const activeFiltersDiv = document.getElementById('activeFilters');
+            const activeFiltersList = document.getElementById('activeFiltersList');
+            
+            const allActiveFilters = []
+                .concat(activeFilters.collections.map(function(f) { return { type: 'collection', value: f, label: f }; }))
+                .concat(activeFilters.categories.map(function(f) { return { type: 'category', value: f, label: f }; }))
+                .concat(activeFilters.ages.map(function(f) { return { type: 'age', value: f, label: f }; }))
+                .concat(activeFilters.availability.map(function(f) { return { type: 'availability', value: f, label: f === 'in-stock' ? 'En Stock' : 'Sin Stock' }; }));
+            
+            if (activeFilters.priceRange.min || activeFilters.priceRange.max) {
+                const minText = activeFilters.priceRange.min ? formatPrice(activeFilters.priceRange.min) : 'Min';
+                const maxText = activeFilters.priceRange.max ? formatPrice(activeFilters.priceRange.max) : 'Max';
+                allActiveFilters.push({ type: 'price', value: 'price', label: minText + ' - ' + maxText });
+            }
+            
+            if (allActiveFilters.length > 0) {
+                activeFiltersDiv.style.display = 'block';
+                activeFiltersList.innerHTML = allActiveFilters.map(function(filter) {
+                    return '<div class="active-filter-tag">' +
+                        filter.label +
+                        '<button class="remove-filter" onclick="removeFilter(\'' + filter.type + '\', \'' + filter.value + '\')">×</button>' +
+                    '</div>';
+                }).join('');
+            } else {
+                activeFiltersDiv.style.display = 'none';
+            }
+        }
+
+        // Función para remover un filtro específico
+        function removeFilter(type, value) {
+            switch (type) {
+                case 'collection':
+                    activeFilters.collections = activeFilters.collections.filter(function(f) { return f !== value; });
+                    document.querySelector('#collectionFilters input[value="' + value + '"]').checked = false;
+                    break;
+                case 'category':
+                    activeFilters.categories = activeFilters.categories.filter(function(f) { return f !== value; });
+                    document.querySelector('#categoryFilters input[value="' + value + '"]').checked = false;
+                    break;
+                case 'age':
+                    activeFilters.ages = activeFilters.ages.filter(function(f) { return f !== value; });
+                    document.querySelector('#ageFilters input[value="' + value + '"]').checked = false;
+                    break;
+                case 'availability':
+                    activeFilters.availability = activeFilters.availability.filter(function(f) { return f !== value; });
+                    document.querySelector('.filter-options input[value="' + value + '"]').checked = false;
+                    break;
+                case 'price':
+                    activeFilters.priceRange.min = null;
+                    activeFilters.priceRange.max = null;
+                    document.getElementById('minPrice').value = '';
+                    document.getElementById('maxPrice').value = '';
+                    break;
+            }
+            applyFilters();
+        }
+
+        // Función para limpiar todos los filtros
+        function clearAllFilters() {
+            // Limpiar checkboxes
+            document.querySelectorAll('.filter-checkbox input[type="checkbox"]').forEach(cb => cb.checked = false);
+            
+            // Limpiar campos de precio
+            document.getElementById('minPrice').value = '';
+            document.getElementById('maxPrice').value = '';
+            
+            // Limpiar búsqueda
+            document.getElementById('searchInput').value = '';
+            
+            // Resetear filtros activos
+            activeFilters = {
+                collections: [],
+                categories: [],
+                ages: [],
+                availability: [],
+                priceRange: { min: null, max: null }
+            };
+            
+            // Mostrar todos los productos
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.style.display = 'block';
+            });
+            
+            // Ocultar filtros activos
+            document.getElementById('activeFilters').style.display = 'none';
+            
+            // Ocultar mensaje de no productos
+            const noProductsMsg = document.querySelector('.no-products-filtered');
+            if (noProductsMsg) {
+                noProductsMsg.style.display = 'none';
+            }
+        }
+
+        // Mejorar la función de filtro de productos existente
+        function filterProducts() {
+            applyFilters(); // Usar la nueva función que maneja todos los filtros
         }
 
         // Inicializar al cargar la página
