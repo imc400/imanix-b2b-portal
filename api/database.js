@@ -380,6 +380,18 @@ const database = {
   // Agregar pedido al historial del usuario
   async addOrder(email, orderData) {
     try {
+      console.log('🔄 addOrder iniciado para email:', email);
+      
+      // Verificar si supabase está configurado
+      if (!supabase) {
+        console.error('❌ Supabase no está configurado en addOrder');
+        console.error('🔍 SUPABASE_URL:', process.env.SUPABASE_URL ? 'CONFIGURADO' : 'NO CONFIGURADO');
+        console.error('🔍 SUPABASE_SERVICE_KEY:', process.env.SUPABASE_SERVICE_KEY ? 'CONFIGURADO' : 'NO CONFIGURADO');
+        return null;
+      }
+
+      console.log('✅ Supabase está configurado');
+
       const fullOrderData = {
         ...orderData,
         customer_email: email,
@@ -387,6 +399,16 @@ const database = {
         updated_at: new Date().toISOString()
       };
 
+      console.log('📋 Datos completos a insertar:', {
+        customer_email: fullOrderData.customer_email,
+        shopify_order_id: fullOrderData.shopify_order_id,
+        order_number: fullOrderData.order_number,
+        total_amount: fullOrderData.total_amount,
+        discount_amount: fullOrderData.discount_amount,
+        status: fullOrderData.status
+      });
+
+      console.log('🚀 Ejecutando insert en tabla draft_orders...');
       const { data, error } = await supabase
         .from('draft_orders')
         .insert(fullOrderData)
@@ -394,13 +416,21 @@ const database = {
         .single();
 
       if (error) {
+        console.error('❌ Error de Supabase:', error);
+        console.error('🔍 Código de error:', error.code);
+        console.error('🔍 Mensaje:', error.message);
+        console.error('🔍 Detalles:', error.details);
         throw error;
       }
 
-      console.log(`📦 Pedido guardado en historial para: ${email} - ID: ${data.id}`);
+      console.log('✅ Pedido guardado exitosamente en historial para:', email);
+      console.log('🆔 ID del pedido guardado:', data.id);
+      console.log('📊 Datos guardados:', data);
       return data;
     } catch (error) {
-      console.error('Error agregando pedido al historial:', error);
+      console.error('❌ Error agregando pedido al historial:', error);
+      console.error('🔍 Tipo de error:', error.constructor.name);
+      console.error('🔍 Stack trace:', error.stack);
       return null;
     }
   },

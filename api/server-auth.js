@@ -452,6 +452,24 @@ function applyB2BDiscount(price, discount) {
 // Función para guardar draft order en Supabase
 async function saveDraftOrderToDatabase(draftOrder, customer) {
     try {
+        console.log('🔄 Iniciando guardado de pedido en base de datos...');
+        console.log('📧 Email del cliente:', customer.email);
+        console.log('🆔 Draft Order ID:', draftOrder.id);
+        console.log('💵 Total Price:', draftOrder.total_price);
+        console.log('💸 Total Discounts:', draftOrder.total_discounts);
+        
+        // Verificar si database está disponible
+        if (!database) {
+            console.error('❌ Database object no está disponible');
+            return;
+        }
+
+        // Verificar si la función addOrder existe
+        if (typeof database.addOrder !== 'function') {
+            console.error('❌ database.addOrder no es una función. Funciones disponibles:', Object.keys(database));
+            return;
+        }
+
         // Usar la función del database manager que es compatible con el perfil
         const orderData = {
             shopify_order_id: draftOrder.id.toString(),
@@ -473,22 +491,33 @@ async function saveDraftOrderToDatabase(draftOrder, customer) {
             })) || []
         };
 
+        console.log('📋 Datos del pedido preparados:', {
+            shopify_order_id: orderData.shopify_order_id,
+            order_number: orderData.order_number,
+            total_amount: orderData.total_amount,
+            discount_amount: orderData.discount_amount,
+            status: orderData.status
+        });
+
+        console.log('🚀 Llamando a database.addOrder...');
         const result = await database.addOrder(customer.email, orderData);
         
         if (result) {
-            console.log('📝 Draft Order guardado en historial del usuario:', draftOrder.id);
+            console.log('✅ Draft Order guardado exitosamente en historial del usuario:', draftOrder.id);
             console.log('💰 Datos guardados:', {
                 email: customer.email,
                 total_amount: orderData.total_amount,
                 discount_amount: orderData.discount_amount,
-                status: orderData.status
+                status: orderData.status,
+                result_id: result.id
             });
         } else {
-            console.log('⚠️ No se pudo guardar en historial (base de datos no disponible)');
+            console.log('⚠️ No se pudo guardar en historial - resultado null/undefined');
             console.error('🔍 Datos que se intentaron guardar:', orderData);
         }
     } catch (error) {
-        console.error('Error en saveDraftOrderToDatabase:', error);
+        console.error('❌ Error en saveDraftOrderToDatabase:', error);
+        console.error('🔍 Stack trace:', error.stack);
     }
 }
 
