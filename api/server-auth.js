@@ -972,7 +972,9 @@ function getCartHTML(customer) {
         .nav-button:hover, .user-account:hover { background: var(--gray-100) !important; }
         
         /* BADGES MEJORADOS */
-        .discount-overlay { 
+        .discount-overlay {
+            background: #10B981 !important;
+            color: white !important; 
             background: #10B981 !important; 
             box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3) !important;
         }
@@ -1602,7 +1604,11 @@ function getCartHTML(customer) {
         
         /* PRECIO DESTACADO */
         .discounted-price {
-            color: #10B981 !important;
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            color: white !important;
             font-weight: 800 !important;
             font-size: 1.25rem !important;
         }
@@ -1638,6 +1644,87 @@ function getCartHTML(customer) {
             outline: 2px solid var(--imanix-yellow) !important;
             outline-offset: 2px !important;
         }
+        /* CORRECCIONES DE CONTRASTE ESPECÍFICAS */
+        .discounted-price, .item-total-price.discounted {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+        
+        .savings, .price-breakdown.highlight {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+        }
+        
+        .discount-badge, .cart-navbar-badge {
+            color: white !important;
+            font-weight: 700 !important;
+        }
+        
+        /* Asegurar contraste en todos los elementos verdes */
+        .success-text, .discount-text, .savings-amount {
+            color: white !important;
+            background: #10B981 !important;
+            padding: 0.125rem 0.25rem !important;
+            border-radius: 3px !important;
+        }
+        /* PRECIOS MEJORADOS CON CONTRASTE PERFECTO */
+        .discounted-price-block {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.75rem 1rem !important;
+            border-radius: 8px !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .discounted-price {
+            color: white !important;
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
+            display: block !important;
+            margin-bottom: 0.25rem !important;
+        }
+        
+        .price-breakdown.highlight {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-size: 0.875rem !important;
+        }
+        
+        .savings {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+            font-size: 0.875rem !important;
+        }
+        
+        /* NOTIFICACIONES CON CONTRASTE PERFECTO */
+        .notification {
+            color: white !important;
+        }
+        
+        .notification-message {
+            color: white !important;
+        }
+        
+        /* BADGES MEJORADOS */
+        .discount-overlay {
+            background: #10B981 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .cart-navbar-badge {
+            background: #EF4444 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+
+
+
+
 
 
     </style>
@@ -2725,7 +2812,11 @@ function getLoginHTML() {
         
         /* PRECIO DESTACADO */
         .discounted-price {
-            color: #10B981 !important;
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            color: white !important;
             font-weight: 800 !important;
             font-size: 1.25rem !important;
         }
@@ -2761,6 +2852,87 @@ function getLoginHTML() {
             outline: 2px solid var(--imanix-yellow) !important;
             outline-offset: 2px !important;
         }
+        /* CORRECCIONES DE CONTRASTE ESPECÍFICAS */
+        .discounted-price, .item-total-price.discounted {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+        
+        .savings, .price-breakdown.highlight {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+        }
+        
+        .discount-badge, .cart-navbar-badge {
+            color: white !important;
+            font-weight: 700 !important;
+        }
+        
+        /* Asegurar contraste en todos los elementos verdes */
+        .success-text, .discount-text, .savings-amount {
+            color: white !important;
+            background: #10B981 !important;
+            padding: 0.125rem 0.25rem !important;
+            border-radius: 3px !important;
+        }
+        /* PRECIOS MEJORADOS CON CONTRASTE PERFECTO */
+        .discounted-price-block {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.75rem 1rem !important;
+            border-radius: 8px !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .discounted-price {
+            color: white !important;
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
+            display: block !important;
+            margin-bottom: 0.25rem !important;
+        }
+        
+        .price-breakdown.highlight {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-size: 0.875rem !important;
+        }
+        
+        .savings {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+            font-size: 0.875rem !important;
+        }
+        
+        /* NOTIFICACIONES CON CONTRASTE PERFECTO */
+        .notification {
+            color: white !important;
+        }
+        
+        .notification-message {
+            color: white !important;
+        }
+        
+        /* BADGES MEJORADOS */
+        .discount-overlay {
+            background: #10B981 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .cart-navbar-badge {
+            background: #EF4444 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+
+
+
+
 
 
     </style>
@@ -3417,7 +3589,11 @@ function getCompleteProfileHTML(customer) {
         
         /* PRECIO DESTACADO */
         .discounted-price {
-            color: #10B981 !important;
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            color: white !important;
             font-weight: 800 !important;
             font-size: 1.25rem !important;
         }
@@ -3453,6 +3629,87 @@ function getCompleteProfileHTML(customer) {
             outline: 2px solid var(--imanix-yellow) !important;
             outline-offset: 2px !important;
         }
+        /* CORRECCIONES DE CONTRASTE ESPECÍFICAS */
+        .discounted-price, .item-total-price.discounted {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+        
+        .savings, .price-breakdown.highlight {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+        }
+        
+        .discount-badge, .cart-navbar-badge {
+            color: white !important;
+            font-weight: 700 !important;
+        }
+        
+        /* Asegurar contraste en todos los elementos verdes */
+        .success-text, .discount-text, .savings-amount {
+            color: white !important;
+            background: #10B981 !important;
+            padding: 0.125rem 0.25rem !important;
+            border-radius: 3px !important;
+        }
+        /* PRECIOS MEJORADOS CON CONTRASTE PERFECTO */
+        .discounted-price-block {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.75rem 1rem !important;
+            border-radius: 8px !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .discounted-price {
+            color: white !important;
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
+            display: block !important;
+            margin-bottom: 0.25rem !important;
+        }
+        
+        .price-breakdown.highlight {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-size: 0.875rem !important;
+        }
+        
+        .savings {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+            font-size: 0.875rem !important;
+        }
+        
+        /* NOTIFICACIONES CON CONTRASTE PERFECTO */
+        .notification {
+            color: white !important;
+        }
+        
+        .notification-message {
+            color: white !important;
+        }
+        
+        /* BADGES MEJORADOS */
+        .discount-overlay {
+            background: #10B981 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .cart-navbar-badge {
+            background: #EF4444 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+
+
+
+
 
 
     </style>
@@ -4474,6 +4731,8 @@ function getPortalHTML(products, customer) {
         }
 
         .discount-overlay {
+            background: #10B981 !important;
+            color: white !important;
             position: absolute;
             top: 12px;
             left: 12px;
@@ -4533,6 +4792,10 @@ function getPortalHTML(products, customer) {
         }
 
         .discounted-price {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
             color: #1A202C;
             font-size: 1.5rem;
             font-weight: 800;
@@ -4707,7 +4970,11 @@ function getPortalHTML(products, customer) {
         
         /* PRECIO DESTACADO */
         .discounted-price {
-            color: #10B981 !important;
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            color: white !important;
             font-weight: 800 !important;
             font-size: 1.25rem !important;
         }
@@ -4743,6 +5010,87 @@ function getPortalHTML(products, customer) {
             outline: 2px solid var(--imanix-yellow) !important;
             outline-offset: 2px !important;
         }
+        /* CORRECCIONES DE CONTRASTE ESPECÍFICAS */
+        .discounted-price, .item-total-price.discounted {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+        
+        .savings, .price-breakdown.highlight {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+        }
+        
+        .discount-badge, .cart-navbar-badge {
+            color: white !important;
+            font-weight: 700 !important;
+        }
+        
+        /* Asegurar contraste en todos los elementos verdes */
+        .success-text, .discount-text, .savings-amount {
+            color: white !important;
+            background: #10B981 !important;
+            padding: 0.125rem 0.25rem !important;
+            border-radius: 3px !important;
+        }
+        /* PRECIOS MEJORADOS CON CONTRASTE PERFECTO */
+        .discounted-price-block {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.75rem 1rem !important;
+            border-radius: 8px !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .discounted-price {
+            color: white !important;
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
+            display: block !important;
+            margin-bottom: 0.25rem !important;
+        }
+        
+        .price-breakdown.highlight {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-size: 0.875rem !important;
+        }
+        
+        .savings {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+            font-size: 0.875rem !important;
+        }
+        
+        /* NOTIFICACIONES CON CONTRASTE PERFECTO */
+        .notification {
+            color: white !important;
+        }
+        
+        .notification-message {
+            color: white !important;
+        }
+        
+        /* BADGES MEJORADOS */
+        .discount-overlay {
+            background: #10B981 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .cart-navbar-badge {
+            background: #EF4444 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+
+
+
+
 
 
     </style>
@@ -5963,7 +6311,11 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         
         /* PRECIO DESTACADO */
         .discounted-price {
-            color: #10B981 !important;
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            color: white !important;
             font-weight: 800 !important;
             font-size: 1.25rem !important;
         }
@@ -5999,6 +6351,87 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             outline: 2px solid var(--imanix-yellow) !important;
             outline-offset: 2px !important;
         }
+        /* CORRECCIONES DE CONTRASTE ESPECÍFICAS */
+        .discounted-price, .item-total-price.discounted {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+        
+        .savings, .price-breakdown.highlight {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+        }
+        
+        .discount-badge, .cart-navbar-badge {
+            color: white !important;
+            font-weight: 700 !important;
+        }
+        
+        /* Asegurar contraste en todos los elementos verdes */
+        .success-text, .discount-text, .savings-amount {
+            color: white !important;
+            background: #10B981 !important;
+            padding: 0.125rem 0.25rem !important;
+            border-radius: 3px !important;
+        }
+        /* PRECIOS MEJORADOS CON CONTRASTE PERFECTO */
+        .discounted-price-block {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.75rem 1rem !important;
+            border-radius: 8px !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .discounted-price {
+            color: white !important;
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
+            display: block !important;
+            margin-bottom: 0.25rem !important;
+        }
+        
+        .price-breakdown.highlight {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-size: 0.875rem !important;
+        }
+        
+        .savings {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+            font-size: 0.875rem !important;
+        }
+        
+        /* NOTIFICACIONES CON CONTRASTE PERFECTO */
+        .notification {
+            color: white !important;
+        }
+        
+        .notification-message {
+            color: white !important;
+        }
+        
+        /* BADGES MEJORADOS */
+        .discount-overlay {
+            background: #10B981 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .cart-navbar-badge {
+            background: #EF4444 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+
+
+
+
 
 
     </style>
@@ -7135,7 +7568,11 @@ function getAccountHTML(customer, profile, addresses, stats) {
         
         /* PRECIO DESTACADO */
         .discounted-price {
-            color: #10B981 !important;
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            color: white !important;
             font-weight: 800 !important;
             font-size: 1.25rem !important;
         }
@@ -7171,6 +7608,87 @@ function getAccountHTML(customer, profile, addresses, stats) {
             outline: 2px solid var(--imanix-yellow) !important;
             outline-offset: 2px !important;
         }
+        /* CORRECCIONES DE CONTRASTE ESPECÍFICAS */
+        .discounted-price, .item-total-price.discounted {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+        
+        .savings, .price-breakdown.highlight {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+        }
+        
+        .discount-badge, .cart-navbar-badge {
+            color: white !important;
+            font-weight: 700 !important;
+        }
+        
+        /* Asegurar contraste en todos los elementos verdes */
+        .success-text, .discount-text, .savings-amount {
+            color: white !important;
+            background: #10B981 !important;
+            padding: 0.125rem 0.25rem !important;
+            border-radius: 3px !important;
+        }
+        /* PRECIOS MEJORADOS CON CONTRASTE PERFECTO */
+        .discounted-price-block {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.75rem 1rem !important;
+            border-radius: 8px !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .discounted-price {
+            color: white !important;
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
+            display: block !important;
+            margin-bottom: 0.25rem !important;
+        }
+        
+        .price-breakdown.highlight {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-size: 0.875rem !important;
+        }
+        
+        .savings {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+            font-size: 0.875rem !important;
+        }
+        
+        /* NOTIFICACIONES CON CONTRASTE PERFECTO */
+        .notification {
+            color: white !important;
+        }
+        
+        .notification-message {
+            color: white !important;
+        }
+        
+        /* BADGES MEJORADOS */
+        .discount-overlay {
+            background: #10B981 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .cart-navbar-badge {
+            background: #EF4444 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+
+
+
+
 
 
         </style>
@@ -7409,7 +7927,11 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
         
         /* PRECIO DESTACADO */
         .discounted-price {
-            color: #10B981 !important;
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            color: white !important;
             font-weight: 800 !important;
             font-size: 1.25rem !important;
         }
@@ -7445,6 +7967,87 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             outline: 2px solid var(--imanix-yellow) !important;
             outline-offset: 2px !important;
         }
+        /* CORRECCIONES DE CONTRASTE ESPECÍFICAS */
+        .discounted-price, .item-total-price.discounted {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+        
+        .savings, .price-breakdown.highlight {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+        }
+        
+        .discount-badge, .cart-navbar-badge {
+            color: white !important;
+            font-weight: 700 !important;
+        }
+        
+        /* Asegurar contraste en todos los elementos verdes */
+        .success-text, .discount-text, .savings-amount {
+            color: white !important;
+            background: #10B981 !important;
+            padding: 0.125rem 0.25rem !important;
+            border-radius: 3px !important;
+        }
+        /* PRECIOS MEJORADOS CON CONTRASTE PERFECTO */
+        .discounted-price-block {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.75rem 1rem !important;
+            border-radius: 8px !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .discounted-price {
+            color: white !important;
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
+            display: block !important;
+            margin-bottom: 0.25rem !important;
+        }
+        
+        .price-breakdown.highlight {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-size: 0.875rem !important;
+        }
+        
+        .savings {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+            font-size: 0.875rem !important;
+        }
+        
+        /* NOTIFICACIONES CON CONTRASTE PERFECTO */
+        .notification {
+            color: white !important;
+        }
+        
+        .notification-message {
+            color: white !important;
+        }
+        
+        /* BADGES MEJORADOS */
+        .discount-overlay {
+            background: #10B981 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .cart-navbar-badge {
+            background: #EF4444 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+
+
+
+
 
 
         </style>
@@ -7557,7 +8160,11 @@ function getOrderDetailHTML(customer, order) {
         
         /* PRECIO DESTACADO */
         .discounted-price {
-            color: #10B981 !important;
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            color: white !important;
             font-weight: 800 !important;
             font-size: 1.25rem !important;
         }
@@ -7593,6 +8200,87 @@ function getOrderDetailHTML(customer, order) {
             outline: 2px solid var(--imanix-yellow) !important;
             outline-offset: 2px !important;
         }
+        /* CORRECCIONES DE CONTRASTE ESPECÍFICAS */
+        .discounted-price, .item-total-price.discounted {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.25rem 0.5rem !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+        }
+        
+        .savings, .price-breakdown.highlight {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+        }
+        
+        .discount-badge, .cart-navbar-badge {
+            color: white !important;
+            font-weight: 700 !important;
+        }
+        
+        /* Asegurar contraste en todos los elementos verdes */
+        .success-text, .discount-text, .savings-amount {
+            color: white !important;
+            background: #10B981 !important;
+            padding: 0.125rem 0.25rem !important;
+            border-radius: 3px !important;
+        }
+        /* PRECIOS MEJORADOS CON CONTRASTE PERFECTO */
+        .discounted-price-block {
+            background: #10B981 !important;
+            color: white !important;
+            padding: 0.75rem 1rem !important;
+            border-radius: 8px !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .discounted-price {
+            color: white !important;
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
+            display: block !important;
+            margin-bottom: 0.25rem !important;
+        }
+        
+        .price-breakdown.highlight {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-size: 0.875rem !important;
+        }
+        
+        .savings {
+            color: #10B981 !important;
+            font-weight: 600 !important;
+            font-size: 0.875rem !important;
+        }
+        
+        /* NOTIFICACIONES CON CONTRASTE PERFECTO */
+        .notification {
+            color: white !important;
+        }
+        
+        .notification-message {
+            color: white !important;
+        }
+        
+        /* BADGES MEJORADOS */
+        .discount-overlay {
+            background: #10B981 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .cart-navbar-badge {
+            background: #EF4444 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+
+
+
+
 
 
         </style>
