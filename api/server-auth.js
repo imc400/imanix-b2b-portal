@@ -2412,7 +2412,7 @@ function getLoginHTML() {
 
         body {
             font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: url('./images/fondo-login.png') center center/cover no-repeat;
+            background: url('/fondo-login.png') center center/cover no-repeat;
             position: relative;
             min-height: 100vh;
             display: flex;
