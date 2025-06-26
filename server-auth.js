@@ -799,6 +799,83 @@ app.get('/perfil', requireAuth, async (req, res) => {
   }
 });
 
+// Performance Optimizer Script
+function getPerformanceOptimizationScript() {
+  return `
+    <script>
+      // Optimizador de rendimiento IMANIX B2B - Garantiza fluidez en todos los navegadores
+      (function() {
+        // CSS de optimización de rendimiento
+        const performanceCSS = \`
+          <style>
+          /* Optimizaciones de rendimiento cross-browser */
+          *,*::before,*::after{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0);-webkit-backface-visibility:hidden;backface-visibility:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+          .nav-button,.checkout-btn,.add-to-cart-btn,.product-card,.cart-navbar-btn,.user-account,.login-button,.submit-button,.btn,.btn-primary,.stat-card,.order-card,.address-card,.dropdown-item,.notification,.quantity-btn,.tab-button,.contact-info,.form-input,.form-select{will-change:transform,opacity,box-shadow;-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0);contain:layout style paint;transition:transform .3s cubic-bezier(.25,.46,.45,.94),opacity .3s cubic-bezier(.25,.46,.45,.94),box-shadow .3s cubic-bezier(.25,.46,.45,.94)}
+          .nav-button:hover,.checkout-btn:hover,.add-to-cart-btn:hover,.cart-navbar-btn:hover,.login-button:hover,.submit-button:hover,.btn:hover,.btn-primary:hover,.user-account:hover,.contact-info:hover{-webkit-transform:translate3d(0,-2px,0) scale3d(1.02,1.02,1);transform:translate3d(0,-2px,0) scale3d(1.02,1.02,1)}
+          .product-card:hover,.stat-card:hover,.order-card:hover{-webkit-transform:translate3d(0,-5px,0) scale3d(1.02,1.02,1);transform:translate3d(0,-5px,0) scale3d(1.02,1.02,1)}
+          .product-card:hover .product-image img{-webkit-transform:scale3d(1.05,1.05,1);transform:scale3d(1.05,1.05,1)}
+          img,.product-image img,.item-image,.brand-logo img{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0);contain:layout style;transition:transform .3s cubic-bezier(.25,.46,.45,.94)}
+          .navbar,.login-container,.cart-header,.cart-items,.cart-summary{-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);contain:layout style paint;-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}
+          html{scroll-behavior:smooth}
+          @media (max-width:768px){.product-card:hover,.stat-card:hover{-webkit-transform:translate3d(0,-2px,0);transform:translate3d(0,-2px,0)}}
+          @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+          </style>
+        \`;
+        
+        // Inyectar CSS optimizado
+        const styleDiv = document.createElement('div');
+        styleDiv.innerHTML = performanceCSS;
+        document.head.appendChild(styleDiv.firstElementChild);
+        
+        // Configurar limpieza automática de will-change
+        function setupPerformanceOptimizations() {
+          const elements = document.querySelectorAll('.nav-button, .btn, .product-card, .stat-card, .cart-navbar-btn');
+          
+          elements.forEach(element => {
+            element.addEventListener('mouseenter', () => {
+              element.style.willChange = 'transform, opacity, box-shadow';
+            });
+            
+            element.addEventListener('mouseleave', () => {
+              setTimeout(() => {
+                if (!element.matches(':hover')) {
+                  element.style.willChange = 'auto';
+                }
+              }, 300);
+            });
+          });
+          
+          // Detectar navegador y aplicar optimizaciones específicas
+          const isChrome = /Chrome/.test(navigator.userAgent);
+          const isFirefox = /Firefox/.test(navigator.userAgent);
+          const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+          
+          if (isChrome) {
+            document.querySelectorAll('.product-card, .stat-card').forEach(el => {
+              el.style.contain = 'layout style paint';
+            });
+          }
+          
+          if (isSafari) {
+            const safariCSS = document.createElement('style');
+            safariCSS.textContent = '.product-card:hover{-webkit-transform:translate3d(0,-5px,0) scale3d(1.02,1.02,1)!important}';
+            document.head.appendChild(safariCSS);
+          }
+        }
+        
+        // Inicializar cuando el DOM esté listo
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', setupPerformanceOptimizations);
+        } else {
+          setupPerformanceOptimizations();
+        }
+        
+        console.log('🚀 IMANIX Performance Optimizer cargado - Optimizado para todos los navegadores');
+      })();
+    </script>
+  `;
+}
+
 // Función para generar HTML del carrito
 function getCartHTML(customer) {
   const customerDiscount = customer.discount;
@@ -812,6 +889,7 @@ function getCartHTML(customer) {
                     <title>Carrito de Compras - Portal B2B IMANIX Chile</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    ${getPerformanceOptimizationScript()}
     <style>
         * {
             margin: 0;
@@ -1672,6 +1750,7 @@ function getLoginHTML() {
                     <title>Portal B2B - Acceso Cliente - IMANIX Chile</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    ${getPerformanceOptimizationScript()}
     <style>
         * {
             margin: 0;
@@ -2190,6 +2269,7 @@ function getCompleteProfileHTML(customer) {
     <title>Completa tu Perfil Empresarial - Portal B2B IMANIX</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    ${getPerformanceOptimizationScript()}
     <style>
         * {
             margin: 0;
@@ -2863,6 +2943,7 @@ function getPortalHTML(products, customer) {
                     <title>Portal B2B Profesional - IMANIX Chile</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    ${getPerformanceOptimizationScript()}
     <style>
         * {
             margin: 0;
@@ -2875,6 +2956,7 @@ function getPortalHTML(products, customer) {
             background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
             min-height: 100vh;
             color: #212529;
+            padding-top: 120px;
         }
 
         .navbar {
@@ -3556,7 +3638,7 @@ function getPortalHTML(products, customer) {
             <div class="catalog-header">
                 <h2 class="catalog-title">
                     <i class="fas fa-store"></i>
-                    Catálogo B2B Exclusivo
+                    Catálogo B2B
                 </h2>
                 <div class="catalog-controls">
                     <input type="text" class="search-box" placeholder="Buscar productos..." 
@@ -3778,6 +3860,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
     <title>Mi Perfil Empresarial - Portal B2B IMANIX Chile</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    ${getPerformanceOptimizationScript()}
     <style>
         * {
             margin: 0;
