@@ -1442,9 +1442,7 @@ function getCartHTML(customer) {
             
             // Mostrar confirmación antes de enviar
             const confirmMessage = \`¿Confirmas tu pedido de \${cart.length} productos?\n\nTu solicitud será enviada a nuestro equipo para procesamiento.\`;
-            if (!confirm(confirmMessage)) {
-                return;
-            }
+            // Proceder directamente al checkout sin confirmación molesta
 
             // Mostrar loading
             const checkoutBtn = document.querySelector('.checkout-btn');
@@ -1662,6 +1660,8 @@ function getCartHTML(customer) {
                 }
             }
         }
+
+
 
         // Inicializar al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
@@ -2818,6 +2818,15 @@ function getPortalHTML(products, customer) {
             const originalPrice = variant?.price ? parseInt(variant.price) : 0;
             const discountedPrice = applyB2BDiscount(originalPrice, discount);
             const savings = originalPrice - discountedPrice;
+            
+            // Calcular neto e IVA para precio con descuento
+            const discountedPriceNeto = calculateNetPrice(discountedPrice);
+            const discountedPriceIVA = calculateIVA(discountedPriceNeto);
+            
+            // Calcular neto e IVA para precio original
+            const originalPriceNeto = calculateNetPrice(originalPrice);
+            const originalPriceIVA = calculateIVA(originalPriceNeto);
+            
             const image = product.images?.edges?.[0]?.node?.url || '/placeholder.jpg';
             const stock = variant?.inventoryQuantity || 0;
 
@@ -2832,8 +2841,14 @@ function getPortalHTML(products, customer) {
                         <h3 class="product-title">${product.title}</h3>
                         <div class="product-pricing">
                             <div class="price-row">
-                                <span class="original-price">${formatPrice(originalPrice)}</span>
-                                <span class="discounted-price">${formatPrice(discountedPrice)}</span>
+                                <div class="original-price-block">
+                                    <span class="original-price">${formatPrice(originalPrice)}</span>
+                                    <div class="price-breakdown">Neto: ${formatPrice(originalPriceNeto)} + IVA: ${formatPrice(originalPriceIVA)}</div>
+                                </div>
+                                <div class="discounted-price-block">
+                                    <span class="discounted-price">${formatPrice(discountedPrice)}</span>
+                                    <div class="price-breakdown highlight">Neto: ${formatPrice(discountedPriceNeto)} + IVA: ${formatPrice(discountedPriceIVA)}</div>
+                                </div>
                             </div>
                             <div class="savings">Ahorras ${formatPrice(savings)}</div>
                         </div>
@@ -3337,21 +3352,51 @@ function getPortalHTML(products, customer) {
 
         .price-row {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 0.75rem;
             margin-bottom: 0.5rem;
+        }
+
+        .original-price-block,
+        .discounted-price-block {
+            padding: 0.75rem;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+        }
+
+        .discounted-price-block {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: 1px solid #059669;
         }
 
         .original-price {
             color: #9ca3af;
             text-decoration: line-through;
             font-size: 0.875rem;
+            display: block;
+            margin-bottom: 0.25rem;
         }
 
         .discounted-price {
-            color: #059669;
+            color: white;
             font-size: 1.25rem;
             font-weight: 800;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .price-breakdown {
+            font-size: 0.75rem;
+            color: #6b7280;
+            line-height: 1.3;
+            font-weight: 500;
+        }
+
+        .price-breakdown.highlight {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
         }
 
         .savings {
