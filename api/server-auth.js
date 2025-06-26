@@ -477,8 +477,15 @@ async function saveDraftOrderToDatabase(draftOrder, customer) {
         
         if (result) {
             console.log('📝 Draft Order guardado en historial del usuario:', draftOrder.id);
+            console.log('💰 Datos guardados:', {
+                email: customer.email,
+                total_amount: orderData.total_amount,
+                discount_amount: orderData.discount_amount,
+                status: orderData.status
+            });
         } else {
             console.log('⚠️ No se pudo guardar en historial (base de datos no disponible)');
+            console.error('🔍 Datos que se intentaron guardar:', orderData);
         }
     } catch (error) {
         console.error('Error en saveDraftOrderToDatabase:', error);
@@ -4438,7 +4445,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                                     <div>
                                         <h4>Pedido #${order.order_number || order.id.substring(0, 8)}</h4>
                                         <p style="color: #718096; margin-top: 0.25rem;">
-                                            ${new Date(order.order_date).toLocaleDateString('es-CL')}
+                                            ${new Date(order.created_at || order.order_date).toLocaleDateString('es-CL')}
                                         </p>
                                     </div>
                                     <div class="order-status status-${order.status.toLowerCase()}">

@@ -204,7 +204,7 @@ const database = {
       }
       
       const totalOrders = orders?.length || 0;
-      const totalSpent = orders?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
+      const totalSpent = orders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
       const avgOrderValue = totalOrders > 0 ? Math.round(totalSpent / totalOrders) : 0;
       const recentOrders = orders?.slice(-5) || [];
       
@@ -440,7 +440,7 @@ const database = {
       }
       
       const totalOrders = orders?.length || 0;
-      const totalSpent = orders?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
+      const totalSpent = orders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
       const totalSaved = orders?.reduce((sum, order) => sum + (order.discount_amount || 0), 0) || 0;
       
       // Calcular estadísticas avanzadas
@@ -463,7 +463,7 @@ const database = {
         new Date(order.created_at) >= threeMonthsAgo
       ) || [];
       
-      const recentSpent = recentOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+      const recentSpent = recentOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
       const recentSaved = recentOrders.reduce((sum, order) => sum + (order.discount_amount || 0), 0);
       
       // Estado del cliente basado en actividad
