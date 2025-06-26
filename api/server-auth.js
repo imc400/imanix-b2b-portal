@@ -855,124 +855,321 @@ function getCartHTML(customer) {
         }
 
         body {
-            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            font-family: 'Inter', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: radial-gradient(ellipse at top, #f0f4f8 0%, #e2e8f0 40%, #cbd5e1 100%);
             min-height: 100vh;
             color: #1e293b;
-            padding-top: 80px;
+            line-height: 1.6;
+            font-smooth: always;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            padding-top: 100px;
         }
 
         .navbar {
-            background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
-            padding: 1rem 2rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 1.25rem 0;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.12), 0 2px 8px rgba(31, 38, 135, 0.08);
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .navbar-content {
             max-width: 1400px;
             margin: 0 auto;
+            padding: 0 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .brand {
+        .navbar-brand {
             display: flex;
             align-items: center;
             gap: 1rem;
-            color: #000000;
-            text-decoration: none;
-            font-weight: 800;
-            font-size: 1.5rem;
         }
 
         .brand-logo {
+            width: 50px;
             height: 50px;
+            background: linear-gradient(135deg, #FFCE36, #FFC107);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        .brand-logo img {
-            height: 45px;
-            width: auto;
-            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2));
-        }
-
-                 .nav-actions {
-             display: flex;
-             align-items: center;
-             gap: 1rem;
-         }
-
-         .customer-info {
-             display: flex;
-             align-items: center;
-             gap: 0.5rem;
-         }
-
-        .nav-button {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
+            font-weight: 800;
+            font-size: 1.2rem;
             color: #000000;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
+        }
+
+        .brand-text h1 {
+            color: #000000;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .brand-text p {
+            color: #666;
+            font-size: 0.75rem;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-account {
+            position: relative;
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            text-decoration: none;
+            color: #000000;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
 
-        .nav-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-1px);
+        .user-account:hover {
+            background: rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            min-width: 220px;
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .user-dropdown.show {
+            display: block;
+            animation: dropdownFadeIn 0.3s ease;
+        }
+
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-header {
+            padding: 1rem;
+            background: linear-gradient(135deg, #FFCE36, #FF7B85);
+            color: #000000;
+        }
+
+        .dropdown-header .user-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .dropdown-header .user-email {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .dropdown-menu {
+            padding: 0.5rem 0;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: #374151;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 206, 54, 0.1);
+            color: #000000;
+        }
+
+        .dropdown-item i {
+            width: 16px;
+            text-align: center;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+            margin: 0.5rem 0;
+        }
+
+        .cart-navbar-btn {
+            position: relative;
+            background: linear-gradient(135deg, #FFCE36, #FFC107);
+            border: none;
+            padding: 0.75rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 50px;
+            height: 50px;
+        }
+
+        .cart-navbar-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 206, 54, 0.4);
+        }
+
+        .cart-navbar-btn i {
+            font-size: 1.2rem;
+            color: #000000;
+        }
+
+        .cart-navbar-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #FF7B85;
+            color: white;
+            border-radius: 50%;
+            min-width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 2px solid white;
         }
 
         .cart-container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+            animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .cart-header {
-            background: white;
-            padding: 2rem;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 3rem;
+            border-radius: 32px;
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+                0 10px 10px -5px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cart-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 33%, #f093fb 66%, #f5576c 100%);
         }
 
         .cart-title {
-            font-size: 2rem;
-            font-weight: 800;
+            font-size: 2.5rem;
+            font-weight: 900;
             color: #1e293b;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.025em;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .cart-subtitle {
             color: #64748b;
-            font-size: 1rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+        }
+
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
         }
 
         .cart-content {
             display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 2rem;
+            grid-template-columns: 1fr 400px;
+            gap: 3rem;
         }
 
         .cart-items {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 32px;
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+                0 10px 10px -5px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+            padding: 3rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cart-items::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
         }
 
         .cart-item {
@@ -1022,16 +1219,24 @@ function getCartHTML(customer) {
         }
 
         .quantity-btn {
-            background: #FFCE36;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            color: white;
             font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .quantity-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
         }
 
         .quantity-display {
@@ -1068,20 +1273,39 @@ function getCartHTML(customer) {
         }
 
         .cart-summary {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 32px;
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+                0 10px 10px -5px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+            padding: 3rem;
             height: fit-content;
             position: sticky;
-            top: 120px;
+            top: 130px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cart-summary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
         }
 
         .summary-title {
-            font-size: 1.5rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 2rem;
             color: #1e293b;
+            letter-spacing: -0.025em;
         }
 
         .summary-line {
@@ -1118,21 +1342,41 @@ function getCartHTML(customer) {
 
         .checkout-btn {
             width: 100%;
-            background: linear-gradient(135deg, #FFCE36, #FF7B85);
-            color: #000000;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             border: none;
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 700;
+            padding: 1.25rem 2.5rem;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: 800;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 1rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 2rem;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.01em;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .checkout-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .checkout-btn:hover::before {
+            opacity: 1;
         }
 
         .checkout-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 206, 54, 0.4);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 16px 40px rgba(102, 126, 234, 0.6);
         }
 
         .empty-cart {
@@ -1198,29 +1442,43 @@ function getCartHTML(customer) {
 <body>
     <nav class="navbar">
         <div class="navbar-content">
-            <a href="/" class="brand">
-                <div class="brand-logo">
-                    <svg width="140" height="45" viewBox="0 0 140 45" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 35px; width: auto;">
-                        <text x="5" y="25" font-family="Arial, sans-serif" font-size="20" font-weight="900" fill="#2D3748">IMANIX</text>
-                        <text x="5" y="37" font-family="Arial, sans-serif" font-size="8" fill="#718096">by BrainToys</text>
-                        <circle cx="120" cy="18" r="10" fill="#FFCE36"/>
-                        <circle cx="120" cy="18" r="6" fill="#2D3748"/>
-                        <circle cx="120" cy="18" r="3" fill="#FFCE36"/>
-                    </svg>
+            <a href="/" class="navbar-brand" style="text-decoration: none;">
+                <img src="/images/Logo%202160x1200%20(1).png" alt="IMANIX Portal B2B" style="height: 70px; width: auto;" />            <div class="navbar-actions">
+                <div class="user-account" onclick="toggleUserDropdown()">
+                    <i class="fas fa-user-circle"></i>
+                    <span>${customer.firstName} ${customer.lastName || ''}</span>
+                    <i class="fas fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.25rem;"></i>
+                    
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-header">
+                            <div class="user-name">${customer.firstName} ${customer.lastName || ''}</div>
+                            <div class="user-email">${customer.email}</div>
+                        </div>
+                        
+                        <div class="dropdown-menu">
+                            <a href="/perfil" class="dropdown-item">
+                                <i class="fas fa-user-edit"></i>
+                                Mi Perfil
+                            </a>
+                            <a href="/carrito" class="dropdown-item">
+                                <i class="fas fa-shopping-cart"></i>
+                                Mi Carrito
+                            </a>
+                            <a href="/perfil" class="dropdown-item">
+                                <i class="fas fa-history"></i>
+                                Historial de Pedidos
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <button onclick="logout()" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Cerrar Sesión
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <span>IMANIX B2B</span>
-            </a>
-            
-            <div class="nav-actions">
-                <div class="customer-info">
-                    <span style="color: #000000; font-weight: 600;">
-                        ${customer.firstName} ${customer.lastName}
-                    </span>
-                    <div class="discount-badge">-${customerDiscount}%</div>
-                </div>
-                <button class="nav-button" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Cerrar Sesión
+                <button class="cart-navbar-btn" onclick="showCart()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-navbar-badge" id="cartNavbarBadge">0</span>
                 </button>
             </div>
         </div>
@@ -1688,10 +1946,40 @@ function getCartHTML(customer) {
             }
         }
 
+        // Funciones para el navbar unificado
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
 
+        // Cerrar dropdown al hacer clic fuera
+        document.addEventListener('click', function(event) {
+            const userAccount = document.querySelector('.user-account');
+            const dropdown = document.getElementById('userDropdown');
+            
+            if (userAccount && dropdown && !userAccount.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Mostrar carrito - redirigir a página dedicada
+        function showCart() {
+            window.location.href = '/carrito';
+        }
+
+
+        // Actualizar contador del carrito
+        function updateCartBadge() {
+            const badge = document.getElementById('cartNavbarBadge');
+            if (badge) {
+                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                badge.textContent = totalItems;
+            }
+        }
 
         // Inicializar al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
+            updateCartBadge();
             renderCart();
         });
     </script>
@@ -1719,7 +2007,8 @@ function getLoginHTML() {
 
         body {
             font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
+            background: url('/login-background.jpeg') center center/cover no-repeat;
+            position: relative;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -1728,43 +2017,79 @@ function getLoginHTML() {
             padding: 2rem;
         }
 
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(1px);
+            z-index: 1;
+        }
+
         .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 3rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            max-width: 480px;
+            position: relative;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 32px;
+            padding: 3.5rem;
+            box-shadow: 
+                0 32px 64px rgba(0, 0, 0, 0.15), 
+                0 16px 32px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            max-width: 520px;
             width: 100%;
             text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .login-container:hover {
+            transform: translateY(-4px);
+            box-shadow: 
+                0 40px 80px rgba(0, 0, 0, 0.2), 
+                0 20px 40px rgba(0, 0, 0, 0.12),
+                0 0 0 1px rgba(255, 255, 255, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
         }
 
         .brand-logo {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #FFCE36, #FFC107);
-            border-radius: 20px;
             display: flex;
-            align-items: center;
             justify-content: center;
-            font-weight: 800;
-            font-size: 2rem;
-            color: #000000;
-            margin: 0 auto 1.5rem;
+            margin: 0 auto 2.5rem;
+        }
+
+        .brand-logo img {
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15));
+            transition: transform 0.3s ease;
+        }
+
+        .brand-logo img:hover {
+            transform: scale(1.05);
         }
 
         .login-title {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: 800;
-            color: #000000;
-            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #1a1a1a, #4a4a4a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
         }
 
         .login-subtitle {
-            color: #666;
-            font-size: 1rem;
-            margin-bottom: 2.5rem;
+            color: #64748b;
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
             font-weight: 500;
+            letter-spacing: 0.01em;
         }
 
         .login-form {
@@ -1788,48 +2113,83 @@ function getLoginHTML() {
 
         .form-input {
             width: 100%;
-            padding: 1rem 1rem 1rem 3rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
+            padding: 1.25rem 1.25rem 1.25rem 3.25rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
             font-size: 1rem;
             transition: all 0.3s ease;
             background: white;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         }
 
         .form-input:focus {
             border-color: #FFCE36;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(255, 206, 54, 0.2);
+            box-shadow: 
+                0 0 0 4px rgba(255, 206, 54, 0.15),
+                0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .form-input:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
         }
 
         .form-icon {
             position: absolute;
-            left: 1rem;
-            top: 2.25rem;
-            color: #666;
+            left: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
             font-size: 1.1rem;
+            pointer-events: none;
+            will-change: color, transform;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .form-input:focus ~ .form-icon {
+            color: #FFCE36;
+            transform: translateY(-50%) scale3d(1.1, 1.1, 1);
+        }
+
+        .form-input:hover ~ .form-icon {
+            color: #FFCE36;
+            transform: translateY(-50%) scale3d(1.05, 1.05, 1);
         }
 
         .login-button {
             background: linear-gradient(135deg, #FFCE36, #FFC107);
-            color: #000000;
+            color: #1a1a1a;
             border: none;
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            font-size: 1rem;
+            padding: 1.25rem 2.5rem;
+            border-radius: 16px;
+            font-size: 1.1rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
-            min-height: 56px;
+            gap: 0.75rem;
+            min-height: 64px;
+            letter-spacing: 0.01em;
+            box-shadow: 
+                0 4px 8px rgba(255, 206, 54, 0.3),
+                0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .login-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 206, 54, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 
+                0 12px 32px rgba(255, 206, 54, 0.4),
+                0 4px 12px rgba(0, 0, 0, 0.15);
+            background: linear-gradient(135deg, #FFD700, #FFCE36);
+        }
+
+        .login-button:active {
+            transform: translateY(-1px);
         }
 
         .login-button:disabled {
@@ -1864,36 +2224,83 @@ function getLoginHTML() {
         }
 
         .info-section {
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid #e5e7eb;
-            text-align: left;
+            margin-top: 2.5rem;
+            padding-top: 2.5rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        .distributor-info {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .info-title {
-            font-size: 1rem;
+            font-size: 1.2rem;
             font-weight: 700;
-            color: #000000;
-            margin-bottom: 0.75rem;
-        }
-
-        .info-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .info-list li {
+            color: #1e293b;
+            margin-bottom: 1rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-            color: #666;
-            font-size: 0.875rem;
+            justify-content: center;
+            gap: 0.75rem;
         }
 
-        .info-list i {
+        .info-title i {
             color: #FFCE36;
-            font-size: 0.75rem;
+            font-size: 1.3rem;
+        }
+
+        .distributor-description {
+            color: #64748b;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .contact-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            will-change: transform, box-shadow;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .contact-info:hover {
+            transform: translate3d(0, -3px, 0) scale3d(1.02, 1.02, 1);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+        }
+
+        .contact-info i {
+            color: #FFCE36;
+            font-size: 1.1rem;
+            will-change: transform;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .contact-info:hover i {
+            transform: scale3d(1.1, 1.1, 1) rotate(5deg);
+        }
+
+        .contact-link {
+            color: #1e293b;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            will-change: color;
+            transition: color 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .contact-link:hover {
+            color: #FFCE36;
         }
 
         @media (max-width: 480px) {
@@ -1987,22 +2394,15 @@ function getLoginHTML() {
 <body>
     <div class="login-container">
                   <div class="brand-logo">
-              <svg width="140" height="45" viewBox="0 0 140 45" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 40px; width: auto;">
-                  <text x="5" y="28" font-family="Arial, sans-serif" font-size="22" font-weight="900" fill="#FFFFFF">IMANIX</text>
-                  <text x="5" y="40" font-family="Arial, sans-serif" font-size="9" fill="#E2E8F0">by BrainToys</text>
-                  <circle cx="120" cy="20" r="10" fill="#FFCE36"/>
-                  <circle cx="120" cy="20" r="6" fill="#2D3748"/>
-                  <circle cx="120" cy="20" r="3" fill="#FFCE36"/>
-              </svg>
+              <img src="/images/Logo%202160x1200%20(1).png" alt="IMANIX Portal B2B" style="height: 70px; width: auto;" />
           </div>
         <h1 class="login-title">Portal B2B</h1>
                         <p class="login-subtitle">Acceso exclusivo para clientes IMANIX</p>
         
         <form class="login-form" id="loginForm">
             <div class="form-group">
-                <label class="form-label" for="email">Email del cliente</label>
+                <label class="form-label" for="email">Email del distribuidor</label>
                 <div style="position: relative;">
-                    <i class="fas fa-envelope form-icon"></i>
                     <input 
                         type="email" 
                         id="email" 
@@ -2012,6 +2412,7 @@ function getLoginHTML() {
                         required
                         autocomplete="email"
                     >
+                    <i class="fas fa-envelope form-icon"></i>
                 </div>
             </div>
 
@@ -2025,13 +2426,22 @@ function getLoginHTML() {
         </form>
 
         <div class="info-section">
-            <h3 class="info-title">Sistema de Descuentos B2B</h3>
-            <ul class="info-list">
-                <li><i class="fas fa-circle"></i> Clientes con etiqueta "b2b20" → 20% descuento</li>
-                <li><i class="fas fa-circle"></i> Clientes con etiqueta "b2b30" → 30% descuento</li>
-                <li><i class="fas fa-circle"></i> Clientes con etiqueta "b2b40" → 40% descuento</li>
-                <li><i class="fas fa-circle"></i> Gestión desde admin de Shopify</li>
-            </ul>
+            <div class="distributor-info">
+                <h3 class="info-title">
+                    <i class="fas fa-handshake"></i>
+                    Portal de Distribuidores Oficiales
+                </h3>
+                <p class="distributor-description">
+                    Acceso exclusivo para distribuidores autorizados de IMANIX. 
+                    Si deseas convertirte en distribuidor oficial, contáctanos.
+                </p>
+                <div class="contact-info">
+                    <i class="fas fa-envelope"></i>
+                    <a href="mailto:administracion@imanix.com" class="contact-link">
+                        administracion@imanix.com
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -2494,7 +2904,7 @@ function getCompleteProfileHTML(customer) {
                 gap: 1rem;
             }
 
-            .notification-container {
+            notification-container {
                 left: 20px;
                 right: 20px;
                 max-width: none;
@@ -2907,20 +3317,30 @@ function getPortalHTML(products, customer) {
         }
 
         body {
-            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
+            font-family: 'Inter', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: radial-gradient(ellipse at top, #f0f4f8 0%, #e2e8f0 40%, #cbd5e1 100%);
             min-height: 100vh;
-            color: #212529;
+            color: #1e293b;
+            line-height: 1.6;
+            font-smooth: always;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            padding-top: 100px;
         }
 
         .navbar {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            padding: 1rem 0;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            position: sticky;
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 1.25rem 0;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.12), 0 2px 8px rgba(31, 38, 135, 0.08);
+            position: fixed;
             top: 0;
+            left: 0;
+            right: 0;
             z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .navbar-content {
@@ -3119,149 +3539,180 @@ function getPortalHTML(products, customer) {
             border: 2px solid white;
         }
 
-        .customer-welcome {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 1.5rem 2rem;
-            margin: 2rem auto;
-            max-width: 1400px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .welcome-text h2 {
-            color: #000000;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-        }
-
-        .welcome-text p {
-            color: #666;
-            font-size: 0.875rem;
-        }
-
-        .discount-badge {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .logout-btn {
-            background: rgba(239, 68, 68, 0.1);
-            color: #dc2626;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-        }
-
-        .logout-btn:hover {
-            background: rgba(239, 68, 68, 0.2);
-        }
-
         .content-section {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 0 2rem 2rem;
+            padding: 0 2rem 4rem;
+            animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .stats-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
         }
 
         .stat-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+                0 10px 10px -5px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
             display: flex;
             align-items: center;
-            gap: 1.5rem;
-            transition: all 0.3s ease;
+            gap: 2rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #FFCE36, #FF7B85, #3b82f6);
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                0 32px 64px -12px rgba(0, 0, 0, 0.15), 
+                0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 206, 54, 0.1);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
         }
 
         .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 15px;
+            width: 72px;
+            height: 72px;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-icon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: inherit;
+            filter: brightness(1.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:hover .stat-icon::before {
+            opacity: 1;
         }
 
         .stat-icon.products {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
         }
 
         .stat-icon.discount {
-            background: linear-gradient(135deg, #10b981, #059669);
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
             color: white;
+            box-shadow: 0 8px 32px rgba(17, 153, 142, 0.4);
         }
 
         .stat-icon.access {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
+            box-shadow: 0 8px 32px rgba(240, 147, 251, 0.4);
         }
 
         .stat-content h3 {
-            font-size: 2rem;
-            font-weight: 800;
-            color: #000000;
-            margin-bottom: 0.25rem;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .stat-content p {
-            color: #666;
-            font-weight: 500;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.01em;
         }
 
         .catalog-section {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 32px;
+            padding: 3rem;
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+                0 10px 10px -5px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .catalog-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 33%, #11998e 66%, #f093fb 100%);
         }
 
         .catalog-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+            margin-bottom: 3rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid rgba(148, 163, 184, 0.1);
+            position: relative;
         }
 
         .catalog-title {
-            font-size: 1.75rem;
-            font-weight: 800;
-            color: #000000;
+            font-size: 2.25rem;
+            font-weight: 900;
+            color: #1e293b;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 1rem;
+            letter-spacing: -0.025em;
+        }
+
+        .catalog-title i {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .catalog-controls {
@@ -3271,40 +3722,76 @@ function getPortalHTML(products, customer) {
         }
 
         .search-box {
-            padding: 0.75rem 1rem;
-            border: 2px solid rgba(0, 0, 0, 0.1);
-            border-radius: 12px;
-            font-size: 0.875rem;
-            width: 250px;
-            transition: all 0.3s ease;
+            padding: 1rem 1.5rem;
+            border: 2px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
+            font-size: 0.95rem;
+            width: 320px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .search-box::placeholder {
+            color: #94a3b8;
+            font-weight: 500;
         }
 
         .search-box:focus {
             outline: none;
-            border-color: #FFCE36;
-            box-shadow: 0 0 0 3px rgba(255, 206, 54, 0.2);
+            border-color: #667eea;
+            box-shadow: 
+                0 0 0 4px rgba(102, 126, 234, 0.1),
+                0 4px 12px rgba(102, 126, 234, 0.15);
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-1px);
         }
 
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
         }
 
         .product-card {
-            background: white;
-            border-radius: 20px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 
+                0 10px 15px -3px rgba(0, 0, 0, 0.1), 
+                0 4px 6px -2px rgba(0, 0, 0, 0.05),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            border-color: #FFCE36;
+            transform: translateY(-12px) scale(1.02);
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.15), 
+                0 0 0 1px rgba(17, 153, 142, 0.1);
+        }
+
+        .product-card:hover::before {
+            transform: translateX(0);
         }
 
         .product-image {
@@ -3464,29 +3951,83 @@ function getPortalHTML(products, customer) {
             color: #374151;
         }
 
-        @media (max-width: 768px) {
-            .customer-welcome {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
             }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Añadir animación a las tarjetas individuales */
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+
+        .stat-card {
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+        }
+
+        .catalog-section {
+            animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both;
+        }
+
+        @media (max-width: 768px) {
             .stats-cards {
                 grid-template-columns: 1fr;
+                gap: 1.5rem;
             }
 
             .products-grid {
                 grid-template-columns: 1fr;
+                gap: 1.5rem;
             }
 
             .catalog-header {
                 flex-direction: column;
-                gap: 1rem;
+                gap: 1.5rem;
                 align-items: flex-start;
             }
 
             .search-box {
                 width: 100%;
+            }
+
+            .stat-card {
+                padding: 2rem;
+                gap: 1.5rem;
+            }
+
+            .stat-icon {
+                width: 64px;
+                height: 64px;
+            }
+
+            .stat-content h3 {
+                font-size: 2rem;
+            }
+
+            .catalog-section {
+                padding: 2rem;
+                border-radius: 24px;
+            }
+
+            .catalog-title {
+                font-size: 1.875rem;
             }
         }
     </style>
@@ -3494,21 +4035,7 @@ function getPortalHTML(products, customer) {
 <body>
     <div class="navbar">
         <div class="navbar-content">
-            <div class="navbar-brand">
-                <div class="brand-logo">
-                    <svg width="140" height="45" viewBox="0 0 140 45" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 45px; width: auto;">
-                        <text x="5" y="30" font-family="Arial, sans-serif" font-size="24" font-weight="900" fill="#2D3748">IMANIX</text>
-                        <text x="5" y="42" font-family="Arial, sans-serif" font-size="10" fill="#718096">by BrainToys</text>
-                        <circle cx="125" cy="22" r="12" fill="#FFCE36"/>
-                        <circle cx="125" cy="22" r="8" fill="#2D3748"/>
-                        <circle cx="125" cy="22" r="4" fill="#FFCE36"/>
-                    </svg>
-                </div>
-                <div class="brand-text">
-                    <h1>Portal B2B - IMANIX</h1>
-                    <p>Distribución Profesional</p>
-                </div>
-            </div>
+                <img src="/images/Logo%202160x1200%20(1).png" alt="IMANIX Portal B2B" style="height: 70px; width: auto;" />                </svg>            </a>
             <div class="navbar-actions">
                 <div class="user-account" onclick="toggleUserDropdown()">
                     <i class="fas fa-user-circle"></i>
@@ -3547,22 +4074,6 @@ function getPortalHTML(products, customer) {
                     <span class="cart-navbar-badge" id="cartNavbarBadge">0</span>
                 </button>
             </div>
-        </div>
-    </div>
-
-    <div class="customer-welcome">
-        <div class="welcome-text">
-            <h2>¡Bienvenido/a, ${customer.firstName}!</h2>
-            <p>Accede a nuestro catálogo exclusivo con precios preferenciales • Email: ${customer.email}</p>
-        </div>
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <div class="discount-badge">
-                <i class="fas fa-percentage"></i>
-                ${customerDiscount}% OFF
-            </div>
-            <button class="logout-btn" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-            </button>
         </div>
     </div>
 
@@ -3616,7 +4127,7 @@ function getPortalHTML(products, customer) {
     </div>
 
     <script>
-        // Carrito de compras
+        // Variables globales
         let cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
 
         // Limpiar y migrar productos del carrito (productos añadidos antes de la actualización)
@@ -3831,27 +4342,36 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         body {
-            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            font-family: 'Inter', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: radial-gradient(ellipse at top, #f0f4f8 0%, #e2e8f0 40%, #cbd5e1 100%);
             min-height: 100vh;
             color: #1e293b;
-            padding-top: 80px;
+            line-height: 1.6;
+            font-smooth: always;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            padding-top: 100px;
         }
 
         .navbar {
-            background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
-            padding: 1rem 2rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 1.25rem 0;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.12), 0 2px 8px rgba(31, 38, 135, 0.08);
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .navbar-content {
             max-width: 1400px;
             margin: 0 auto;
+            padding: 0 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -3894,63 +4414,114 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .profile-container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+            animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .profile-header {
-            background: white;
-            padding: 2rem;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 3rem;
+            border-radius: 32px;
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+                0 10px 10px -5px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 33%, #11998e 66%, #f093fb 100%);
         }
 
         .profile-title {
-            font-size: 2rem;
-            font-weight: 800;
+            font-size: 2.5rem;
+            font-weight: 900;
             color: #1e293b;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.025em;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .profile-subtitle {
             color: #64748b;
-            font-size: 1rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+            letter-spacing: 0.01em;
         }
 
         .profile-tabs {
             display: flex;
-            background: white;
-            border-radius: 20px;
-            padding: 0.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 24px;
+            padding: 0.75rem;
+            margin-bottom: 3rem;
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+                0 10px 10px -5px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
             overflow-x: auto;
+            gap: 0.5rem;
         }
 
         .tab-button {
             flex: 1;
-            padding: 1rem 1.5rem;
+            padding: 1.25rem 2rem;
             border: none;
             background: none;
             cursor: pointer;
-            border-radius: 12px;
+            border-radius: 16px;
             font-weight: 600;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
             color: #64748b;
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 16px;
         }
 
         .tab-button.active {
-            background: linear-gradient(135deg, #FFCE36, #FF7B85);
-            color: #000000;
-            box-shadow: 0 5px 15px rgba(255, 206, 54, 0.3);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
-        .tab-button:hover {
-            background: rgba(255, 206, 54, 0.1);
-            color: #1e293b;
+        .tab-button:hover:not(.active) {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            transform: translateY(-1px);
         }
 
         .tab-content {
@@ -3967,114 +4538,256 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             to { opacity: 1; transform: translateY(0); }
         }
 
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
         }
 
         .stat-card {
-            background: white;
-            border-radius: 20px;
-            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 24px;
+            padding: 2.5rem;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+                0 10px 10px -5px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #FFCE36, #FF7B85, #3b82f6);
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
         .stat-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                0 32px 64px -12px rgba(0, 0, 0, 0.15), 
+                0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 206, 54, 0.1);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
         }
 
         .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
+            width: 72px;
+            height: 72px;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1rem;
-            font-size: 1.5rem;
+            margin: 0 auto 1.5rem;
+            font-size: 1.75rem;
             color: white;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .stat-icon.orders { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
-        .stat-icon.spent { background: linear-gradient(135deg, #f59e0b, #d97706); }
-        .stat-icon.saved { background: linear-gradient(135deg, #10b981, #059669); }
-        .stat-icon.discount { background: linear-gradient(135deg, #FFCE36, #FF7B85); }
+        .stat-icon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: inherit;
+            filter: brightness(1.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:hover .stat-icon::before {
+            opacity: 1;
+        }
+
+        .stat-icon.orders { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+        }
+        .stat-icon.spent { 
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 8px 32px rgba(240, 147, 251, 0.4);
+        }
+        .stat-icon.saved { 
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            box-shadow: 0 8px 32px rgba(17, 153, 142, 0.4);
+        }
+        .stat-icon.discount { 
+            background: linear-gradient(135deg, #FFCE36, #FF7B85);
+            box-shadow: 0 8px 32px rgba(255, 206, 54, 0.4);
+        }
 
         .content-card {
-            background: white;
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 32px;
+            padding: 3rem;
+            margin-bottom: 3rem;
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+                0 10px 10px -5px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .content-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .content-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.15), 
+                0 0 0 1px rgba(17, 153, 142, 0.1);
         }
 
         .section-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            color: #2d3748;
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 2rem;
+            color: #1e293b;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 1rem;
+            letter-spacing: -0.025em;
+        }
+
+        .section-title i {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
         }
 
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .form-label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
             font-weight: 600;
-            color: #4a5568;
+            color: #374151;
+            font-size: 0.95rem;
+            letter-spacing: 0.01em;
         }
 
         .form-input {
             width: 100%;
-            padding: 0.75rem 1rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            border: 2px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
             font-size: 1rem;
-            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .form-input::placeholder {
+            color: #94a3b8;
+            font-weight: 500;
         }
 
         .form-input:focus {
             outline: none;
-            border-color: #FFCE36;
-            box-shadow: 0 0 0 3px rgba(255, 206, 54, 0.2);
+            border-color: #667eea;
+            box-shadow: 
+                0 0 0 4px rgba(102, 126, 234, 0.1),
+                0 4px 12px rgba(102, 126, 234, 0.15);
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-1px);
         }
 
         .btn {
-            padding: 0.75rem 1.5rem;
+            padding: 1rem 2rem;
             border: none;
-            border-radius: 10px;
-            font-weight: 600;
+            border-radius: 16px;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+            letter-spacing: 0.01em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: inherit;
+            filter: brightness(1.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn:hover::before {
+            opacity: 1;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #FFCE36, #FF7B85);
-            color: #000000;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 206, 54, 0.4);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.5);
         }
 
         .btn-secondary {
@@ -4190,6 +4903,194 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             opacity: 0.5;
         }
 
+        /* Estilos del navbar dropdown */
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .brand-logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #FFCE36, #FFC107);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #000000;
+        }
+
+        .brand-text h1 {
+            color: #000000;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .brand-text p {
+            color: #666;
+            font-size: 0.75rem;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-account {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            text-decoration: none;
+            color: #000000;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .user-account:hover {
+            background: rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            min-width: 220px;
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .user-dropdown.show {
+            display: block;
+            animation: dropdownFadeIn 0.3s ease;
+        }
+
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-header {
+            padding: 1rem;
+            background: linear-gradient(135deg, #FFCE36, #FF7B85);
+            color: #000000;
+        }
+
+        .dropdown-header .user-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .dropdown-header .user-email {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .dropdown-menu {
+            padding: 0.5rem 0;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: #374151;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 206, 54, 0.1);
+            color: #000000;
+        }
+
+        .dropdown-item i {
+            width: 16px;
+            text-align: center;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+            margin: 0.5rem 0;
+        }
+
+        .cart-navbar-btn {
+            position: relative;
+            background: linear-gradient(135deg, #FFCE36, #FFC107);
+            border: none;
+            padding: 0.75rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 50px;
+            height: 50px;
+        }
+
+        .cart-navbar-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 206, 54, 0.4);
+        }
+
+        .cart-navbar-btn i {
+            font-size: 1.2rem;
+            color: #000000;
+        }
+
+        .cart-navbar-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #FF7B85;
+            color: white;
+            border-radius: 50%;
+            min-width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 2px solid white;
+        }
+
         @media (max-width: 768px) {
             .profile-container {
                 padding: 0 1rem;
@@ -4218,37 +5119,43 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 <body>
     <nav class="navbar">
         <div class="navbar-content">
-            <a href="/" class="brand">
-                <div class="brand-logo">
-                    <svg width="140" height="45" viewBox="0 0 140 45" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 35px; width: auto;">
-                        <text x="5" y="25" font-family="Arial, sans-serif" font-size="20" font-weight="900" fill="#2D3748">IMANIX</text>
-                        <text x="5" y="37" font-family="Arial, sans-serif" font-size="8" fill="#718096">by BrainToys</text>
-                        <circle cx="120" cy="18" r="10" fill="#FFCE36"/>
-                        <circle cx="120" cy="18" r="6" fill="#2D3748"/>
-                        <circle cx="120" cy="18" r="3" fill="#FFCE36"/>
-                    </svg>
+                <img src="/images/Logo%202160x1200%20(1).png" alt="IMANIX Portal B2B" style="height: 70px; width: auto;" />                </svg>            </a>
+            <div class="navbar-actions">
+                <div class="user-account" onclick="toggleUserDropdown()">
+                    <i class="fas fa-user-circle"></i>
+                    <span>${customer.firstName} ${customer.lastName || ''}</span>
+                    <i class="fas fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.25rem;"></i>
+                    
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-header">
+                            <div class="user-name">${customer.firstName} ${customer.lastName || ''}</div>
+                            <div class="user-email">${customer.email}</div>
+                        </div>
+                        
+                        <div class="dropdown-menu">
+                            <a href="/perfil" class="dropdown-item">
+                                <i class="fas fa-user-edit"></i>
+                                Mi Perfil
+                            </a>
+                            <a href="/carrito" class="dropdown-item">
+                                <i class="fas fa-shopping-cart"></i>
+                                Mi Carrito
+                            </a>
+                            <a href="/perfil" class="dropdown-item">
+                                <i class="fas fa-history"></i>
+                                Historial de Pedidos
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <button onclick="logout()" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Cerrar Sesión
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <span>IMANIX B2B</span>
-            </a>
-            
-            <div class="nav-actions">
-                <div class="customer-info">
-                    <span style="color: #000000; font-weight: 600;">
-                        ${customer.firstName}
-                    </span>
-                    <div class="discount-badge" style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">-${customerDiscount}%</div>
-                </div>
-                <a href="/" class="nav-button">
-                    <i class="fas fa-home"></i>
-                    Catálogo
-                </a>
-                <a href="/carrito" class="nav-button">
+                <button class="cart-navbar-btn" onclick="showCart()">
                     <i class="fas fa-shopping-cart"></i>
-                    Carrito
-                </a>
-                <button class="nav-button" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Cerrar Sesión
+                    <span class="cart-navbar-badge" id="cartNavbarBadge">0</span>
                 </button>
             </div>
         </div>
@@ -4530,46 +5437,89 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
     </div>
 
     <script>
-        // Definir switchTab inmediatamente cuando se carga el script
+        // Funciones del navbar - AGREGADAS
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Cerrar dropdown al hacer clic fuera
+        document.addEventListener('click', function(event) {
+            const userAccount = document.querySelector('.user-account');
+            const dropdown = document.getElementById('userDropdown');
+            
+            if (userAccount && dropdown && !userAccount.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Mostrar carrito - redirigir a página dedicada
+        function showCart() {
+            window.location.href = '/carrito';
+        }
+
+        // Carrito de compras
+        let cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
+
+        // Actualizar contador del carrito
+        function updateCartBadge() {
+            const badge = document.getElementById('cartNavbarBadge');
+            if (badge) {
+                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                badge.textContent = totalItems;
+            }
+        }
+
+        // Función de logout
+        async function logout() {
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                try {
+                    const response = await fetch('/api/auth/logout', { method: 'POST' });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        localStorage.removeItem('b2bCart');
+                        window.location.href = '/';
+                    } else {
+                        alert('Error al cerrar sesión');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error de conexión');
+                }
+            }
+        }
+
+        // Función switchTab - ÚNICA DEFINICIÓN
         function switchTab(tabName, buttonElement) {
-            console.log('🔄 switchTab llamado con:', tabName);
+            console.log('switchTab ejecutado:', tabName);
             
             try {
                 // Ocultar todas las tabs
-                const tabs = document.querySelectorAll('.tab-content');
-                console.log('📋 Tabs encontradas:', tabs.length);
-                tabs.forEach(tab => {
-                    console.log('❌ Ocultando tab:', tab.id);
+                document.querySelectorAll('.tab-content').forEach(tab => {
                     tab.classList.remove('active');
                 });
                 
                 // Mostrar tab seleccionada
                 const targetTab = document.getElementById(tabName + '-tab');
-                console.log('🎯 Tab objetivo:', targetTab ? targetTab.id : 'NO ENCONTRADA');
                 if (targetTab) {
                     targetTab.classList.add('active');
-                    console.log('✅ Tab activada:', targetTab.id);
-                } else {
-                    console.error('❌ No se encontró la tab:', tabName + '-tab');
                 }
                 
                 // Actualizar botones
-                const buttons = document.querySelectorAll('.tab-button');
-                buttons.forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
                 
-                // Marcar el botón clickeado como activo
                 if (buttonElement) {
                     buttonElement.classList.add('active');
-                    console.log('✅ Botón activado:', buttonElement.textContent.trim());
-                } else {
-                    console.error('❌ No se recibió buttonElement');
                 }
             } catch (error) {
-                console.error('❌ Error en switchTab:', error);
+                console.error('Error en switchTab:', error);
             }
         }
         
-        // También asignar a window para acceso global
+        // Hacer disponible globalmente
         window.switchTab = switchTab;
 
         async function updateProfile(event) {
@@ -4647,9 +5597,11 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         // Inicializar comunas al cargar la página si hay región seleccionada
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Página cargada - iniciando debug');
-            console.log('📊 Datos de pedidos disponibles');
-            console.log('📋 Total de pedidos:', ${orders?.length || 0});
+            console.log('Página cargada - iniciando');
+            console.log('Total de pedidos:', ${orders?.length || 0});
+            
+            // Inicializar carrito
+            updateCartBadge();
             
             const regionSelect = document.querySelector('select[name="region"]');
             const comunaSelect = document.getElementById('comunaSelectProfile');
@@ -4659,10 +5611,14 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             const profileTab = document.getElementById('profile-tab');
             const addressesTab = document.getElementById('addresses-tab'); 
             const ordersTab = document.getElementById('orders-tab');
-            console.log('🔍 Tabs encontradas:');
-            console.log('  - profile-tab:', profileTab ? 'SÍ' : 'NO');
-            console.log('  - addresses-tab:', addressesTab ? 'SÍ' : 'NO');
-            console.log('  - orders-tab:', ordersTab ? 'SÍ' : 'NO');
+            console.log('Tabs encontradas:');
+            console.log('profile-tab:', profileTab ? 'SÍ' : 'NO');
+            console.log('addresses-tab:', addressesTab ? 'SÍ' : 'NO'); 
+            console.log('orders-tab:', ordersTab ? 'SÍ' : 'NO');
+            
+            // Verificar que switchTab esté disponible
+            console.log('switchTab disponible:', typeof switchTab);
+            console.log('window.switchTab disponible:', typeof window.switchTab);
             
             if (regionSelect && regionSelect.value) {
                 updateComunasInProfile();
@@ -4801,9 +5757,18 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             const discountHtml = parseFloat(discountAmount) > 0 ? 
                 '<div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #e5e7eb;"><strong>Descuento Aplicado:</strong><br><span style="color:#10b981;font-weight:600;">- ' + formatPrice(parseFloat(discountAmount)) + '</span></div>' : '';
             
-            modal.innerHTML = '<div style="background:white;padding:2rem;border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,0.2);max-width:500px;width:90%;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;"><h2 style="margin:0;color:#1f2937;font-weight:700;">Detalles del Pedido</h2><button onclick="this.closest(\'div\').parentElement.remove()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;">×</button></div><div style="background:#f8f9fa;padding:1.5rem;border-radius:12px;margin-bottom:1.5rem;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;"><div><strong>Número de Pedido:</strong><br><span style="color:#6366f1;font-weight:600;">#' + orderNumber + '</span></div><div><strong>Estado:</strong><br><span style="padding:0.25rem 0.75rem;border-radius:20px;font-size:0.875rem;font-weight:600;background:' + statusBg + ';color:' + statusColor + ';">' + status + '</span></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;"><div><strong>Fecha:</strong><br><span>' + date + '</span></div><div><strong>Total:</strong><br><span style="color:#059669;font-weight:700;font-size:1.1rem;">' + formatPrice(parseFloat(totalAmount)) + '</span></div></div>' + discountHtml + '</div><div style="background:#fff3cd;padding:1rem;border-radius:8px;border-left:4px solid #ffc107;margin-bottom:1.5rem;"><div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;"><i class="fas fa-info-circle" style="color:#856404;"></i><strong style="color:#856404;">Estado del Pedido</strong></div><p style="margin:0;color:#856404;font-size:0.9rem;">Tu pedido está siendo revisado por nuestro equipo. Te contactaremos pronto para confirmar los detalles de envío y pago.</p></div><div style="display:flex;gap:1rem;"><button onclick="this.closest(\'div\').parentElement.remove()" style="flex:1;padding:0.75rem;background:#6b7280;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Cerrar</button></div></div>';
+            // Crear el contenido del modal con event listeners en lugar de onclick inline
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = 'background:white;padding:2rem;border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,0.2);max-width:500px;width:90%;';
             
+            modalContent.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;"><h2 style="margin:0;color:#1f2937;font-weight:700;">Detalles del Pedido</h2><button id="closeModal" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;">×</button></div><div style="background:#f8f9fa;padding:1.5rem;border-radius:12px;margin-bottom:1.5rem;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;"><div><strong>Número de Pedido:</strong><br><span style="color:#6366f1;font-weight:600;">#' + orderNumber + '</span></div><div><strong>Estado:</strong><br><span style="padding:0.25rem 0.75rem;border-radius:20px;font-size:0.875rem;font-weight:600;background:' + statusBg + ';color:' + statusColor + ';">' + status + '</span></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;"><div><strong>Fecha:</strong><br><span>' + date + '</span></div><div><strong>Total:</strong><br><span style="color:#059669;font-weight:700;font-size:1.1rem;">' + formatPrice(parseFloat(totalAmount)) + '</span></div></div>' + discountHtml + '</div><div style="background:#fff3cd;padding:1rem;border-radius:8px;border-left:4px solid #ffc107;margin-bottom:1.5rem;"><div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;"><i class="fas fa-info-circle" style="color:#856404;"></i><strong style="color:#856404;">Estado del Pedido</strong></div><p style="margin:0;color:#856404;font-size:0.9rem;">Tu pedido está siendo revisado por nuestro equipo. Te contactaremos pronto para confirmar los detalles de envío y pago.</p></div><div style="display:flex;gap:1rem;"><button id="closeModalBtn" style="flex:1;padding:0.75rem;background:#6b7280;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Cerrar</button></div>';
+            
+            modal.appendChild(modalContent);
             document.body.appendChild(modal);
+            
+            // Agregar event listeners después de agregar al DOM
+            document.getElementById('closeModal').addEventListener('click', () => modal.remove());
+            document.getElementById('closeModalBtn').addEventListener('click', () => modal.remove());
             
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
