@@ -6856,15 +6856,124 @@ function getPortalHTML(products, customer) {
                 
                 // Si se está mostrando el panel, inicializar filtros
                 if (panel.classList.contains('show')) {
+                    console.log('🔍 Inicializando filtros al abrir panel...');
                     setTimeout(function() {
-                        if (typeof initializeFilters === 'function') {
-                            initializeFilters();
-                        } else if (typeof window.initializeFilters === 'function') {
+                        // Llamar la función de inicialización desde el head
+                        if (typeof window.initializeFilters === 'function') {
                             window.initializeFilters();
+                        } else {
+                            console.log('⚠️ window.initializeFilters no encontrada, inicializando manualmente...');
+                            initializeFiltersManual();
                         }
                     }, 100);
                 }
             }
+        }
+        
+        // Función de respaldo para inicializar filtros manualmente
+        function initializeFiltersManual() {
+            console.log('🔍 Inicializando filtros manualmente...');
+            
+            var products = Array.from(document.querySelectorAll('.product-card'));
+            var subCategorias = new Set();
+            var marcas = new Set();
+            var edades = new Set();
+            
+            console.log('📦 Productos encontrados:', products.length);
+            
+            // Extraer todos los metacampos de los productos
+            products.forEach(function(card) {
+                var metafieldsAttr = card.getAttribute('data-metafields');
+                console.log('🏷️ Metacampos del producto:', metafieldsAttr);
+                
+                if (metafieldsAttr) {
+                    try {
+                        var metafields = JSON.parse(metafieldsAttr.replace(/&#39;/g, "'"));
+                        
+                        // Organizar metacampos por tipo
+                        Object.keys(metafields).forEach(function(key) {
+                            var value = metafields[key];
+                            if (value) {
+                                var keyLower = key.toLowerCase();
+                                
+                                if (keyLower.includes('subcategor') || keyLower.includes('categoria')) {
+                                    subCategorias.add(value);
+                                }
+                                else if (keyLower.includes('marca') || keyLower.includes('brand')) {
+                                    marcas.add(value);
+                                }
+                                else if (keyLower.includes('edad') || keyLower.includes('age') || keyLower.includes('años')) {
+                                    // Limpiar IDs de Shopify
+                                    if (typeof value === 'string' && !value.startsWith('gid://shopify/')) {
+                                        edades.add(value);
+                                    }
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Error parseando metacampos:', error);
+                    }
+                }
+            });
+            
+            console.log('📊 Metacampos extraídos:', {
+                subCategorias: subCategorias.size,
+                marcas: marcas.size,
+                edades: edades.size
+            });
+            
+            // Llenar filtros de Sub-Categorías
+            var collectionFilters = document.getElementById('collectionFilters');
+            if (collectionFilters) {
+                var subCategoriasArray = Array.from(subCategorias).sort();
+                if (subCategoriasArray.length > 0) {
+                    collectionFilters.innerHTML = subCategoriasArray.map(function(subCategoria) {
+                        return '<label class="filter-checkbox">' +
+                            '<input type="checkbox" value="' + subCategoria + '" onchange="applyFilters()">' +
+                            '<span class="checkmark"></span>' +
+                            subCategoria +
+                        '</label>';
+                    }).join('');
+                } else {
+                    collectionFilters.innerHTML = '<p style="color: #666; font-style: italic;">No hay sub-categorías disponibles</p>';
+                }
+            }
+            
+            // Llenar filtros de Marcas
+            var categoryFilters = document.getElementById('categoryFilters');
+            if (categoryFilters) {
+                var marcasArray = Array.from(marcas).sort();
+                if (marcasArray.length > 0) {
+                    categoryFilters.innerHTML = marcasArray.map(function(marca) {
+                        return '<label class="filter-checkbox">' +
+                            '<input type="checkbox" value="' + marca + '" onchange="applyFilters()">' +
+                            '<span class="checkmark"></span>' +
+                            marca +
+                        '</label>';
+                    }).join('');
+                } else {
+                    categoryFilters.innerHTML = '<p style="color: #666; font-style: italic;">No hay marcas disponibles</p>';
+                }
+            }
+            
+            // Llenar filtros de Edades
+            var ageFilters = document.getElementById('ageFilters');
+            if (ageFilters) {
+                var edadesArray = Array.from(edades).sort();
+                if (edadesArray.length > 0) {
+                    ageFilters.innerHTML = edadesArray.map(function(edad) {
+                        return '<label class="filter-checkbox">' +
+                            '<input type="checkbox" value="' + edad + '" onchange="applyFilters()">' +
+                            '<span class="checkmark"></span>' +
+                            edad +
+                        '</label>';
+                    }).join('');
+                } else {
+                    ageFilters.innerHTML = '<p style="color: #666; font-style: italic;">No hay filtros de edad disponibles</p>';
+                }
+            }
+            
+            console.log('✅ Filtros poblados manualmente');
         }
         
         function addToCart(productId, variantId, title, price, image) {
