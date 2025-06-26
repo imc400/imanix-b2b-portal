@@ -6234,83 +6234,130 @@ function getPortalHTML(products, customer) {
             }
         }
 
+        // DEFINIR TODAS LAS FUNCIONES GLOBALMENTE PRIMERO
+        window.toggleUserDropdown = function() {
+            var dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        };
+        
+        window.toggleFilters = function() {
+            var panel = document.getElementById('filtersPanel');
+            if (panel) {
+                panel.classList.toggle('show');
+                if (panel.classList.contains('show') && typeof initializeFilters === 'function') {
+                    initializeFilters();
+                }
+            }
+        };
+        
+        window.showCart = function() {
+            window.location.href = '/carrito';
+        };
+        
+        window.addToCart = function(productId, variantId, title, price, image) {
+            try {
+                var existingItem = cart.find(function(item) { 
+                    return item.productId === productId || item.title === title; 
+                });
+                
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    cart.push({
+                        productId: productId || 'product_' + Date.now(),
+                        variantId: variantId || 'variant_' + Date.now(),
+                        title: title,
+                        price: price,
+                        image: image,
+                        quantity: 1
+                    });
+                }
+                
+                localStorage.setItem('b2bCart', JSON.stringify(cart));
+                updateCartBadge();
+                showNotification(title + ' agregado al carrito', 'success');
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                showNotification('Error agregando producto', 'error');
+            }
+        };
+        
+        window.logout = function() {
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                fetch('/api/auth/logout', { method: 'POST' })
+                    .then(function(response) { return response.json(); })
+                    .then(function(data) {
+                        if (data.success) {
+                            localStorage.removeItem('b2bCart');
+                            window.location.reload();
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('Error:', error);
+                        window.location.reload();
+                    });
+            }
+        };
+        
+        window.clearAllFilters = function() {
+            try {
+                // Limpiar checkboxes
+                var checkboxes = document.querySelectorAll('.filter-checkbox input[type="checkbox"]');
+                checkboxes.forEach(function(cb) { cb.checked = false; });
+                
+                // Limpiar campos
+                var minPrice = document.getElementById('minPrice');
+                var maxPrice = document.getElementById('maxPrice');
+                var searchInput = document.getElementById('searchInput');
+                
+                if (minPrice) minPrice.value = '';
+                if (maxPrice) maxPrice.value = '';
+                if (searchInput) searchInput.value = '';
+                
+                // Mostrar todos los productos
+                var productCards = document.querySelectorAll('.product-card');
+                productCards.forEach(function(card) {
+                    card.style.display = 'block';
+                });
+                
+                // Ocultar filtros activos
+                var activeFilters = document.getElementById('activeFilters');
+                if (activeFilters) activeFilters.style.display = 'none';
+            } catch (error) {
+                console.error('Error clearing filters:', error);
+            }
+        };
+        
+        window.applyFilters = function() {
+            try {
+                if (typeof window.applyFiltersInternal === 'function') {
+                    window.applyFiltersInternal();
+                }
+            } catch (error) {
+                console.error('Error applying filters:', error);
+            }
+        };
+        
+        window.removeFilter = function(type, value) {
+            try {
+                // Lógica básica para remover filtros
+                var input = document.querySelector('input[value="' + value + '"]');
+                if (input) {
+                    input.checked = false;
+                }
+                if (typeof window.applyFilters === 'function') {
+                    window.applyFilters();
+                }
+            } catch (error) {
+                console.error('Error removing filter:', error);
+            }
+        };
+
         // Inicializar al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             updateCartBadge();
-            
-            // Configurar event listeners para los botones
-            var userAccountBtn = document.querySelector('.user-account');
-            if (userAccountBtn) {
-                userAccountBtn.addEventListener('click', function() {
-                    var dropdown = document.getElementById('userDropdown');
-                    if (dropdown) {
-                        dropdown.classList.toggle('show');
-                    }
-                });
-            }
-            
-            var filterToggleBtn = document.querySelector('.filter-toggle-btn');
-            if (filterToggleBtn) {
-                filterToggleBtn.addEventListener('click', function() {
-                    var panel = document.getElementById('filtersPanel');
-                    if (panel) {
-                        panel.classList.toggle('show');
-                        
-                        // Si se está mostrando el panel, inicializar filtros
-                        if (panel.classList.contains('show')) {
-                            initializeFilters();
-                        }
-                    }
-                });
-            }
-            
-            var cartBtn = document.querySelector('.cart-navbar-btn');
-            if (cartBtn) {
-                cartBtn.addEventListener('click', function() {
-                    window.location.href = '/carrito';
-                });
-            }
-            
-            // Configurar event listeners para botones de agregar al carrito
-            document.addEventListener('click', function(event) {
-                if (event.target.classList.contains('add-to-cart-btn') || event.target.closest('.add-to-cart-btn')) {
-                    var btn = event.target.classList.contains('add-to-cart-btn') ? event.target : event.target.closest('.add-to-cart-btn');
-                    var productCard = btn.closest('.product-card');
-                    if (productCard) {
-                        var title = productCard.querySelector('.product-title').textContent;
-                        var priceEl = productCard.querySelector('.discounted-price');
-                        var price = priceEl ? parseInt(priceEl.textContent.replace(/[^0-9]/g, '')) : 0;
-                        var img = productCard.querySelector('.product-image img');
-                        var image = img ? img.src : '';
-                        
-                        // Generar IDs únicos para el producto
-                        var productId = 'product_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                        var variantId = 'variant_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                        
-                        // Agregar al carrito
-                        var existingItem = cart.find(function(item) { return item.title === title; });
-                        
-                        if (existingItem) {
-                            existingItem.quantity += 1;
-                        } else {
-                            cart.push({
-                                productId: productId,
-                                variantId: variantId,
-                                title: title,
-                                price: price,
-                                image: image,
-                                quantity: 1
-                            });
-                        }
-                        
-                        localStorage.setItem('b2bCart', JSON.stringify(cart));
-                        updateCartBadge();
-                        
-                        // Mostrar confirmación
-                        showNotification(title + ' agregado al carrito', 'success');
-                    }
-                }
-            });
         });
     </script>
 </body>
