@@ -856,9 +856,9 @@ function getCartHTML(customer) {
 
         body {
             font-family: 'Inter', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: radial-gradient(ellipse at top, #f0f4f8 0%, #e2e8f0 40%, #cbd5e1 100%);
+            background: #FFFFFF;
             min-height: 100vh;
-            color: #1e293b;
+            color: #000000;
             line-height: 1.6;
             font-smooth: always;
             -webkit-font-smoothing: antialiased;
@@ -867,9 +867,9 @@ function getCartHTML(customer) {
         }
 
         .navbar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            background: #FFCE36;
+            
+            -webkit-
             border-bottom: 1px solid rgba(255, 255, 255, 0.18);
             padding: 1.25rem 0;
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.12), 0 2px 8px rgba(31, 38, 135, 0.08);
@@ -984,7 +984,7 @@ function getCartHTML(customer) {
 
         .dropdown-header {
             padding: 1rem;
-            background: linear-gradient(135deg, #FFCE36, #FF7B85);
+            background: #FFCE36;
             color: #000000;
         }
 
@@ -1064,8 +1064,8 @@ function getCartHTML(customer) {
             position: absolute;
             top: -8px;
             right: -8px;
-            background: #FF7B85;
-            color: white;
+            background: #000000;
+            color: #000000;
             border-radius: 50%;
             min-width: 22px;
             height: 22px;
@@ -1085,9 +1085,9 @@ function getCartHTML(customer) {
         }
 
         .cart-header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            background: #FFCE36;
+            
+            -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
             padding: 3rem;
             border-radius: 32px;
@@ -1113,7 +1113,7 @@ function getCartHTML(customer) {
         .cart-title {
             font-size: 2.5rem;
             font-weight: 900;
-            color: #1e293b;
+            color: #000000;
             margin-bottom: 0.75rem;
             letter-spacing: -0.025em;
             background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
@@ -1147,9 +1147,9 @@ function getCartHTML(customer) {
         }
 
         .cart-items {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            background: #FFCE36;
+            
+            -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 32px;
             box-shadow: 
@@ -1196,7 +1196,7 @@ function getCartHTML(customer) {
         .item-details h3 {
             font-size: 1.1rem;
             font-weight: 700;
-            color: #1e293b;
+            color: #000000;
             margin-bottom: 0.5rem;
         }
 
@@ -1219,12 +1219,12 @@ function getCartHTML(customer) {
         }
 
         .quantity-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #FFCE36;
             border: none;
             width: 36px;
             height: 36px;
             border-radius: 12px;
-            color: white;
+            color: #000000;
             font-weight: 700;
             cursor: pointer;
             display: flex;
@@ -1253,7 +1253,7 @@ function getCartHTML(customer) {
         .item-total-price {
             font-size: 1.1rem;
             font-weight: 700;
-            color: #1e293b;
+            color: #000000;
         }
 
         .item-total-breakdown {
@@ -1264,7 +1264,7 @@ function getCartHTML(customer) {
 
         .remove-btn {
             background: #ef4444;
-            color: white;
+            color: #000000;
             border: none;
             padding: 0.5rem;
             border-radius: 8px;
@@ -1273,9 +1273,9 @@ function getCartHTML(customer) {
         }
 
         .cart-summary {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            background: #FFCE36;
+            
+            -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 32px;
             box-shadow: 
@@ -1304,7 +1304,7 @@ function getCartHTML(customer) {
             font-size: 2rem;
             font-weight: 900;
             margin-bottom: 2rem;
-            color: #1e293b;
+            color: #000000;
             letter-spacing: -0.025em;
         }
 
@@ -1328,12 +1328,12 @@ function getCartHTML(customer) {
 
         .summary-value {
             font-weight: 600;
-            color: #1e293b;
+            color: #000000;
         }
 
         .discount-badge {
             background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
+            color: #000000;
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
             font-size: 0.875rem;
@@ -1342,8 +1342,8 @@ function getCartHTML(customer) {
 
         .checkout-btn {
             width: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #FFCE36;
+            color: #000000;
             border: none;
             padding: 1.25rem 2.5rem;
             border-radius: 20px;
@@ -1396,7 +1396,7 @@ function getCartHTML(customer) {
         .empty-cart-title {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #1e293b;
+            color: #000000;
             margin-bottom: 0.5rem;
         }
 
@@ -1406,7 +1406,7 @@ function getCartHTML(customer) {
         }
 
         .continue-shopping {
-            background: linear-gradient(135deg, #FFCE36, #FF7B85);
+            background: #FFCE36;
             color: #000000;
             text-decoration: none;
             padding: 1rem 2rem;
@@ -1846,11 +1846,11 @@ function getCartHTML(customer) {
                     
                     <div style="display: flex; gap: 1rem; justify-content: center;">
                         <button onclick="this.parentElement.parentElement.parentElement.remove()" 
-                                style="background: #6366f1; color: white; border: none; padding: 0.8rem 2rem; border-radius: 10px; cursor: pointer; font-weight: 600;">
+                                style="background: #6366f1; color: #000000; border: none; padding: 0.8rem 2rem; border-radius: 10px; cursor: pointer; font-weight: 600;">
                             Cerrar
                         </button>
                         <button onclick="window.location.href='/perfil'" 
-                                style="background: #10b981; color: white; border: none; padding: 0.8rem 2rem; border-radius: 10px; cursor: pointer; font-weight: 600;">
+                                style="background: #10b981; color: #000000; border: none; padding: 0.8rem 2rem; border-radius: 10px; cursor: pointer; font-weight: 600;">
                             Ver Mis Pedidos
                         </button>
                     </div>
@@ -1898,7 +1898,7 @@ function getCartHTML(customer) {
                 top: 20px;
                 right: 20px;
                 background: \${type === 'success' ? '#10b981' : '#ef4444'};
-                color: white;
+                color: #000000;
                 padding: 1rem 1.5rem;
                 border-radius: 12px;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -2033,8 +2033,8 @@ function getLoginHTML() {
             position: relative;
             z-index: 2;
             background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            
+            -webkit-
             border: 1px solid rgba(255, 255, 255, 0.4);
             border-radius: 32px;
             padding: 3.5rem;
@@ -2240,7 +2240,7 @@ function getLoginHTML() {
         .info-title {
             font-size: 1.2rem;
             font-weight: 700;
-            color: #1e293b;
+            color: #000000;
             margin-bottom: 1rem;
             display: flex;
             align-items: center;
@@ -2291,7 +2291,7 @@ function getLoginHTML() {
         }
 
         .contact-link {
-            color: #1e293b;
+            color: #000000;
             text-decoration: none;
             font-weight: 600;
             font-size: 0.95rem;
@@ -2333,7 +2333,7 @@ function getLoginHTML() {
             opacity: 0;
             transform: translateX(100%);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            color: white;
+            color: #000000;
             font-weight: 500;
         }
 
@@ -2362,7 +2362,7 @@ function getLoginHTML() {
         .notification-close {
             background: none;
             border: none;
-            color: white;
+            color: #000000;
             cursor: pointer;
             font-size: 16px;
             padding: 4px;
@@ -2647,14 +2647,14 @@ function getCompleteProfileHTML(customer) {
 
         body {
             font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
+            background: #F8F9FA;
             min-height: 100vh;
-            color: #212529;
+            color: #000000;
             padding: 2rem;
         }
 
         .profile-container {
-            background: rgba(255, 255, 255, 0.95);
+            background: #FFCE36;
             backdrop-filter: blur(20px);
             border-radius: 24px;
             padding: 3rem;
@@ -2775,7 +2775,7 @@ function getCompleteProfileHTML(customer) {
             font-size: 1rem;
             transition: all 0.3s ease;
             background: white;
-            color: #1e293b;
+            color: #000000;
         }
 
         .form-input:focus, .form-select:focus {
@@ -2850,7 +2850,7 @@ function getCompleteProfileHTML(customer) {
             opacity: 0;
             transform: translateX(100%);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            color: white;
+            color: #000000;
             font-weight: 500;
         }
 
@@ -2879,7 +2879,7 @@ function getCompleteProfileHTML(customer) {
         .notification-close {
             background: none;
             border: none;
-            color: white;
+            color: #000000;
             cursor: pointer;
             font-size: 16px;
             padding: 4px;
@@ -3318,9 +3318,9 @@ function getPortalHTML(products, customer) {
 
         body {
             font-family: 'Inter', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: radial-gradient(ellipse at top, #f0f4f8 0%, #e2e8f0 40%, #cbd5e1 100%);
+            background: #FFFFFF;
             min-height: 100vh;
-            color: #1e293b;
+            color: #000000;
             line-height: 1.6;
             font-smooth: always;
             -webkit-font-smoothing: antialiased;
@@ -3329,9 +3329,9 @@ function getPortalHTML(products, customer) {
         }
 
         .navbar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            background: #FFCE36;
+            
+            -webkit-
             border-bottom: 1px solid rgba(255, 255, 255, 0.18);
             padding: 1.25rem 0;
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.12), 0 2px 8px rgba(31, 38, 135, 0.08);
@@ -3446,7 +3446,7 @@ function getPortalHTML(products, customer) {
 
         .dropdown-header {
             padding: 1rem;
-            background: linear-gradient(135deg, #FFCE36, #FF7B85);
+            background: #FFCE36;
             color: #000000;
         }
 
@@ -3526,8 +3526,8 @@ function getPortalHTML(products, customer) {
             position: absolute;
             top: -8px;
             right: -8px;
-            background: #FF7B85;
-            color: white;
+            background: #000000;
+            color: #000000;
             border-radius: 50%;
             min-width: 22px;
             height: 22px;
@@ -3553,9 +3553,9 @@ function getPortalHTML(products, customer) {
         }
 
         .stat-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            background: #FFCE36;
+            
+            -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 24px;
             padding: 2.5rem;
@@ -3578,7 +3578,7 @@ function getPortalHTML(products, customer) {
             left: 0;
             right: 0;
             height: 3px;
-            background: linear-gradient(90deg, #FFCE36, #FF7B85, #3b82f6);
+            background: linear-gradient(90deg, #FFCE36, #000000, #3b82f6);
             opacity: 0;
             transition: opacity 0.3s ease;
         }
@@ -3626,27 +3626,27 @@ function getPortalHTML(products, customer) {
         }
 
         .stat-icon.products {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #FFCE36;
+            color: #000000;
             box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
         }
 
         .stat-icon.discount {
             background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
+            color: #000000;
             box-shadow: 0 8px 32px rgba(17, 153, 142, 0.4);
         }
 
         .stat-icon.access {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
+            color: #000000;
             box-shadow: 0 8px 32px rgba(240, 147, 251, 0.4);
         }
 
         .stat-content h3 {
             font-size: 2.5rem;
             font-weight: 900;
-            color: #1e293b;
+            color: #000000;
             margin-bottom: 0.5rem;
             letter-spacing: -0.025em;
             background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
@@ -3663,9 +3663,9 @@ function getPortalHTML(products, customer) {
         }
 
         .catalog-section {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            background: #FFCE36;
+            
+            -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 32px;
             padding: 3rem;
@@ -3700,7 +3700,7 @@ function getPortalHTML(products, customer) {
         .catalog-title {
             font-size: 2.25rem;
             font-weight: 900;
-            color: #1e293b;
+            color: #000000;
             display: flex;
             align-items: center;
             gap: 1rem;
@@ -3708,7 +3708,7 @@ function getPortalHTML(products, customer) {
         }
 
         .catalog-title i {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #FFCE36;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -3730,7 +3730,7 @@ function getPortalHTML(products, customer) {
             backdrop-filter: blur(10px);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             font-weight: 500;
-            color: #1e293b;
+            color: #000000;
         }
 
         .search-box::placeholder {
@@ -3744,7 +3744,7 @@ function getPortalHTML(products, customer) {
             box-shadow: 
                 0 0 0 4px rgba(102, 126, 234, 0.1),
                 0 4px 12px rgba(102, 126, 234, 0.15);
-            background: rgba(255, 255, 255, 0.95);
+            background: #FFCE36;
             transform: translateY(-1px);
         }
 
@@ -3756,7 +3756,7 @@ function getPortalHTML(products, customer) {
         }
 
         .product-card {
-            background: rgba(255, 255, 255, 0.95);
+            background: #FFCE36;
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 24px;
@@ -3818,7 +3818,7 @@ function getPortalHTML(products, customer) {
             top: 12px;
             left: 12px;
             background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
+            color: #000000;
             padding: 0.5rem 0.75rem;
             border-radius: 8px;
             font-size: 0.75rem;
@@ -3840,7 +3840,7 @@ function getPortalHTML(products, customer) {
 
         .stock-badge.out-of-stock {
             background: rgba(239, 68, 68, 0.9);
-            color: white;
+            color: #000000;
         }
 
         .product-title {
@@ -3867,13 +3867,13 @@ function getPortalHTML(products, customer) {
             padding: 1rem;
             border-radius: 12px;
             background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
+            color: #000000;
             border: 1px solid #059669;
             text-align: center;
         }
 
         .discounted-price {
-            color: white;
+            color: #000000;
             font-size: 1.5rem;
             font-weight: 800;
             display: block;
@@ -4234,7 +4234,7 @@ function getPortalHTML(products, customer) {
                 top: 20px;
                 right: 20px;
                 background: \${type === 'success' ? '#10b981' : '#ef4444'};
-                color: white;
+                color: #000000;
                 padding: 1rem 1.5rem;
                 border-radius: 12px;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -4343,9 +4343,9 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         body {
             font-family: 'Inter', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: radial-gradient(ellipse at top, #f0f4f8 0%, #e2e8f0 40%, #cbd5e1 100%);
+            background: #FFFFFF;
             min-height: 100vh;
-            color: #1e293b;
+            color: #000000;
             line-height: 1.6;
             font-smooth: always;
             -webkit-font-smoothing: antialiased;
@@ -4354,9 +4354,9 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .navbar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            background: #FFCE36;
+            
+            -webkit-
             border-bottom: 1px solid rgba(255, 255, 255, 0.18);
             padding: 1.25rem 0;
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.12), 0 2px 8px rgba(31, 38, 135, 0.08);
@@ -4421,9 +4421,9 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .profile-header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            background: #FFCE36;
+            
+            -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
             padding: 3rem;
             border-radius: 32px;
@@ -4449,7 +4449,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         .profile-title {
             font-size: 2.5rem;
             font-weight: 900;
-            color: #1e293b;
+            color: #000000;
             margin-bottom: 0.75rem;
             letter-spacing: -0.025em;
             background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
@@ -4467,9 +4467,9 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         .profile-tabs {
             display: flex;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            background: #FFCE36;
+            
+            -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 24px;
             padding: 0.75rem;
@@ -4505,15 +4505,15 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #FFCE36;
             opacity: 0;
             transition: opacity 0.3s ease;
             border-radius: 16px;
         }
 
         .tab-button.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #FFCE36;
+            color: #000000;
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
@@ -4557,9 +4557,9 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .stat-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            background: #FFCE36;
+            
+            -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 24px;
             padding: 2.5rem;
@@ -4580,7 +4580,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             left: 0;
             right: 0;
             height: 3px;
-            background: linear-gradient(90deg, #FFCE36, #FF7B85, #3b82f6);
+            background: linear-gradient(90deg, #FFCE36, #000000, #3b82f6);
             opacity: 0;
             transition: opacity 0.3s ease;
         }
@@ -4606,7 +4606,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             justify-content: center;
             margin: 0 auto 1.5rem;
             font-size: 1.75rem;
-            color: white;
+            color: #000000;
             position: relative;
             overflow: hidden;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -4630,7 +4630,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .stat-icon.orders { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #FFCE36;
             box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
         }
         .stat-icon.spent { 
@@ -4642,14 +4642,14 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             box-shadow: 0 8px 32px rgba(17, 153, 142, 0.4);
         }
         .stat-icon.discount { 
-            background: linear-gradient(135deg, #FFCE36, #FF7B85);
+            background: #FFCE36;
             box-shadow: 0 8px 32px rgba(255, 206, 54, 0.4);
         }
 
         .content-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            background: #FFCE36;
+            
+            -webkit-
             border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 32px;
             padding: 3rem;
@@ -4684,7 +4684,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             font-size: 2rem;
             font-weight: 900;
             margin-bottom: 2rem;
-            color: #1e293b;
+            color: #000000;
             display: flex;
             align-items: center;
             gap: 1rem;
@@ -4727,7 +4727,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             backdrop-filter: blur(10px);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             font-weight: 500;
-            color: #1e293b;
+            color: #000000;
         }
 
         .form-input::placeholder {
@@ -4741,7 +4741,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             box-shadow: 
                 0 0 0 4px rgba(102, 126, 234, 0.1),
                 0 4px 12px rgba(102, 126, 234, 0.15);
-            background: rgba(255, 255, 255, 0.95);
+            background: #FFCE36;
             transform: translateY(-1px);
         }
 
@@ -4780,8 +4780,8 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #FFCE36;
+            color: #000000;
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
@@ -4822,7 +4822,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         .address-type {
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            color: white;
+            color: #000000;
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
             font-size: 0.875rem;
@@ -4998,7 +4998,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         .dropdown-header {
             padding: 1rem;
-            background: linear-gradient(135deg, #FFCE36, #FF7B85);
+            background: #FFCE36;
             color: #000000;
         }
 
@@ -5078,8 +5078,8 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             position: absolute;
             top: -8px;
             right: -8px;
-            background: #FF7B85;
-            color: white;
+            background: #000000;
+            color: #000000;
             border-radius: 50%;
             min-width: 22px;
             height: 22px;
@@ -5231,7 +5231,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                 <form id="profileForm" onsubmit="updateProfile(event)">
                     <!-- Datos Personales -->
                     <div style="margin-bottom: 2rem;">
-                        <h3 style="color: #1e293b; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <h3 style="color: #000000; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fas fa-user"></i>
                             Datos Personales
                         </h3>
@@ -5263,7 +5263,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
                     <!-- Datos Empresariales -->
                     <div style="margin-bottom: 2rem;">
-                        <h3 style="color: #1e293b; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <h3 style="color: #000000; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fas fa-building"></i>
                             Datos Empresariales
                         </h3>
@@ -6142,12 +6142,12 @@ function getAccountHTML(customer, profile, addresses, stats) {
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
                 line-height: 1.6; 
                 color: #333; 
-                background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
+                background: linear-gradient(135deg, #FFCE36 0%, #000000 100%);
                 min-height: 100vh;
             }
             .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
             .header {
-                background: rgba(255, 255, 255, 0.95);
+                background: #FFCE36;
                 padding: 1rem 2rem;
                 margin-bottom: 2rem;
                 border-radius: 15px;
@@ -6161,17 +6161,17 @@ function getAccountHTML(customer, profile, addresses, stats) {
             .user-info { display: flex; align-items: center; gap: 15px; }
             .discount-badge { 
                 background: linear-gradient(45deg, #ff6b6b, #ff8e53);
-                color: white; padding: 8px 16px; border-radius: 20px;
+                color: #000000; padding: 8px 16px; border-radius: 20px;
                 font-weight: bold; font-size: 0.9rem;
             }
             .logout-btn {
-                background: #e74c3c; color: white; padding: 8px 16px;
+                background: #e74c3c; color: #000000; padding: 8px 16px;
                 border: none; border-radius: 8px; cursor: pointer;
                 text-decoration: none; font-size: 0.9rem;
             }
             .logout-btn:hover { background: #c0392b; }
             .nav-menu {
-                background: rgba(255, 255, 255, 0.95);
+                background: #FFCE36;
                 padding: 1rem; margin-bottom: 2rem; border-radius: 15px;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.1);
                 backdrop-filter: blur(10px);
@@ -6182,8 +6182,8 @@ function getAccountHTML(customer, profile, addresses, stats) {
                 border-radius: 8px; transition: all 0.3s ease; font-weight: 500;
             }
             .nav-menu a:hover, .nav-menu a.active {
-                background: linear-gradient(45deg, #FFCE36, #FF7B85);
-                color: white; transform: translateY(-2px);
+                background: linear-gradient(45deg, #FFCE36, #000000);
+                color: #000000; transform: translateY(-2px);
             }
             .account-grid {
                 display: grid;
@@ -6191,7 +6191,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
                 gap: 2rem; margin-bottom: 2rem;
             }
             .card {
-                background: rgba(255, 255, 255, 0.95);
+                background: #FFCE36;
                 padding: 2rem; border-radius: 15px;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.1);
                 backdrop-filter: blur(10px);
@@ -6207,8 +6207,8 @@ function getAccountHTML(customer, profile, addresses, stats) {
             }
             .stat-item {
                 text-align: center; padding: 1rem;
-                background: linear-gradient(45deg, #FFCE36, #FF7B85);
-                color: white; border-radius: 10px;
+                background: linear-gradient(45deg, #FFCE36, #000000);
+                color: #000000; border-radius: 10px;
             }
             .stat-value { font-size: 2rem; font-weight: bold; display: block; }
             .stat-label { font-size: 0.9rem; opacity: 0.9; }
@@ -6220,8 +6220,8 @@ function getAccountHTML(customer, profile, addresses, stats) {
             .profile-label { font-weight: 500; color: #666; }
             .profile-value { color: #2c3e50; font-weight: 500; }
             .btn {
-                background: linear-gradient(45deg, #FFCE36, #FF7B85);
-                color: white; padding: 12px 24px; border: none;
+                background: linear-gradient(45deg, #FFCE36, #000000);
+                color: #000000; padding: 12px 24px; border: none;
                 border-radius: 8px; cursor: pointer; text-decoration: none;
                 font-weight: 500; transition: all 0.3s ease;
                 display: inline-block; margin-top: 1rem;
@@ -6359,12 +6359,12 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             body { 
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
                 line-height: 1.6; color: #333; 
-                background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
+                background: linear-gradient(135deg, #FFCE36 0%, #000000 100%);
                 min-height: 100vh;
             }
             .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
             .header {
-                background: rgba(255, 255, 255, 0.95);
+                background: #FFCE36;
                 padding: 1rem 2rem; margin-bottom: 2rem; border-radius: 15px;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.1);
                 backdrop-filter: blur(10px);
@@ -6374,16 +6374,16 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             .user-info { display: flex; align-items: center; gap: 15px; }
             .discount-badge { 
                 background: linear-gradient(45deg, #ff6b6b, #ff8e53);
-                color: white; padding: 8px 16px; border-radius: 20px;
+                color: #000000; padding: 8px 16px; border-radius: 20px;
                 font-weight: bold; font-size: 0.9rem;
             }
             .logout-btn {
-                background: #e74c3c; color: white; padding: 8px 16px;
+                background: #e74c3c; color: #000000; padding: 8px 16px;
                 border: none; border-radius: 8px; text-decoration: none; font-size: 0.9rem;
             }
             .logout-btn:hover { background: #c0392b; }
             .nav-menu {
-                background: rgba(255, 255, 255, 0.95);
+                background: #FFCE36;
                 padding: 1rem; margin-bottom: 2rem; border-radius: 15px;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.1);
                 backdrop-filter: blur(10px);
@@ -6394,11 +6394,11 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
                 border-radius: 8px; transition: all 0.3s ease; font-weight: 500;
             }
             .nav-menu a:hover, .nav-menu a.active {
-                background: linear-gradient(45deg, #FFCE36, #FF7B85);
-                color: white; transform: translateY(-2px);
+                background: linear-gradient(45deg, #FFCE36, #000000);
+                color: #000000; transform: translateY(-2px);
             }
             .orders-container {
-                background: rgba(255, 255, 255, 0.95);
+                background: #FFCE36;
                 padding: 2rem; border-radius: 15px;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.1);
                 backdrop-filter: blur(10px);
@@ -6424,7 +6424,7 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             .order-info h3 { color: #2c3e50; margin: 0 0 5px 0; }
             .order-date { color: #666; font-size: 0.9rem; }
             .order-status {
-                padding: 6px 12px; border-radius: 20px; color: white;
+                padding: 6px 12px; border-radius: 20px; color: #000000;
                 font-size: 0.8rem; font-weight: bold; background: #f39c12;
             }
             .order-details {
@@ -6437,8 +6437,8 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             .detail-value { color: #2c3e50; font-weight: bold; }
             .order-actions { display: flex; gap: 10px; justify-content: flex-end; }
             .btn {
-                background: linear-gradient(45deg, #FFCE36, #FF7B85);
-                color: white; padding: 8px 16px; border: none;
+                background: linear-gradient(45deg, #FFCE36, #000000);
+                color: #000000; padding: 8px 16px; border: none;
                 border-radius: 6px; cursor: pointer; text-decoration: none;
                 font-size: 0.9rem; font-weight: 500; transition: all 0.3s ease;
             }
@@ -6496,12 +6496,12 @@ function getOrderDetailHTML(customer, order) {
             body { 
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
                 line-height: 1.6; color: #333; 
-                background: linear-gradient(135deg, #FFCE36 0%, #FF7B85 100%);
+                background: linear-gradient(135deg, #FFCE36 0%, #000000 100%);
                 min-height: 100vh;
             }
             .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
             .header {
-                background: rgba(255, 255, 255, 0.95);
+                background: #FFCE36;
                 padding: 1rem 2rem; margin-bottom: 2rem; border-radius: 15px;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.1);
                 backdrop-filter: blur(10px);
@@ -6509,12 +6509,12 @@ function getOrderDetailHTML(customer, order) {
             }
             .logo { font-size: 1.8rem; font-weight: bold; color: #2c3e50; text-decoration: none; }
             .back-btn {
-                background: #6c757d; color: white; padding: 8px 16px;
+                background: #6c757d; color: #000000; padding: 8px 16px;
                 border: none; border-radius: 8px; text-decoration: none; font-size: 0.9rem;
             }
             .back-btn:hover { background: #5a6268; }
             .order-detail {
-                background: rgba(255, 255, 255, 0.95);
+                background: #FFCE36;
                 padding: 2rem; border-radius: 15px;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.1);
                 backdrop-filter: blur(10px);
@@ -6525,7 +6525,7 @@ function getOrderDetailHTML(customer, order) {
             }
             .order-title { color: #2c3e50; font-size: 1.8rem; margin: 0; }
             .order-status {
-                padding: 10px 20px; border-radius: 25px; color: white;
+                padding: 10px 20px; border-radius: 25px; color: #000000;
                 font-weight: bold; background: #f39c12;
             }
             .info-card {
