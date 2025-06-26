@@ -478,17 +478,8 @@ async function saveDraftOrderToDatabase(draftOrder, customer) {
             total_amount: parseFloat(draftOrder.total_price || 0),
             discount_amount: parseFloat(draftOrder.total_discounts || 0),
             currency: draftOrder.currency || 'CLP',
-            order_date: new Date().toISOString(),
-            items: draftOrder.line_items?.map(item => ({
-                shopify_product_id: item.product_id?.toString() || null,
-                shopify_variant_id: item.variant_id?.toString() || null,
-                product_title: item.title || item.name || 'Producto',
-                variant_title: item.variant_title || null,
-                quantity: item.quantity || 1,
-                price: parseFloat(item.price || 0),
-                discount_price: null, // Se calcula en el total
-                sku: item.sku || null
-            })) || []
+            order_date: new Date().toISOString()
+            // Nota: Los items se guardan en Shopify, para estadísticas solo necesitamos los totales
         };
 
         console.log('📋 Datos del pedido preparados:', {
