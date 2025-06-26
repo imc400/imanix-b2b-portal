@@ -4531,12 +4531,23 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
     <script>
         function switchTab(tabName, buttonElement) {
+            console.log('🔄 switchTab llamado con:', tabName);
+            
             // Ocultar todas las tabs
             const tabs = document.querySelectorAll('.tab-content');
-            tabs.forEach(tab => tab.classList.remove('active'));
+            console.log('📋 Tabs encontradas:', tabs.length);
+            tabs.forEach(tab => {
+                console.log('❌ Ocultando tab:', tab.id);
+                tab.classList.remove('active');
+            });
             
             // Mostrar tab seleccionada
-            document.getElementById(tabName + '-tab').classList.add('active');
+            const targetTab = document.getElementById(tabName + '-tab');
+            console.log('🎯 Tab objetivo:', targetTab ? targetTab.id : 'NO ENCONTRADA');
+            if (targetTab) {
+                targetTab.classList.add('active');
+                console.log('✅ Tab activada:', targetTab.id);
+            }
             
             // Actualizar botones
             const buttons = document.querySelectorAll('.tab-button');
@@ -4545,6 +4556,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             // Marcar el botón clickeado como activo
             if (buttonElement) {
                 buttonElement.classList.add('active');
+                console.log('✅ Botón activado:', buttonElement.textContent.trim());
             }
         }
 
@@ -4623,9 +4635,22 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         // Inicializar comunas al cargar la página si hay región seleccionada
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Página cargada - iniciando debug');
+            console.log('📊 Datos de pedidos disponibles:', ${JSON.stringify(orders || [])});
+            console.log('📋 Total de pedidos:', ${orders?.length || 0});
+            
             const regionSelect = document.querySelector('select[name="region"]');
             const comunaSelect = document.getElementById('comunaSelectProfile');
             const currentComuna = '${profile?.comuna || ''}';
+            
+            // Verificar tabs
+            const profileTab = document.getElementById('profile-tab');
+            const addressesTab = document.getElementById('addresses-tab'); 
+            const ordersTab = document.getElementById('orders-tab');
+            console.log('🔍 Tabs encontradas:');
+            console.log('  - profile-tab:', profileTab ? 'SÍ' : 'NO');
+            console.log('  - addresses-tab:', addressesTab ? 'SÍ' : 'NO');
+            console.log('  - orders-tab:', ordersTab ? 'SÍ' : 'NO');
             
             if (regionSelect && regionSelect.value) {
                 updateComunasInProfile();
