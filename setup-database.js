@@ -65,7 +65,22 @@ CREATE TABLE IF NOT EXISTS user_addresses (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Tabla de historial de pedidos
+-- Tabla de draft orders (pedidos B2B desde el portal)
+CREATE TABLE IF NOT EXISTS draft_orders (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  customer_email VARCHAR(255) NOT NULL,
+  shopify_order_id BIGINT,
+  order_number VARCHAR(100),
+  status VARCHAR(50) NOT NULL DEFAULT 'pendiente',
+  total_amount DECIMAL(10,2) NOT NULL,
+  discount_amount DECIMAL(10,2) DEFAULT 0,
+  currency VARCHAR(3) DEFAULT 'CLP',
+  order_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabla de historial de pedidos (legacy - para compatibilidad)
 CREATE TABLE IF NOT EXISTS order_history (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
@@ -136,6 +151,7 @@ END $$;
 -- Índices para mejor rendimiento
 CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON user_profiles(email);
 CREATE INDEX IF NOT EXISTS idx_user_addresses_user_id ON user_addresses(user_id);
+CREATE INDEX IF NOT EXISTS idx_draft_orders_customer_email ON draft_orders(customer_email);
 CREATE INDEX IF NOT EXISTS idx_order_history_user_id ON order_history(user_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
 
@@ -158,6 +174,12 @@ CREATE TRIGGER update_user_profiles_updated_at
 DROP TRIGGER IF EXISTS update_user_addresses_updated_at ON user_addresses;
 CREATE TRIGGER update_user_addresses_updated_at
     BEFORE UPDATE ON user_addresses
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_draft_orders_updated_at ON draft_orders;
+CREATE TRIGGER update_draft_orders_updated_at
+    BEFORE UPDATE ON draft_orders
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
@@ -188,7 +210,8 @@ async function setupDatabase() {
     console.log('\n📊 Tablas creadas:');
     console.log('   • user_profiles - Perfiles de usuarios B2B');
     console.log('   • user_addresses - Direcciones de envío y facturación');
-    console.log('   • order_history - Historial de pedidos');
+    console.log('   • draft_orders - Pedidos B2B desde el portal');
+    console.log('   • order_history - Historial de pedidos (legacy)');
     console.log('   • order_items - Productos de cada pedido');
     
     console.log('\n🔧 Configuración recomendada en Supabase Dashboard:');

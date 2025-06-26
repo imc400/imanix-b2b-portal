@@ -4241,28 +4241,28 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                 <div class="stat-icon orders">
                     <i class="fas fa-shopping-bag"></i>
                 </div>
-                <h3>${stats.totalOrders}</h3>
+                <h3>${stats?.totalOrders || 0}</h3>
                 <p>Pedidos Realizados</p>
             </div>
             <div class="stat-card">
                 <div class="stat-icon spent">
                     <i class="fas fa-dollar-sign"></i>
                 </div>
-                <h3>$${new Intl.NumberFormat('es-CL').format(stats.totalSpent || 0)}</h3>
+                <h3>$${new Intl.NumberFormat('es-CL').format(stats?.totalSpent || 0)}</h3>
                 <p>Total Gastado</p>
             </div>
             <div class="stat-card">
                 <div class="stat-icon saved">
                     <i class="fas fa-piggy-bank"></i>
                 </div>
-                <h3>$${new Intl.NumberFormat('es-CL').format(stats.totalSaved || 0)}</h3>
+                <h3>$${new Intl.NumberFormat('es-CL').format(stats?.totalSaved || 0)}</h3>
                 <p>Total Ahorrado</p>
             </div>
             <div class="stat-card">
                 <div class="stat-icon discount">
                     <i class="fas fa-tags"></i>
                 </div>
-                <h3>${stats.discountPercentage}%</h3>
+                <h3>${stats?.discountPercentage || customerDiscount}%</h3>
                 <p>Descuento Activo</p>
             </div>
         </div>

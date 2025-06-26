@@ -331,52 +331,25 @@ class DatabaseManager {
     if (!supabase) return null;
     
     try {
-      const profile = await this.getProfile(userEmail);
-      if (!profile) return null;
+      const fullOrderData = {
+        ...orderData,
+        customer_email: userEmail,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
 
       const { data: order, error: orderError } = await supabase
-        .from('order_history')
-        .insert({
-          user_id: profile.id,
-          shopify_order_id: orderData.shopify_order_id || null,
-          order_number: orderData.order_number,
-          status: orderData.status,
-          total_amount: orderData.total_amount,
-          discount_amount: orderData.discount_amount || 0,
-          currency: orderData.currency || 'CLP',
-          order_date: orderData.order_date
-        })
+        .from('draft_orders')
+        .insert(fullOrderData)
         .select()
         .single();
 
       if (orderError) {
-        console.error('Error agregando pedido:', orderError);
+        console.error('Error agregando pedido a draft_orders:', orderError);
         return null;
       }
 
-      // Agregar items del pedido
-      if (orderData.items && orderData.items.length > 0) {
-        const items = orderData.items.map(item => ({
-          order_id: order.id,
-          shopify_product_id: item.shopify_product_id || null,
-          shopify_variant_id: item.shopify_variant_id || null,
-          product_title: item.product_title,
-          variant_title: item.variant_title || null,
-          quantity: item.quantity,
-          price: item.price,
-          discount_price: item.discount_price || null,
-          sku: item.sku || null
-        }));
-
-        const { error: itemsError } = await supabase
-          .from('order_items')
-          .insert(items);
-
-        if (itemsError) {
-          console.error('Error agregando items del pedido:', itemsError);
-        }
-      }
-
+      console.log(`📦 Pedido guardado en historial para: ${userEmail} - ID: ${order.id}`);
       return order;
     } catch (err) {
       console.error('Error en addOrder:', err);
@@ -388,27 +361,11 @@ class DatabaseManager {
     if (!supabase) return [];
     
     try {
-      const profile = await this.getProfile(userEmail);
-      if (!profile) return [];
-
       const { data, error } = await supabase
-        .from('order_history')
-        .select(`
-          *,
-          order_items (
-            id,
-            shopify_product_id,
-            shopify_variant_id,
-            product_title,
-            variant_title,
-            quantity,
-            price,
-            discount_price,
-            sku
-          )
-        `)
-        .eq('user_id', profile.id)
-        .order('order_date', { ascending: false })
+        .from('draft_orders')
+        .select('*')
+        .eq('customer_email', userEmail)
+        .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
       if (error) {
@@ -428,21 +385,8 @@ class DatabaseManager {
     
     try {
       const { data, error } = await supabase
-        .from('order_history')
-        .select(`
-          *,
-          order_items (
-            id,
-            shopify_product_id,
-            shopify_variant_id,
-            product_title,
-            variant_title,
-            quantity,
-            price,
-            discount_price,
-            sku
-          )
-        `)
+        .from('draft_orders')
+        .select('*')
         .eq('id', orderId)
         .single();
 
@@ -482,25 +426,30 @@ class DatabaseManager {
       const profile = await this.getProfile(userEmail);
       if (!profile) return null;
 
-      // Obtener estadísticas del usuario
+      // Obtener estadísticas del usuario desde draft_orders (donde se guardan realmente los pedidos)
       const { data: orders } = await supabase
-        .from('order_history')
+        .from('draft_orders')
         .select('total_amount, discount_amount, status')
-        .eq('user_id', profile.id);
+        .eq('customer_email', userEmail);
 
       const totalOrders = orders?.length || 0;
-      const totalSpent = orders?.reduce((sum, order) => sum + parseFloat(order.total_amount), 0) || 0;
+      const totalSpent = orders?.reduce((sum, order) => sum + parseFloat(order.total_amount || 0), 0) || 0;
       const totalSaved = orders?.reduce((sum, order) => sum + parseFloat(order.discount_amount || 0), 0) || 0;
 
       return {
         totalOrders,
         totalSpent,
         totalSaved,
-        discountPercentage: profile.discount_percentage
+        discountPercentage: profile.discount_percentage || 0
       };
     } catch (err) {
       console.error('Error obteniendo estadísticas:', err);
-      return null;
+      return {
+        totalOrders: 0,
+        totalSpent: 0,
+        totalSaved: 0,
+        discountPercentage: profile?.discount_percentage || 0
+      };
     }
   }
 }
