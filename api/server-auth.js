@@ -4292,7 +4292,7 @@ function getPortalHTML(products, customer) {
         };
         
         window.applyFilters = function() {
-            console.log('🔍 Aplicando filtros...');
+            console.log('🔍 Aplicando filtros con METACAMPOS...');
             
             // Variables globales para filtros
             var activeFilters = {
@@ -4316,6 +4316,8 @@ function getPortalHTML(products, customer) {
             activeFilters.priceRange.min = minPrice ? parseInt(minPrice) : null;
             activeFilters.priceRange.max = maxPrice ? parseInt(maxPrice) : null;
             
+            console.log('🎯 Filtros activos:', activeFilters);
+            
             // Aplicar filtros a productos
             var productCards = document.querySelectorAll('.product-card');
             var visibleCount = 0;
@@ -4323,9 +4325,19 @@ function getPortalHTML(products, customer) {
             productCards.forEach(function(card) {
                 var shouldShow = true;
                 
-                // Obtener etiquetas del producto
-                var productTags = card.getAttribute('data-tags') || '';
-                var productTagsArray = productTags.split(',').map(function(tag) { return tag.trim(); });
+                // Obtener metacampos del producto
+                var productMetafields = {};
+                var metafieldsAttr = card.getAttribute('data-metafields');
+                if (metafieldsAttr) {
+                    try {
+                        productMetafields = JSON.parse(metafieldsAttr.replace(/&#39;/g, "'"));
+                    } catch (error) {
+                        console.error('Error parseando metacampos en filtro:', error);
+                    }
+                }
+                
+                // Extraer valores de metacampos para filtrado
+                var metaValues = Object.values(productMetafields);
                 
                 // Filtro por texto de búsqueda
                 var searchInputEl = document.getElementById('searchInput');
@@ -4340,32 +4352,32 @@ function getPortalHTML(products, customer) {
                     }
                 }
                 
-                // Filtro por colecciones (etiquetas)
+                // Filtro por Sub-Categorías (antes colecciones)
                 if (activeFilters.collections.length > 0 && shouldShow) {
-                    var hasCollection = activeFilters.collections.some(function(collection) {
-                        return productTagsArray.includes(collection);
+                    var hasSubCategoria = activeFilters.collections.some(function(subCategoria) {
+                        return metaValues.includes(subCategoria);
                     });
-                    if (!hasCollection) {
+                    if (!hasSubCategoria) {
                         shouldShow = false;
                     }
                 }
                 
-                // Filtro por categorías (etiquetas)
+                // Filtro por Marcas (antes categorías)
                 if (activeFilters.categories.length > 0 && shouldShow) {
-                    var hasCategory = activeFilters.categories.some(function(category) {
-                        return productTagsArray.includes(category);
+                    var hasMarca = activeFilters.categories.some(function(marca) {
+                        return metaValues.includes(marca);
                     });
-                    if (!hasCategory) {
+                    if (!hasMarca) {
                         shouldShow = false;
                     }
                 }
                 
-                // Filtro por edades (etiquetas)
+                // Filtro por Edades
                 if (activeFilters.ages.length > 0 && shouldShow) {
-                    var hasAge = activeFilters.ages.some(function(age) {
-                        return productTagsArray.includes(age);
+                    var hasEdad = activeFilters.ages.some(function(edad) {
+                        return metaValues.includes(edad);
                     });
-                    if (!hasAge) {
+                    if (!hasEdad) {
                         shouldShow = false;
                     }
                 }
