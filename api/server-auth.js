@@ -4103,7 +4103,8 @@ function getPortalHTML(products, customer) {
                             <span class="sku">SKU: ${variant?.sku || 'N/A'}</span>
                             <span class="stock-count">${stock} unidades</span>
                         </div>
-                        <button class="add-to-cart-btn" ${stock === 0 ? 'disabled' : ''}>
+                        <button class="add-to-cart-btn" ${stock === 0 ? 'disabled' : ''} 
+                                onclick="addToCart('${product.id}', '${variant?.id}', '${product.title}', ${discountedPrice}, '${image}')">
                             <i class="fas fa-cart-plus"></i>
                             ${stock > 0 ? 'Agregar al Carrito' : 'Sin Stock'}
                         </button>
@@ -5578,7 +5579,7 @@ function getPortalHTML(products, customer) {
                 <div class="catalog-controls">
                     <input type="text" class="search-box" placeholder="Buscar productos..." 
                            id="searchInput" onkeyup="filterProducts()">
-                    <button class="filter-toggle-btn">
+                    <button class="filter-toggle-btn" onclick="toggleFilters()">
                         <i class="fas fa-filter"></i>
                         Filtros
                     </button>
