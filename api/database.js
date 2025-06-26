@@ -177,7 +177,7 @@ const database = {
       const { data, error } = await supabase
         .from('user_addresses')
         .select('*')
-        .eq('customer_email', email);
+        .eq('email', email);
       
       if (error) {
         throw error;
@@ -293,7 +293,7 @@ const database = {
     try {
       const fullAddressData = {
         ...addressData,
-        customer_email: email,
+        email: email,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
