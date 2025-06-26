@@ -326,23 +326,36 @@ app.post('/api/profile/update', async (req, res) => {
 
     // Actualizar perfil en base de datos
     if (database) {
-      const updatedProfile = await database.updateProfileData(email, profileData);
-      
-      if (updatedProfile) {
-        console.log(`✅ Perfil empresarial actualizado para: ${email}`);
+      try {
+        console.log('📝 Intentando actualizar perfil para:', email);
+        console.log('📝 Datos a guardar:', JSON.stringify(profileData, null, 2));
         
-        res.json({ 
-          success: true, 
-          message: '¡Datos empresariales guardados exitosamente!',
-          profileCompleted: updatedProfile.profile_completed
-        });
-      } else {
+        const updatedProfile = await database.updateProfileData(email, profileData);
+        
+        if (updatedProfile) {
+          console.log(`✅ Perfil empresarial actualizado para: ${email}`);
+          
+          res.json({ 
+            success: true, 
+            message: '¡Datos empresariales guardados exitosamente!',
+            profileCompleted: updatedProfile.profile_completed
+          });
+        } else {
+          console.log('❌ updateProfileData retornó null');
+          res.status(500).json({ 
+            success: false, 
+            message: 'Error actualizando el perfil. Inténtalo nuevamente.' 
+          });
+        }
+      } catch (dbError) {
+        console.error('❌ Error específico en database.updateProfileData:', dbError);
         res.status(500).json({ 
           success: false, 
-          message: 'Error actualizando el perfil. Inténtalo nuevamente.' 
+          message: `Error de base de datos: ${dbError.message}` 
         });
       }
     } else {
+      console.log('❌ Variable database no está definida');
       res.status(500).json({ 
         success: false, 
         message: 'Base de datos no disponible' 
