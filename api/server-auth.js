@@ -4123,6 +4123,112 @@ function getPortalHTML(products, customer) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
+    <!-- 🚀 CRITICAL: GLOBAL FUNCTIONS LOADED FIRST -->
+    <script>
+        // Variables globales
+        var cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
+        
+        // DEFINIR TODAS LAS FUNCIONES GLOBALMENTE ANTES QUE CUALQUIER HTML
+        window.toggleUserDropdown = function() {
+            console.log('✅ toggleUserDropdown ejecutada');
+            var dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        };
+        
+        window.toggleFilters = function() {
+            console.log('✅ toggleFilters ejecutada');
+            var panel = document.getElementById('filtersPanel');
+            if (panel) {
+                panel.classList.toggle('show');
+            }
+        };
+        
+        window.showCart = function() {
+            console.log('✅ showCart ejecutada');
+            window.location.href = '/carrito';
+        };
+        
+        window.addToCart = function(productId, variantId, title, price, image) {
+            console.log('✅ addToCart ejecutada:', title);
+            try {
+                var existingItem = cart.find(function(item) { 
+                    return item.productId === productId || item.title === title; 
+                });
+                
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    cart.push({
+                        productId: productId || 'product_' + Date.now(),
+                        variantId: variantId || 'variant_' + Date.now(),
+                        title: title,
+                        price: price,
+                        image: image,
+                        quantity: 1
+                    });
+                }
+                
+                localStorage.setItem('b2bCart', JSON.stringify(cart));
+                
+                // Actualizar badge si la función existe
+                setTimeout(function() {
+                    if (typeof updateCartBadge === 'function') {
+                        updateCartBadge();
+                    }
+                    if (typeof showNotification === 'function') {
+                        showNotification(title + ' agregado al carrito', 'success');
+                    }
+                }, 100);
+                
+            } catch (error) {
+                console.error('❌ Error adding to cart:', error);
+            }
+        };
+        
+        window.logout = function() {
+            console.log('✅ logout ejecutada');
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                fetch('/api/auth/logout', { method: 'POST' })
+                    .then(function(response) { return response.json(); })
+                    .then(function(data) {
+                        localStorage.removeItem('b2bCart');
+                        window.location.reload();
+                    })
+                    .catch(function(error) {
+                        console.error('Error:', error);
+                        window.location.reload();
+                    });
+            }
+        };
+        
+        window.clearAllFilters = function() {
+            console.log('✅ clearAllFilters ejecutada');
+            try {
+                var checkboxes = document.querySelectorAll('.filter-checkbox input[type="checkbox"]');
+                checkboxes.forEach(function(cb) { cb.checked = false; });
+                
+                var productCards = document.querySelectorAll('.product-card');
+                productCards.forEach(function(card) {
+                    card.style.display = 'block';
+                });
+            } catch (error) {
+                console.error('❌ Error clearing filters:', error);
+            }
+        };
+        
+        window.applyFilters = function() {
+            console.log('✅ applyFilters ejecutada');
+        };
+        
+        window.removeFilter = function(type, value) {
+            console.log('✅ removeFilter ejecutada:', type, value);
+        };
+        
+        console.log('🚀 TODAS LAS FUNCIONES GLOBALES CARGADAS EXITOSAMENTE');
+    </script>
+
     <!-- 🎨 IMANIX Professional Design System -->
     <style>
         :root {
