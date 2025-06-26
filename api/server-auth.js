@@ -4297,15 +4297,15 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         ` : ''}
 
         <div class="profile-tabs">
-            <button class="tab-button active" onclick="switchTab('profile')">
+            <button class="tab-button active" onclick="switchTab('profile', this)">
                 <i class="fas fa-user"></i>
                 Perfil
             </button>
-            <button class="tab-button" onclick="switchTab('addresses')">
+            <button class="tab-button" onclick="switchTab('addresses', this)">
                 <i class="fas fa-map-marker-alt"></i>
                 Direcciones
             </button>
-            <button class="tab-button" onclick="switchTab('orders')">
+            <button class="tab-button" onclick="switchTab('orders', this)">
                 <i class="fas fa-history"></i>
                 Historial
             </button>
@@ -4530,7 +4530,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
     </div>
 
     <script>
-        function switchTab(tabName) {
+        function switchTab(tabName, buttonElement) {
             // Ocultar todas las tabs
             const tabs = document.querySelectorAll('.tab-content');
             tabs.forEach(tab => tab.classList.remove('active'));
@@ -4541,7 +4541,11 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             // Actualizar botones
             const buttons = document.querySelectorAll('.tab-button');
             buttons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            
+            // Marcar el botón clickeado como activo
+            if (buttonElement) {
+                buttonElement.classList.add('active');
+            }
         }
 
         async function updateProfile(event) {
