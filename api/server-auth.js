@@ -6277,24 +6277,12 @@ function getPortalHTML(products, customer) {
         
         // FUNCIONES DE CARRITO DUPLICADAS ELIMINADAS - USAR LAS DEL HEAD
 
-        // Filtrar productos - versión simplificada que funciona siempre
+        // Filtrar productos - integrado con el sistema principal de filtros
         function filterProducts() {
-            var searchInputEl = document.getElementById('searchInput');
-            var searchTerm = searchInputEl ? searchInputEl.value.toLowerCase() : '';
-            var productCards = document.querySelectorAll('.product-card');
-            
-            productCards.forEach(function(card) {
-                var titleEl = card.querySelector('.product-title');
-                var title = titleEl ? titleEl.textContent.toLowerCase() : '';
-                var skuElement = card.querySelector('.sku');
-                var sku = skuElement ? skuElement.textContent.toLowerCase() : '';
-                
-                if (title.includes(searchTerm) || sku.includes(searchTerm)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
+            // Simplemente llamar a applyFilters ya que maneja tanto búsqueda como filtros
+            if (typeof applyFilters === 'function') {
+                applyFilters();
+            }
         }
 
         // MÁS FUNCIONES DUPLICADAS ELIMINADAS - USAR SOLO LAS DEL HEAD
@@ -6471,9 +6459,26 @@ function getPortalHTML(products, customer) {
             console.log('✅ Filtros poblados exitosamente');
         }
 
-        // Función para aplicar filtros REALES basados en etiquetas de Shopify
+        // Variable global para filtros activos
+        var activeFilters = {
+            collections: [],
+            categories: [],
+            ages: [],
+            availability: [],
+            priceRange: { min: null, max: null }
+        };
+
+        // Función mejorada para aplicar filtros basados en metafields de Shopify
         function applyFilters() {
-            console.log('🔍 Aplicando filtros...');
+            console.log('🔍 Aplicando filtros mejorados...');
+            
+            // Mapeo de IDs de Shopify a valores legibles para edades
+            var ageMapping = {
+                'gid://shopify/Metaobject/122522435859': '3-5 años',
+                'gid://shopify/Metaobject/98466890003': '5-9 años',
+                'gid://shopify/Metaobject/35341876855059': '9+ años',
+                'gid://shopify/Metaobject/39573422145811': 'Experto'
+            };
             
             // Recopilar filtros activos
             activeFilters.collections = Array.from(document.querySelectorAll('#collectionFilters input:checked')).map(function(cb) { return cb.value; });
@@ -6488,6 +6493,8 @@ function getPortalHTML(products, customer) {
             activeFilters.priceRange.min = minPrice ? parseInt(minPrice) : null;
             activeFilters.priceRange.max = maxPrice ? parseInt(maxPrice) : null;
             
+            console.log('🎯 Filtros activos:', activeFilters);
+            
             // Aplicar filtros a productos
             var productCards = document.querySelectorAll('.product-card');
             var visibleCount = 0;
@@ -6495,9 +6502,39 @@ function getPortalHTML(products, customer) {
             productCards.forEach(function(card) {
                 var shouldShow = true;
                 
-                // Obtener etiquetas del producto
-                var productTags = card.getAttribute('data-tags') || '';
-                var productTagsArray = productTags.split(',').map(function(tag) { return tag.trim(); });
+                // Obtener datos del producto
+                var price = parseFloat(card.dataset.price || 0);
+                var stock = parseInt(card.dataset.stock || 0);
+                var metafieldsStr = card.dataset.metafields || '{}';
+                var metafields = {};
+                
+                try {
+                    metafields = JSON.parse(metafieldsStr.replace(/&#39;/g, "'"));
+                } catch (e) {
+                    console.warn('Error parsing metafields:', e);
+                }
+                
+                // Convertir metacampos para comparación
+                var convertedMetafields = {};
+                Object.keys(metafields).forEach(function(key) {
+                    var value = metafields[key];
+                    if (value && typeof value === 'string') {
+                        // Convertir IDs de Shopify a valores legibles
+                        if (value.startsWith('gid://shopify/')) {
+                            var convertedValue = ageMapping[value];
+                            if (convertedValue) {
+                                convertedMetafields[key] = convertedValue;
+                            } else {
+                                convertedMetafields[key] = value; // Mantener original si no hay conversión
+                            }
+                        } else {
+                            convertedMetafields[key] = value;
+                        }
+                    }
+                });
+                
+                // Obtener todos los valores convertidos para filtrado
+                var metaValues = Object.values(convertedMetafields);
                 
                 // Filtro por texto de búsqueda
                 var searchInputEl = document.getElementById('searchInput');
@@ -6512,53 +6549,49 @@ function getPortalHTML(products, customer) {
                     }
                 }
                 
-                // Filtro por colecciones (etiquetas)
+                // Filtro por Colecciones (Sub-categorías)
                 if (activeFilters.collections.length > 0 && shouldShow) {
                     var hasCollection = activeFilters.collections.some(function(collection) {
-                        return productTagsArray.includes(collection);
+                        return metaValues.includes(collection);
                     });
                     if (!hasCollection) {
                         shouldShow = false;
                     }
                 }
                 
-                // Filtro por categorías (etiquetas)
+                // Filtro por Categorías (Marcas)
                 if (activeFilters.categories.length > 0 && shouldShow) {
                     var hasCategory = activeFilters.categories.some(function(category) {
-                        return productTagsArray.includes(category);
+                        return metaValues.includes(category);
                     });
                     if (!hasCategory) {
                         shouldShow = false;
                     }
                 }
                 
-                // Filtro por edades (etiquetas)
+                // Filtro por Edades (con conversión de IDs)
                 if (activeFilters.ages.length > 0 && shouldShow) {
                     var hasAge = activeFilters.ages.some(function(age) {
-                        return productTagsArray.includes(age);
+                        return metaValues.includes(age);
                     });
                     if (!hasAge) {
                         shouldShow = false;
                     }
                 }
                 
-                // Filtro por disponibilidad
+                // Filtro por Disponibilidad
                 if (activeFilters.availability.length > 0 && shouldShow) {
-                    var stock = parseInt(card.getAttribute('data-stock')) || 0;
-                    var inStock = stock > 0;
-                    
-                    if (activeFilters.availability.includes('in-stock') && !inStock) {
+                    var isInStock = stock > 0;
+                    if (activeFilters.availability.includes('in-stock') && !isInStock) {
                         shouldShow = false;
                     }
-                    if (activeFilters.availability.includes('out-of-stock') && inStock) {
+                    if (activeFilters.availability.includes('out-of-stock') && isInStock) {
                         shouldShow = false;
                     }
                 }
                 
-                // Filtro por precio
+                // Filtro por Precio
                 if ((activeFilters.priceRange.min || activeFilters.priceRange.max) && shouldShow) {
-                    var price = parseInt(card.getAttribute('data-price')) || 0;
-                    
                     if (activeFilters.priceRange.min && price < activeFilters.priceRange.min) {
                         shouldShow = false;
                     }
@@ -6573,9 +6606,6 @@ function getPortalHTML(products, customer) {
             });
             
             console.log('📊 Productos filtrados:', visibleCount + '/' + productCards.length);
-            
-            // Actualizar filtros activos
-            updateActiveFilters();
             
             // Mostrar mensaje si no hay productos
             var productsGrid = document.getElementById('productsGrid');
@@ -6597,6 +6627,48 @@ function getPortalHTML(products, customer) {
             } else {
                 if (noProductsMsg) {
                     noProductsMsg.style.display = 'none';
+                }
+            }
+            
+            // Actualizar indicadores visuales de filtros activos
+            updateFilterGroupIndicators(activeFilters);
+        }
+        
+        // Función para actualizar indicadores visuales de filtros activos
+        function updateFilterGroupIndicators(activeFilters) {
+            // Actualizar grupo de colecciones
+            var collectionGroup = document.querySelector('#collectionFilters').closest('.filter-group');
+            if (collectionGroup) {
+                if (activeFilters.collections.length > 0) {
+                    collectionGroup.classList.add('has-active-filters');
+                    collectionGroup.querySelector('.filter-title').classList.add('has-active');
+                } else {
+                    collectionGroup.classList.remove('has-active-filters');
+                    collectionGroup.querySelector('.filter-title').classList.remove('has-active');
+                }
+            }
+            
+            // Actualizar grupo de categorías
+            var categoryGroup = document.querySelector('#categoryFilters').closest('.filter-group');
+            if (categoryGroup) {
+                if (activeFilters.categories.length > 0) {
+                    categoryGroup.classList.add('has-active-filters');
+                    categoryGroup.querySelector('.filter-title').classList.add('has-active');
+                } else {
+                    categoryGroup.classList.remove('has-active-filters');
+                    categoryGroup.querySelector('.filter-title').classList.remove('has-active');
+                }
+            }
+            
+            // Actualizar grupo de edades
+            var ageGroup = document.querySelector('#ageFilters').closest('.filter-group');
+            if (ageGroup) {
+                if (activeFilters.ages.length > 0) {
+                    ageGroup.classList.add('has-active-filters');
+                    ageGroup.querySelector('.filter-title').classList.add('has-active');
+                } else {
+                    ageGroup.classList.remove('has-active-filters');
+                    ageGroup.querySelector('.filter-title').classList.remove('has-active');
                 }
             }
         }
@@ -6677,13 +6749,11 @@ function getPortalHTML(products, customer) {
             if (searchInputEl) searchInputEl.value = '';
             
             // Resetear filtros activos
-            activeFilters = {
-                collections: [],
-                categories: [],
-                ages: [],
-                availability: [],
-                priceRange: { min: null, max: null }
-            };
+            activeFilters.collections = [];
+            activeFilters.categories = [];
+            activeFilters.ages = [];
+            activeFilters.availability = [];
+            activeFilters.priceRange = { min: null, max: null };
             
             // Mostrar todos los productos
             document.querySelectorAll('.product-card').forEach(function(card) {
@@ -6806,15 +6876,8 @@ function getPortalHTML(products, customer) {
             }
         };
         
-        window.applyFilters = function() {
-            try {
-                if (typeof window.applyFiltersInternal === 'function') {
-                    window.applyFiltersInternal();
-                }
-            } catch (error) {
-                console.error('Error applying filters:', error);
-            }
-        };
+        // Asignar función applyFilters al scope global
+        window.applyFilters = applyFilters;
         
         window.removeFilter = function(type, value) {
             try {
@@ -6903,8 +6966,20 @@ function getPortalHTML(products, customer) {
                                     marcas.add(value);
                                 }
                                 else if (keyLower.includes('edad') || keyLower.includes('age') || keyLower.includes('años')) {
-                                    // Limpiar IDs de Shopify
-                                    if (typeof value === 'string' && !value.startsWith('gid://shopify/')) {
+                                    // Mapeo de IDs de Shopify a valores legibles para edades
+                                    var ageMapping = {
+                                        'gid://shopify/Metaobject/122522435859': '3-5 años',
+                                        'gid://shopify/Metaobject/98466890003': '5-9 años',
+                                        'gid://shopify/Metaobject/35341876855059': '9+ años',
+                                        'gid://shopify/Metaobject/39573422145811': 'Experto'
+                                    };
+                                    
+                                    if (typeof value === 'string' && value.startsWith('gid://shopify/')) {
+                                        var mappedValue = ageMapping[value];
+                                        if (mappedValue) {
+                                            edades.add(mappedValue);
+                                        }
+                                    } else if (typeof value === 'string') {
                                         edades.add(value);
                                     }
                                 }
