@@ -1852,7 +1852,7 @@ function getCartHTML(customer) {
             const cartContent = document.getElementById('cartContent');
             
             if (cart.length === 0) {
-                cartContent.innerHTML = \`
+                cartContent.innerHTML = `
                     <div class="empty-cart">
                         <div class="empty-cart-icon">
                             <i class="fas fa-shopping-cart"></i>
@@ -1864,7 +1864,7 @@ function getCartHTML(customer) {
                             Continuar Comprando
                         </a>
                     </div>
-                \`;
+                `;
                 return;
             }
 
@@ -1880,38 +1880,38 @@ function getCartHTML(customer) {
                 const unitPriceNeto = calculateNetPrice(item.price);
                 const unitPriceIVA = calculateIVA(unitPriceNeto);
                 
-                return \`
-                    <div class="cart-item" data-product-id="\${item.productId}" data-variant-id="\${item.variantId}">
-                        <img src="\${item.image}" alt="\${item.title}" class="item-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjFGNUY5Ii8+CjxwYXRoIGQ9Ik0zNSA0MEg2NVY2MEgzNVY0MFoiIGZpbGw9IiNCREMzQzciLz4KPC9zdmc+'" />
+                return `
+                    <div class="cart-item" data-product-id="${item.productId}" data-variant-id="${item.variantId}">
+                        <img src="${item.image}" alt="${item.title}" class="item-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjFGNUY5Ii8+CjxwYXRoIGQ9Ik0zNSA0MEg2NVY2MEgzNVY0MFoiIGZpbGw9IiNCREMzQzciLz4KPC9zdmc+'" />
                         
                         <div class="item-details">
-                            <h3>\${item.title}</h3>
+                            <h3>${item.title}</h3>
                             <div class="item-price-info">
-                                Precio unitario: \${formatPrice(item.price)}
+                                Precio unitario: ${formatPrice(item.price)}
                                 <div class="price-breakdown">
-                                    Neto: \${formatPrice(unitPriceNeto)} + IVA: \${formatPrice(unitPriceIVA)}
+                                    Neto: ${formatPrice(unitPriceNeto)} + IVA: ${formatPrice(unitPriceIVA)}
                                 </div>
                             </div>
                         </div>
                         
                         <div class="quantity-controls">
-                            <button class="quantity-btn" onclick="updateQuantity('\${item.productId}', '\${item.variantId}', -1)">-</button>
-                            <span class="quantity-display">\${item.quantity}</span>
-                            <button class="quantity-btn" onclick="updateQuantity('\${item.productId}', '\${item.variantId}', 1)">+</button>
-                            <button class="remove-btn" onclick="removeFromCart('\${item.productId}', '\${item.variantId}')">
+                            <button class="quantity-btn" onclick="updateQuantity('${item.productId}', '${item.variantId}', -1)">-</button>
+                            <span class="quantity-display">${item.quantity}</span>
+                            <button class="quantity-btn" onclick="updateQuantity('${item.productId}', '${item.variantId}', 1)">+</button>
+                            <button class="remove-btn" onclick="removeFromCart('${item.productId}', '${item.variantId}')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
                         
                         <div class="item-total">
-                            <div class="item-total-price">\${formatPrice(itemTotalBruto)}</div>
+                            <div class="item-total-price">${formatPrice(itemTotalBruto)}</div>
                             <div class="item-total-breakdown">
-                                Neto: \${formatPrice(itemTotalNeto)}<br>
-                                IVA: \${formatPrice(itemTotalIVA)}
+                                Neto: ${formatPrice(itemTotalNeto)}<br>
+                                IVA: ${formatPrice(itemTotalIVA)}
                             </div>
                         </div>
                     </div>
-                \`;
+                `;
             }).join('');
 
             // Calcular totales
@@ -1922,10 +1922,10 @@ function getCartHTML(customer) {
             const totalNetoConDescuento = calculateNetPrice(totalConDescuento);
             const totalIVAConDescuento = calculateIVA(totalNetoConDescuento);
 
-            cartContent.innerHTML = \`
+            cartContent.innerHTML = `
                 <div class="cart-content">
                     <div class="cart-items">
-                        \${itemsHTML}
+                        ${itemsHTML}
                     </div>
                     
                     <div class="cart-summary">
@@ -1933,37 +1933,37 @@ function getCartHTML(customer) {
                         
                         <div class="summary-line">
                             <span class="summary-label">Subtotal (Bruto):</span>
-                            <span class="summary-value">\${formatPrice(subtotalBruto)}</span>
+                            <span class="summary-value">${formatPrice(subtotalBruto)}</span>
                         </div>
                         
                         <div class="summary-line">
                             <span class="summary-label">• Neto:</span>
-                            <span class="summary-value">\${formatPrice(subtotalNeto)}</span>
+                            <span class="summary-value">${formatPrice(subtotalNeto)}</span>
                         </div>
                         
                         <div class="summary-line">
                             <span class="summary-label">• IVA (19%):</span>
-                            <span class="summary-value">\${formatPrice(subtotalIVA)}</span>
+                            <span class="summary-value">${formatPrice(subtotalIVA)}</span>
                         </div>
                         
                         <div class="summary-line">
-                            <span class="summary-label">Descuento B2B (-\${customerDiscount}%):</span>
-                            <span class="summary-value" style="color: #10b981;">-\${formatPrice(descuentoMonto)}</span>
+                            <span class="summary-label">Descuento B2B (-${customerDiscount}%):</span>
+                            <span class="summary-value" style="color: #10b981;">-${formatPrice(descuentoMonto)}</span>
                         </div>
                         
                         <div class="summary-line total">
                             <span class="summary-label">Total a Pagar:</span>
-                            <span class="summary-value">\${formatPrice(totalConDescuento)}</span>
+                            <span class="summary-value">${formatPrice(totalConDescuento)}</span>
                         </div>
                         
                         <div class="summary-line" style="font-size: 0.875rem; margin-top: -0.5rem;">
                             <span class="summary-label">• Neto final:</span>
-                            <span class="summary-value">\${formatPrice(totalNetoConDescuento)}</span>
+                            <span class="summary-value">${formatPrice(totalNetoConDescuento)}</span>
                         </div>
                         
                         <div class="summary-line" style="font-size: 0.875rem; margin-top: -0.5rem; margin-bottom: 0;">
                             <span class="summary-label">• IVA final:</span>
-                            <span class="summary-value">\${formatPrice(totalIVAConDescuento)}</span>
+                            <span class="summary-value">${formatPrice(totalIVAConDescuento)}</span>
                         </div>
                         
                         <button class="checkout-btn" onclick="proceedToCheckout()">
@@ -1982,7 +1982,7 @@ function getCartHTML(customer) {
                         </button>
                     </div>
                 </div>
-            \`;
+            `;
         }
 
         // Función para actualizar cantidad
@@ -2026,7 +2026,7 @@ function getCartHTML(customer) {
             }
             
             // Mostrar confirmación antes de enviar
-            const confirmMessage = \`¿Confirmas tu pedido de \${cart.length} productos?\n\nTu solicitud será enviada a nuestro equipo para procesamiento.\`;
+            const confirmMessage = `¿Confirmas tu pedido de \${cart.length} productos?\n\nTu solicitud será enviada a nuestro equipo para procesamiento.\`;
             // Proceder directamente al checkout sin confirmación molesta
 
             // Mostrar loading
@@ -2081,7 +2081,7 @@ function getCartHTML(customer) {
         // Función para mostrar modal de pedido exitoso
         function showOrderSuccessModal(data) {
             const modal = document.createElement('div');
-            modal.style.cssText = \`
+            modal.style.cssText = `
                 position: fixed;
                 top: 0;
                 left: 0;
@@ -2093,9 +2093,9 @@ function getCartHTML(customer) {
                 justify-content: center;
                 z-index: 10000;
                 padding: 2rem;
-            \`;
+            `;
             
-            modal.innerHTML = \`
+            modal.innerHTML = `
                 <div style="
                     background: white;
                     border-radius: 20px;
@@ -2140,7 +2140,7 @@ function getCartHTML(customer) {
                     <div style="text-align: left; margin-bottom: 2rem;">
                         <h4 style="color: #374151; margin-bottom: 1rem;">Próximos Pasos:</h4>
                         <ol style="color: #6b7280; line-height: 1.8; padding-left: 1.5rem;">
-                            \${data.nextSteps.map(step => \`<li>\${step}</li>\`).join('')}
+                            ${data.nextSteps.map(step => `<li>${step}</li>`).join('')}
                         </ol>
                     </div>
                     
@@ -2166,7 +2166,7 @@ function getCartHTML(customer) {
                         to { opacity: 1; transform: scale(1) translateY(0); }
                     }
                 </style>
-            \`;
+            `;
             
             document.body.appendChild(modal);
             
@@ -2193,7 +2193,7 @@ function getCartHTML(customer) {
         // Función para mostrar notificaciones
         function showNotification(message, type) {
             const notification = document.createElement('div');
-            notification.style.cssText = \`
+            notification.style.cssText = `
                 position: fixed;
                 top: 20px;
                 right: 20px;
@@ -2206,7 +2206,7 @@ function getCartHTML(customer) {
                 font-weight: 600;
                 transform: translateX(100%);
                 transition: transform 0.3s ease;
-            \`;
+            `;
             notification.textContent = message;
             
             document.body.appendChild(notification);
@@ -3050,7 +3050,7 @@ function getLoginHTML() {
             const config = typeConfig[type] || typeConfig.info;
             
             notification.className = 'notification notification-' + type;
-            notification.innerHTML = \`
+            notification.innerHTML = `
                 <div class="notification-content">
                     <div class="notification-icon">
                         <i class="\${config.icon}"></i>
@@ -3060,13 +3060,13 @@ function getLoginHTML() {
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-            \`;
+            `;
             
             // Estilos dinámicos
-            notification.style.cssText = \`
-                background: linear-gradient(135deg, \${config.bgColor}, \${config.borderColor});
-                border-left: 4px solid \${config.borderColor};
-            \`;
+            notification.style.cssText = `
+                background: linear-gradient(135deg, ${config.bgColor}, ${config.borderColor});
+                border-left: 4px solid ${config.borderColor};
+            `;
             
             container.appendChild(notification);
             
@@ -3889,7 +3889,7 @@ function getCompleteProfileHTML(customer) {
             const config = typeConfig[type] || typeConfig.info;
             
             notification.className = 'notification notification-' + type;
-            notification.innerHTML = \`
+            notification.innerHTML = `
                 <div class="notification-content">
                     <div class="notification-icon">
                         <i class="\${config.icon}"></i>
@@ -3899,13 +3899,13 @@ function getCompleteProfileHTML(customer) {
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-            \`;
+            `;
             
             // Estilos dinámicos
-            notification.style.cssText = \`
-                background: linear-gradient(135deg, \${config.bgColor}, \${config.borderColor});
-                border-left: 4px solid \${config.borderColor};
-            \`;
+            notification.style.cssText = `
+                background: linear-gradient(135deg, ${config.bgColor}, ${config.borderColor});
+                border-left: 4px solid ${config.borderColor};
+            `;
             
             container.appendChild(notification);
             
@@ -4127,7 +4127,7 @@ function getPortalHTML(products, customer) {
                             <span class="stock-count">${stock} unidades</span>
                         </div>
                         <button class="add-to-cart-btn" ${stock === 0 ? 'disabled' : ''} 
-                                onclick="addToCart('${product.id}', '${variant?.id}', '${product.title}', ${discountedPrice}, '${image}')">
+                                onclick="addToCart('${product.id}', '${variant?.id}', '${product.title.replace(/'/g, '&#39;').replace(/"/g, '&quot;')}', ${discountedPrice}, '${image}')">
                             <i class="fas fa-cart-plus"></i>
                             ${stock > 0 ? 'Agregar al Carrito' : 'Sin Stock'}
                         </button>
@@ -6185,29 +6185,7 @@ function getPortalHTML(products, customer) {
             console.log('🧹 Carrito limpiado y migrado');
         }
         
-        // Definir funciones en el ámbito global para que estén disponibles en onclick
-        window.addToCart = function(productId, variantId, title, price, image) {
-            var existingItem = cart.find(function(item) { return item.productId === productId && item.variantId === variantId; });
-            
-            if (existingItem) {
-                existingItem.quantity += 1;
-            } else {
-                cart.push({
-                    productId: productId,
-                    variantId: variantId,
-                    title: title,
-                    price: price,
-                    image: image,
-                    quantity: 1
-                });
-            }
-            
-            localStorage.setItem('b2bCart', JSON.stringify(cart));
-            updateCartBadge();
-            
-            // Mostrar confirmación
-            showNotification(title + ' agregado al carrito', 'success');
-        };
+        // addToCart ya está definida globalmente arriba - eliminando duplicado
         
         // FUNCIONES DUPLICADAS ELIMINADAS - SOLO USAR LAS DEL HEAD
         
@@ -6721,7 +6699,7 @@ function getPortalHTML(products, customer) {
                 activeFiltersList.innerHTML = allActiveFilters.map(function(filter) {
                     return '<div class="active-filter-tag">' +
                         filter.label +
-                        '<button class="remove-filter" onclick="removeFilter(\'' + filter.type + '\', \'' + filter.value + '\')">×</button>' +
+                        '<button class="remove-filter" onclick="removeFilter(&quot;' + filter.type + '&quot;, &quot;' + filter.value + '&quot;)">×</button>' +
                     '</div>';
                 }).join('');
             } else {
@@ -6814,35 +6792,32 @@ function getPortalHTML(products, customer) {
         
         // toggleFilters eliminada - usando la definición anterior window.toggleFilters
         
-        window.showCart = function() {
-            window.location.href = '/carrito';
-        };
+        // showCart y addToCart ya están definidas globalmente arriba - eliminando duplicados
         
-        window.addToCart = function(productId, variantId, title, price, image) {
+        // Función para remover filtros activos
+        window.removeFilter = function(type, value) {
+            console.log('🗑️ Removiendo filtro:', type, value);
             try {
-                var existingItem = cart.find(function(item) { 
-                    return item.productId === productId || item.title === title; 
+                // Encontrar y desmarcar el checkbox correspondiente
+                var checkboxes = document.querySelectorAll('input[type="checkbox"][value="' + value + '"]');
+                checkboxes.forEach(function(checkbox) {
+                    checkbox.checked = false;
                 });
                 
-                if (existingItem) {
-                    existingItem.quantity += 1;
-                } else {
-                    cart.push({
-                        productId: productId || 'product_' + Date.now(),
-                        variantId: variantId || 'variant_' + Date.now(),
-                        title: title,
-                        price: price,
-                        image: image,
-                        quantity: 1
-                    });
+                // Limpiar rango de precios si es necesario
+                if (type === 'priceRange') {
+                    var minPriceEl = document.getElementById('minPrice');
+                    var maxPriceEl = document.getElementById('maxPrice');
+                    if (minPriceEl) minPriceEl.value = '';
+                    if (maxPriceEl) maxPriceEl.value = '';
                 }
                 
-                localStorage.setItem('b2bCart', JSON.stringify(cart));
-                updateCartBadge();
-                showNotification(title + ' agregado al carrito', 'success');
+                // Reaplicar filtros
+                if (typeof window.applyFilters === 'function') {
+                    window.applyFilters();
+                }
             } catch (error) {
-                console.error('Error adding to cart:', error);
-                showNotification('Error agregando producto', 'error');
+                console.error('Error removing filter:', error);
             }
         };
         
@@ -7167,14 +7142,8 @@ function getPortalHTML(products, customer) {
             }
         }
         
-        // Asignar funciones al objeto window para acceso global
-        window.toggleUserDropdown = toggleUserDropdown;
-        // window.toggleFilters ya está definida globalmente arriba
-        window.addToCart = addToCart;
-        window.updateCartBadge = updateCartBadge;
-        window.showNotification = showNotification;
-        window.showCart = showCart;
-        window.logout = logout;
+        // Las funciones ya están asignadas globalmente arriba - eliminando asignaciones duplicadas
+        // window.toggleUserDropdown, window.addToCart, window.showCart, etc. ya están definidas
         
         // Inicializar cuando el DOM esté completamente cargado
         document.addEventListener('DOMContentLoaded', function() {
