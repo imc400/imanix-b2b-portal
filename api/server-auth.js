@@ -1881,33 +1881,33 @@ function getCartHTML(customer) {
                 const unitPriceIVA = calculateIVA(unitPriceNeto);
                 
                 return \`
-                    <div class="cart-item" data-product-id="${item.productId}" data-variant-id="${item.variantId}">
-                        <img src="${item.image}" alt="${item.title}" class="item-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjFGNUY5Ii8+CjxwYXRoIGQ9Ik0zNSA0MEg2NVY2MEgzNVY0MFoiIGZpbGw9IiNCREMzQzciLz4KPC9zdmc+'" />
+                    <div class="cart-item" data-product-id="\${item.productId}" data-variant-id="\${item.variantId}">
+                        <img src="\${item.image}" alt="\${item.title}" class="item-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjFGNUY5Ii8+CjxwYXRoIGQ9Ik0zNSA0MEg2NVY2MEgzNVY0MFoiIGZpbGw9IiNCREMzQzciLz4KPC9zdmc+'" />
                         
                         <div class="item-details">
-                            <h3>${item.title}</h3>
+                            <h3>\${item.title}</h3>
                             <div class="item-price-info">
-                                Precio unitario: ${formatPrice(item.price)}
+                                Precio unitario: \${formatPrice(item.price)}
                                 <div class="price-breakdown">
-                                    Neto: ${formatPrice(unitPriceNeto)} + IVA: ${formatPrice(unitPriceIVA)}
+                                    Neto: \${formatPrice(unitPriceNeto)} + IVA: \${formatPrice(unitPriceIVA)}
                                 </div>
                             </div>
                         </div>
                         
                         <div class="quantity-controls">
-                            <button class="quantity-btn" onclick="updateQuantity('${item.productId}', '${item.variantId}', -1)">-</button>
-                            <span class="quantity-display">${item.quantity}</span>
-                            <button class="quantity-btn" onclick="updateQuantity('${item.productId}', '${item.variantId}', 1)">+</button>
-                            <button class="remove-btn" onclick="removeFromCart('${item.productId}', '${item.variantId}')">
+                            <button class="quantity-btn" onclick="updateQuantity('\${item.productId}', '\${item.variantId}', -1)">-</button>
+                            <span class="quantity-display">\${item.quantity}</span>
+                            <button class="quantity-btn" onclick="updateQuantity('\${item.productId}', '\${item.variantId}', 1)">+</button>
+                            <button class="remove-btn" onclick="removeFromCart('\${item.productId}', '\${item.variantId}')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
                         
                         <div class="item-total">
-                            <div class="item-total-price">${formatPrice(itemTotalBruto)}</div>
+                            <div class="item-total-price">\${formatPrice(itemTotalBruto)}</div>
                             <div class="item-total-breakdown">
-                                Neto: ${formatPrice(itemTotalNeto)}<br>
-                                IVA: ${formatPrice(itemTotalIVA)}
+                                Neto: \${formatPrice(itemTotalNeto)}<br>
+                                IVA: \${formatPrice(itemTotalIVA)}
                             </div>
                         </div>
                     </div>
@@ -1925,7 +1925,7 @@ function getCartHTML(customer) {
             cartContent.innerHTML = \`
                 <div class="cart-content">
                     <div class="cart-items">
-                        ${itemsHTML}
+                        \${itemsHTML}
                     </div>
                     
                     <div class="cart-summary">
@@ -1933,37 +1933,37 @@ function getCartHTML(customer) {
                         
                         <div class="summary-line">
                             <span class="summary-label">Subtotal (Bruto):</span>
-                            <span class="summary-value">${formatPrice(subtotalBruto)}</span>
+                            <span class="summary-value">\${formatPrice(subtotalBruto)}</span>
                         </div>
                         
                         <div class="summary-line">
                             <span class="summary-label">• Neto:</span>
-                            <span class="summary-value">${formatPrice(subtotalNeto)}</span>
+                            <span class="summary-value">\${formatPrice(subtotalNeto)}</span>
                         </div>
                         
                         <div class="summary-line">
                             <span class="summary-label">• IVA (19%):</span>
-                            <span class="summary-value">${formatPrice(subtotalIVA)}</span>
+                            <span class="summary-value">\${formatPrice(subtotalIVA)}</span>
                         </div>
                         
                         <div class="summary-line">
-                            <span class="summary-label">Descuento B2B (-${customerDiscount}%):</span>
-                            <span class="summary-value" style="color: #10b981;">-${formatPrice(descuentoMonto)}</span>
+                            <span class="summary-label">Descuento B2B (-\${customerDiscount}%):</span>
+                            <span class="summary-value" style="color: #10b981;">-\${formatPrice(descuentoMonto)}</span>
                         </div>
                         
                         <div class="summary-line total">
                             <span class="summary-label">Total a Pagar:</span>
-                            <span class="summary-value">${formatPrice(totalConDescuento)}</span>
+                            <span class="summary-value">\${formatPrice(totalConDescuento)}</span>
                         </div>
                         
                         <div class="summary-line" style="font-size: 0.875rem; margin-top: -0.5rem;">
                             <span class="summary-label">• Neto final:</span>
-                            <span class="summary-value">${formatPrice(totalNetoConDescuento)}</span>
+                            <span class="summary-value">\${formatPrice(totalNetoConDescuento)}</span>
                         </div>
                         
                         <div class="summary-line" style="font-size: 0.875rem; margin-top: -0.5rem; margin-bottom: 0;">
                             <span class="summary-label">• IVA final:</span>
-                            <span class="summary-value">${formatPrice(totalIVAConDescuento)}</span>
+                            <span class="summary-value">\${formatPrice(totalIVAConDescuento)}</span>
                         </div>
                         
                         <button class="checkout-btn" onclick="proceedToCheckout()">
