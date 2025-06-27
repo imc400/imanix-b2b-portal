@@ -6964,7 +6964,16 @@ function getPortalHTML(products, customer) {
                 
                 if (metafieldsAttr) {
                     try {
-                        var metafields = JSON.parse(metafieldsAttr.replace(/&#39;/g, "'"));
+                        // Limpiar JSON malformado de forma más robusta
+                        var cleanedData = metafieldsAttr
+                            .replace(/&#39;/g, "'")
+                            .replace(/\r?\n|\r/g, " ")
+                            .replace(/\t/g, " ")
+                            .replace(/\s+/g, " ")
+                            .trim();
+                            
+                        // Intentar parsear JSON limpio
+                        var metafields = JSON.parse(cleanedData);
                         
                         // Organizar metacampos por tipo
                         Object.keys(metafields).forEach(function(key) {
@@ -7062,6 +7071,30 @@ function getPortalHTML(products, customer) {
             }
             
             console.log('✅ Filtros poblados manualmente');
+            
+            // CRÍTICO: Asegurar que applyFilters esté disponible después de la inicialización manual
+            if (typeof window.applyFilters !== 'function') {
+                window.applyFilters = function() {
+                    console.log('🔍 applyFilters ejecutada desde inicialización manual');
+                    // Función básica que al menos no genera error
+                    var searchTerm = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
+                    var productCards = document.querySelectorAll('.product-card');
+                    
+                    productCards.forEach(function(card) {
+                        var titleEl = card.querySelector('.product-title');
+                        var title = titleEl ? titleEl.textContent.toLowerCase() : '';
+                        var skuElement = card.querySelector('.sku');
+                        var sku = skuElement ? skuElement.textContent.toLowerCase() : '';
+                        
+                        if (!searchTerm || title.includes(searchTerm) || sku.includes(searchTerm)) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                };
+                console.log('✅ applyFilters asignada desde inicialización manual');
+            }
         }
         
         function addToCart(productId, variantId, title, price, image) {
