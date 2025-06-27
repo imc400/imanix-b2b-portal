@@ -2408,7 +2408,7 @@ function getCartHTML(customer) {
             const notification = document.createElement('div');
             notification.style.cssText = \`
                 position: fixed;
-                top: 20px;
+                top: 140px;
                 right: 20px;
                 background: \${type === 'success' ? '#10b981' : '#ef4444'};
                 color: #1A202C;
