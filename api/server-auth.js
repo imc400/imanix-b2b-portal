@@ -462,10 +462,14 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error en checkout:', error);
+    console.error('❌ Error en checkout:', error);
+    console.error('🔍 Stack trace:', error.stack);
+    console.error('📊 Request body:', req.body);
+    console.error('📎 File:', req.file);
     res.status(500).json({ 
       success: false, 
-      message: 'Error procesando el pedido. Inténtalo nuevamente o contacta a soporte.' 
+      message: 'Error procesando el pedido: ' + error.message,
+      error: error.message 
     });
   }
 });
@@ -2165,6 +2169,14 @@ function getCartHTML(customer) {
             \`;
 
             document.body.appendChild(modal);
+            
+            // Activar transferencia por defecto
+            setTimeout(() => {
+                const transferOption = document.querySelector('div[onclick*="transferencia"]');
+                if (transferOption) {
+                    selectPaymentMethod('transferencia', transferOption);
+                }
+            }, 100);
         }
 
         function selectPaymentMethod(method, element) {
