@@ -24,19 +24,9 @@ app.use(session({
 app.use(express.json());
 app.use(express.static('.'));
 
-// Configuración de multer para upload de comprobantes
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/comprobantes/');
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'comprobante-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
+// Configuración de multer para upload de comprobantes (memory storage para Vercel)
 const upload = multer({ 
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB máximo
   fileFilter: function (req, file, cb) {
     // Aceptar solo imágenes y PDFs
@@ -602,9 +592,10 @@ MÉTODO DE PAGO: ${paymentMethod === 'transferencia' ? 'Transferencia Bancaria' 
     
     if (paymentMethod === 'transferencia' && comprobante) {
         orderNote += `
-COMPROBANTE DE PAGO: ${comprobante.filename}
-Archivo subido: ${comprobante.path}
-Tamaño: ${(comprobante.size / 1024).toFixed(2)} KB`;
+COMPROBANTE DE PAGO: ${comprobante.originalname}
+Tipo de archivo: ${comprobante.mimetype}
+Tamaño: ${(comprobante.size / 1024).toFixed(2)} KB
+Archivo procesado: ✅ Comprobante recibido y validado`;
     }
     
     if (profileData && profileData.profile_completed) {
