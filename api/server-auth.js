@@ -4152,6 +4152,12 @@ function getPortalHTML(products, customer) {
         // Variables globales
         var cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
         
+        // FUNCIÓN GLOBAL CRÍTICA: applyFilters debe estar disponible desde el inicio
+        window.applyFilters = function() {
+            console.log('🔍 applyFilters llamada (función temporal)');
+            // Esta función será reemplazada por la implementación completa más abajo
+        };
+        
         // DEFINIR TODAS LAS FUNCIONES GLOBALMENTE ANTES QUE CUALQUIER HTML
         window.toggleUserDropdown = function() {
             console.log('✅ toggleUserDropdown ejecutada');
@@ -6639,7 +6645,7 @@ function getPortalHTML(products, customer) {
             updateFilterGroupIndicators(activeFilters);
         }
         
-        // Asignar función applyFilters al scope global para los checkboxes
+        // CRÍTICO: Asignar función applyFilters al scope global INMEDIATAMENTE después de definirla
         window.applyFilters = applyFilters;
         
         // Función para actualizar indicadores visuales de filtros activos
