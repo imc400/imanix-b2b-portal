@@ -7151,6 +7151,17 @@ function getPortalHTML(products, customer) {
             updateCartBadge();
         });
         
+        // Asegurar que toggleFilters esté disponible globalmente
+        if (typeof window.toggleFilters !== 'function') {
+            window.toggleFilters = function() {
+                console.log('✅ toggleFilters backup ejecutada');
+                var panel = document.getElementById('filtersPanel');
+                if (panel) {
+                    panel.classList.toggle('show');
+                }
+            };
+        }
+        
         console.log('✅ Funciones globales cargadas correctamente');
     </script>
 </body>
