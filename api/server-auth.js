@@ -2117,30 +2117,30 @@ function getCartHTML(customer) {
                     <div style="background: #f3f4f6; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: left;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                             <span><strong>Número de Pedido:</strong></span>
-                            <span style="color: #6366f1; font-weight: bold;">\\${data.draftOrderNumber}</span>
+                            <span style="color: #6366f1; font-weight: bold;">\${data.draftOrderNumber}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                             <span><strong>Total:</strong></span>
-                            <span style="color: #059669; font-weight: bold;">\\${formatPrice(data.total)}</span>
+                            <span style="color: #059669; font-weight: bold;">\${formatPrice(data.total)}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                             <span><strong>Descuento:</strong></span>
-                            <span style="color: #dc2626; font-weight: bold;">\\${formatPrice(data.discount)}</span>
+                            <span style="color: #dc2626; font-weight: bold;">\${formatPrice(data.discount)}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span><strong>Estado:</strong></span>
-                            <span style="color: #f59e0b; font-weight: bold; text-transform: capitalize;">\\${data.status}</span>
+                            <span style="color: #f59e0b; font-weight: bold; text-transform: capitalize;">\${data.status}</span>
                         </div>
                     </div>
                     
                     <p style="color: #6b7280; margin-bottom: 1.5rem; line-height: 1.6;">
-                        \\${data.note}
+                        \${data.note}
                     </p>
                     
                     <div style="text-align: left; margin-bottom: 2rem;">
                         <h4 style="color: #374151; margin-bottom: 1rem;">Próximos Pasos:</h4>
                         <ol style="color: #6b7280; line-height: 1.8; padding-left: 1.5rem;">
-                            \\${data.nextSteps ? data.nextSteps.map(function(step) { return '<li>' + step + '</li>'; }).join('') : ''}
+                            \${data.nextSteps ? data.nextSteps.map(function(step) { return '<li>' + step + '</li>'; }).join('') : ''}
                         </ol>
                     </div>
                     
