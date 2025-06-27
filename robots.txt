@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://imanix-b2b-portal-go5po2sjb-ignacios-projects-91899df9.vercel.app/sitemap.xml
