@@ -2,6 +2,8 @@ const express = require('express');
 const fs = require('fs').promises;
 const session = require('express-session');
 const axios = require('axios');
+const multer = require('multer');
+const path = require('path');
 const database = require('./database');
 require('dotenv').config();
 
@@ -21,6 +23,30 @@ app.use(session({
 
 app.use(express.json());
 app.use(express.static('.'));
+
+// Configuración de multer para upload de comprobantes
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/comprobantes/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'comprobante-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB máximo
+  fileFilter: function (req, file, cb) {
+    // Aceptar solo imágenes y PDFs
+    if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten archivos de imagen (JPG, PNG, etc.) o PDF'));
+    }
+  }
+});
 
 // Configuración de Shopify API
 const SHOPIFY_SHOP_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN || 'braintoys-chile.myshopify.com';
@@ -367,7 +393,7 @@ app.post('/api/profile/update', async (req, res) => {
 });
 
 // Endpoint para procesar checkout y crear draft order
-app.post('/api/checkout', async (req, res) => {
+app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
   try {
     // Verificar autenticación
     if (!req.session.customer) {
@@ -377,7 +403,8 @@ app.post('/api/checkout', async (req, res) => {
       });
     }
 
-    const { cartItems } = req.body;
+    const { cartItems, paymentMethod } = req.body;
+    const comprobante = req.file;
     
     if (!cartItems || cartItems.length === 0) {
       return res.status(400).json({ 
@@ -389,8 +416,16 @@ app.post('/api/checkout', async (req, res) => {
     const customer = req.session.customer;
     const discountPercentage = customer.discount || 0;
 
+    // Validar que si es transferencia, se haya subido comprobante
+    if (paymentMethod === 'transferencia' && !comprobante) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Debe subir el comprobante de transferencia' 
+      });
+    }
+
     // Crear draft order en Shopify
-    const draftOrder = await createDraftOrder(customer, cartItems, discountPercentage);
+    const draftOrder = await createDraftOrder(customer, cartItems, discountPercentage, paymentMethod, comprobante);
     
     // Log para seguimiento
     console.log(`🎯 Draft Order #${draftOrder.id} creado para cliente B2B: ${customer.email}`);
@@ -513,7 +548,7 @@ async function saveDraftOrderToDatabase(draftOrder, customer) {
 }
 
 // Función para crear Draft Order en Shopify
-async function createDraftOrder(customer, cartItems, discountPercentage) {
+async function createDraftOrder(customer, cartItems, discountPercentage, paymentMethod = 'contacto', comprobante = null) {
     // Obtener datos del perfil empresarial desde la base de datos
     let profileData = null;
     if (database) {
@@ -544,7 +579,16 @@ async function createDraftOrder(customer, cartItems, discountPercentage) {
     });
 
     // Construir nota con información empresarial completa
-    let orderNote = `Pedido B2B desde portal - Cliente: ${customer.email} - Descuento: ${discountPercentage}%`;
+    let orderNote = `Pedido B2B desde portal - Cliente: ${customer.email} - Descuento: ${discountPercentage}%
+    
+MÉTODO DE PAGO: ${paymentMethod === 'transferencia' ? 'Transferencia Bancaria' : 'Contacto para Coordinación'}`;
+    
+    if (paymentMethod === 'transferencia' && comprobante) {
+        orderNote += `
+COMPROBANTE DE PAGO: ${comprobante.filename}
+Archivo subido: ${comprobante.path}
+Tamaño: ${(comprobante.size / 1024).toFixed(2)} KB`;
+    }
     
     if (profileData && profileData.profile_completed) {
         orderNote += `
@@ -582,7 +626,7 @@ CONTACTO:
                 amount: null
             },
             note: orderNote,
-            tags: `b2b-portal,descuento-${discountPercentage}${profileData?.profile_completed ? ',perfil-completo' : ',perfil-incompleto'}`,
+            tags: `b2b-portal,descuento-${discountPercentage},pago-${paymentMethod}${profileData?.profile_completed ? ',perfil-completo' : ',perfil-incompleto'}${comprobante ? ',comprobante-subido' : ''}`,
             invoice_sent_at: null,
             invoice_url: null,
             status: "open",
@@ -2019,15 +2063,135 @@ function getCartHTML(customer) {
         }
 
         // Función para proceder al checkout
-        async function proceedToCheckout() {
+        function proceedToCheckout() {
             if (cart.length === 0) {
                 showNotification('Tu carrito está vacío', 'error');
                 return;
             }
             
-            // Mostrar confirmación antes de enviar
-            const confirmMessage = \`¿Confirmas tu pedido de \${cart.length} productos?\n\nTu solicitud será enviada a nuestro equipo para procesamiento.\`;
-            // Proceder directamente al checkout sin confirmación molesta
+            // Mostrar modal de método de pago
+            showPaymentMethodModal();
+        }
+
+        function showPaymentMethodModal() {
+            const modal = document.createElement('div');
+            modal.style.cssText = \`
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            \`;
+
+            modal.innerHTML = \`
+                <div style="background: white; border-radius: 15px; padding: 2rem; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                    <h2 style="color: #333; margin-bottom: 1.5rem; text-align: center;">
+                        <i class="fas fa-credit-card"></i> Método de Pago
+                    </h2>
+                    
+                    <div style="margin-bottom: 2rem;">
+                        <div style="border: 2px solid #FFCE36; border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; cursor: pointer;" onclick="selectPaymentMethod('transferencia', this)">
+                            <label style="cursor: pointer; display: flex; align-items: center;">
+                                <input type="radio" name="paymentMethod" value="transferencia" style="margin-right: 1rem; transform: scale(1.2);">
+                                <div>
+                                    <h3 style="margin: 0; color: #333;"><i class="fas fa-university"></i> Transferencia Bancaria</h3>
+                                    <p style="margin: 0.5rem 0 0 0; color: #666; font-size: 0.9rem;">Transfiere y sube tu comprobante para procesar el pedido</p>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div style="border: 2px solid #ddd; border-radius: 10px; padding: 1.5rem; cursor: pointer;" onclick="selectPaymentMethod('contacto', this)">
+                            <label style="cursor: pointer; display: flex; align-items: center;">
+                                <input type="radio" name="paymentMethod" value="contacto" style="margin-right: 1rem; transform: scale(1.2);">
+                                <div>
+                                    <h3 style="margin: 0; color: #333;"><i class="fas fa-phone"></i> Contacto para Pago</h3>
+                                    <p style="margin: 0.5rem 0 0 0; color: #666; font-size: 0.9rem;">Nuestro equipo te contactará para coordinar el pago</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="bankDetails" style="display: none; background: #f8f9fa; border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem;">
+                        <h4 style="color: #333; margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> Datos Bancarios</h4>
+                        <div style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <p style="margin: 0.25rem 0;"><strong>Banco:</strong> Banco de Crédito e Inversiones (BCI)</p>
+                            <p style="margin: 0.25rem 0;"><strong>Cuenta Corriente:</strong> 76938301</p>
+                            <p style="margin: 0.25rem 0;"><strong>RUT:</strong> 76.411.264-4</p>
+                            <p style="margin: 0.25rem 0;"><strong>Titular:</strong> BRAIN TOYS SpA</p>
+                            <p style="margin: 0.25rem 0;"><strong>Email:</strong> administracion@braintoys.cl</p>
+                        </div>
+                        
+                        <div style="margin-top: 1.5rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #333;">
+                                <i class="fas fa-upload"></i> Subir Comprobante de Transferencia
+                            </label>
+                            <input type="file" id="comprobante" accept="image/*,.pdf" 
+                                   style="width: 100%; padding: 0.75rem; border: 2px dashed #FFCE36; border-radius: 8px; background: #fff;">
+                            <p style="margin: 0.5rem 0 0 0; color: #666; font-size: 0.85rem;">
+                                Acepta imágenes (JPG, PNG) o PDF. Máximo 5MB.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                                style="background: #6c757d; color: white; border: none; padding: 0.8rem 2rem; border-radius: 10px; cursor: pointer; font-weight: 600;">
+                            Cancelar
+                        </button>
+                        <button onclick="processCheckout()" 
+                                style="background: #FFCE36; color: #333; border: none; padding: 0.8rem 2rem; border-radius: 10px; cursor: pointer; font-weight: 600;">
+                            <i class="fas fa-shopping-cart"></i> Procesar Pedido
+                        </button>
+                    </div>
+                </div>
+            \`;
+
+            document.body.appendChild(modal);
+        }
+
+        function selectPaymentMethod(method, element) {
+            // Desmarcar todos los métodos
+            document.querySelectorAll('div[onclick*="selectPaymentMethod"]').forEach(div => {
+                div.style.borderColor = '#ddd';
+                div.querySelector('input[type="radio"]').checked = false;
+            });
+
+            // Marcar el método seleccionado
+            element.style.borderColor = '#FFCE36';
+            element.querySelector('input[type="radio"]').checked = true;
+
+            // Mostrar/ocultar detalles bancarios
+            const bankDetails = document.getElementById('bankDetails');
+            if (method === 'transferencia') {
+                bankDetails.style.display = 'block';
+            } else {
+                bankDetails.style.display = 'none';
+            }
+        }
+
+        async function processCheckout() {
+            const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked');
+            if (!selectedMethod) {
+                showNotification('Selecciona un método de pago', 'error');
+                return;
+            }
+
+            const paymentMethod = selectedMethod.value;
+            const comprobanteFile = document.getElementById('comprobante')?.files[0];
+
+            // Validar que si es transferencia, se haya subido comprobante
+            if (paymentMethod === 'transferencia' && !comprobanteFile) {
+                showNotification('Debes subir el comprobante de transferencia', 'error');
+                return;
+            }
+
+            // Cerrar modal
+            document.querySelector('div[style*="position: fixed"]').remove();
 
             // Mostrar loading
             const checkoutBtn = document.querySelector('.checkout-btn');
@@ -2036,19 +2200,22 @@ function getCartHTML(customer) {
             checkoutBtn.disabled = true;
 
             try {
+                const formData = new FormData();
+                formData.append('cartItems', JSON.stringify(cart.map(item => ({
+                    variantId: item.variantId,
+                    quantity: item.quantity,
+                    price: item.price,
+                    title: item.title
+                }))));
+                formData.append('paymentMethod', paymentMethod);
+                
+                if (comprobanteFile) {
+                    formData.append('comprobante', comprobanteFile);
+                }
+
                 const response = await fetch('/api/checkout', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        cartItems: cart.map(item => ({
-                            variantId: item.variantId,
-                            quantity: item.quantity,
-                            price: item.price,
-                            title: item.title
-                        }))
-                    })
+                    body: formData
                 });
 
                 const data = await response.json();
