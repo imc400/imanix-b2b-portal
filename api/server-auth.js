@@ -623,7 +623,7 @@ MÉTODO DE PAGO: ${paymentMethod === 'transferencia' ? 'Transferencia Bancaria' 
 COMPROBANTE DE PAGO: ${comprobante.originalname}
 Tipo de archivo: ${comprobante.mimetype}
 Tamaño: ${(comprobante.size / 1024).toFixed(2)} KB
-📎 <a href="${comprobanteUrl}" target="_blank">DESCARGAR COMPROBANTE</a>
+📎 LINK DE DESCARGA: ${comprobanteUrl}
 ✅ Archivo almacenado permanentemente`;
         } catch (uploadError) {
             console.error('Error subiendo archivo a Cloudinary:', uploadError);
