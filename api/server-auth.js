@@ -4031,7 +4031,7 @@ function getCompleteProfileHTML(customer) {
                 let dv = value.slice(-1);
                 
                 // Formatear con puntos
-                rut = rut.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                rut = rut.replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1.');
                 
                 e.target.value = rut + '-' + dv;
             }
@@ -4414,7 +4414,7 @@ function getPortalHTML(products, customer) {
                             
                             // Si contiene saltos de línea, separar y buscar en cada línea
                             if (valueStr.includes('\n') || valueStr.includes('\r')) {
-                                var lines = valueStr.split(/[\n\r]+/);
+                                var lines = valueStr.split(/[\\n\\r]+/);
                                 return lines.some(function(line) {
                                     var cleanLine = line.trim();
                                     return cleanLine === edad || cleanLine.toLowerCase().includes(edad.toLowerCase());
@@ -4593,7 +4593,7 @@ function getPortalHTML(products, customer) {
                                     
                                     // Si es múltiples líneas, separar por saltos de línea
                                     if (cleanValue && typeof cleanValue === 'string') {
-                                        var edadValues = cleanValue.split(/[\n\r]+/).filter(function(v) { 
+                                        var edadValues = cleanValue.split(/[\\n\\r]+/).filter(function(v) { 
                                             return v.trim().length > 0; 
                                         });
                                         
@@ -6924,9 +6924,9 @@ function getPortalHTML(products, customer) {
                         // Limpiar JSON malformado de forma más robusta
                         var cleanedData = metafieldsAttr
                             .replace(/&#39;/g, "'")
-                            .replace(/\r?\n|\r/g, " ")
-                            .replace(/\t/g, " ")
-                            .replace(/\s+/g, " ")
+                            .replace(/\\r?\\n|\\r/g, " ")
+                            .replace(/\\t/g, " ")
+                            .replace(/\\s+/g, " ")
                             .trim();
                             
                         // Intentar parsear JSON limpio
