@@ -4509,7 +4509,7 @@ function getPortalHTML(products, customer) {
                 };
                 
                 // Extraer el ID numérico del final
-                var idMatch = value.match(/\\/(\d+)$/);
+                var idMatch = value.match(/\\\\/(\\\d+)$/);
                 if (idMatch && ageMapping[idMatch[1]]) {
                     console.log('✅ ID mapeado:', idMatch[1], '->', ageMapping[idMatch[1]]);
                     return ageMapping[idMatch[1]];
