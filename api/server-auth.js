@@ -4,8 +4,16 @@ const session = require('express-session');
 const axios = require('axios');
 const multer = require('multer');
 const path = require('path');
+const cloudinary = require('cloudinary').v2;
 const database = require('./database');
 require('dotenv').config();
+
+// Configuración de Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'imanix-b2b',
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const app = express();
 // Port is handled by Vercel automatically
@@ -590,12 +598,41 @@ async function createDraftOrder(customer, cartItems, discountPercentage, payment
     
 MÉTODO DE PAGO: ${paymentMethod === 'transferencia' ? 'Transferencia Bancaria' : 'Contacto para Coordinación'}`;
     
+    // Subir comprobante a Cloudinary si existe
+    let comprobanteUrl = null;
     if (paymentMethod === 'transferencia' && comprobante) {
-        orderNote += `
+        try {
+            // Subir archivo a Cloudinary
+            const uploadResult = await new Promise((resolve, reject) => {
+                cloudinary.uploader.upload_stream(
+                    {
+                        resource_type: 'auto',
+                        folder: 'imanix-comprobantes',
+                        public_id: `comprobante-${Date.now()}-${customer.email.replace('@', '-at-')}`
+                    },
+                    (error, result) => {
+                        if (error) reject(error);
+                        else resolve(result);
+                    }
+                ).end(comprobante.buffer);
+            });
+            
+            comprobanteUrl = uploadResult.secure_url;
+            
+            orderNote += `
 COMPROBANTE DE PAGO: ${comprobante.originalname}
 Tipo de archivo: ${comprobante.mimetype}
 Tamaño: ${(comprobante.size / 1024).toFixed(2)} KB
-Archivo procesado: ✅ Comprobante recibido y validado`;
+📎 DESCARGAR COMPROBANTE: ${comprobanteUrl}
+✅ Archivo almacenado permanentemente`;
+        } catch (uploadError) {
+            console.error('Error subiendo archivo a Cloudinary:', uploadError);
+            orderNote += `
+COMPROBANTE DE PAGO: ${comprobante.originalname}
+Tipo de archivo: ${comprobante.mimetype}
+Tamaño: ${(comprobante.size / 1024).toFixed(2)} KB
+⚠️ Error al subir archivo - contactar soporte`;
+        }
     }
     
     if (profileData && profileData.profile_completed) {
