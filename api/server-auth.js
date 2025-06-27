@@ -4071,7 +4071,7 @@ function getPortalHTML(products, customer) {
                     <h3>No hay productos disponibles</h3>
                     <p>Los productos B2B aparecerán aquí próximamente</p>
                 </div>
-            `;
+            \`;
         }
 
         return products.map(product => {
@@ -4096,7 +4096,7 @@ function getPortalHTML(products, customer) {
             if (product.metafields?.edges) {
                 product.metafields.edges.forEach(edge => {
                     const metafield = edge.node;
-                    metafields[`${metafield.namespace}.${metafield.key}`] = metafield.value;
+                    metafields[\`\${metafield.namespace}.\${metafield.key}\`] = metafield.value;
                 });
             }
 
@@ -4133,7 +4133,7 @@ function getPortalHTML(products, customer) {
                         </button>
                     </div>
                 </div>
-            `;
+            \`;
         }).join('');
     }
     
