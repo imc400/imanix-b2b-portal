@@ -2026,7 +2026,7 @@ function getCartHTML(customer) {
             }
             
             // Mostrar confirmación antes de enviar
-            const confirmMessage = `¿Confirmas tu pedido de \${cart.length} productos?\n\nTu solicitud será enviada a nuestro equipo para procesamiento.\`;
+            const confirmMessage = `¿Confirmas tu pedido de ${cart.length} productos?\n\nTu solicitud será enviada a nuestro equipo para procesamiento.`;
             // Proceder directamente al checkout sin confirmación molesta
 
             // Mostrar loading
@@ -2117,24 +2117,24 @@ function getCartHTML(customer) {
                     <div style="background: #f3f4f6; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: left;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                             <span><strong>Número de Pedido:</strong></span>
-                            <span style="color: #6366f1; font-weight: bold;">\${data.draftOrderNumber}</span>
+                            <span style="color: #6366f1; font-weight: bold;">${data.draftOrderNumber}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                             <span><strong>Total:</strong></span>
-                            <span style="color: #059669; font-weight: bold;">\${formatPrice(data.total)}</span>
+                            <span style="color: #059669; font-weight: bold;">${formatPrice(data.total)}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                             <span><strong>Descuento:</strong></span>
-                            <span style="color: #dc2626; font-weight: bold;">\${formatPrice(data.discount)}</span>
+                            <span style="color: #dc2626; font-weight: bold;">${formatPrice(data.discount)}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span><strong>Estado:</strong></span>
-                            <span style="color: #f59e0b; font-weight: bold; text-transform: capitalize;">\${data.status}</span>
+                            <span style="color: #f59e0b; font-weight: bold; text-transform: capitalize;">${data.status}</span>
                         </div>
                     </div>
                     
                     <p style="color: #6b7280; margin-bottom: 1.5rem; line-height: 1.6;">
-                        \${data.note}
+                        ${data.note}
                     </p>
                     
                     <div style="text-align: left; margin-bottom: 2rem;">
@@ -2197,7 +2197,7 @@ function getCartHTML(customer) {
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                background: \${type === 'success' ? '#10b981' : '#ef4444'};
+                background: ${type === 'success' ? '#10b981' : '#ef4444'};
                 color: #1A202C;
                 padding: 1rem 1.5rem;
                 border-radius: 12px;
@@ -3053,9 +3053,9 @@ function getLoginHTML() {
             notification.innerHTML = `
                 <div class="notification-content">
                     <div class="notification-icon">
-                        <i class="\${config.icon}"></i>
+                        <i class="${config.icon}"></i>
                     </div>
-                    <div class="notification-message">\${message}</div>
+                    <div class="notification-message">${message}</div>
                     <button class="notification-close" onclick="closeNotification(this)">
                         <i class="fas fa-times"></i>
                     </button>
@@ -3892,9 +3892,9 @@ function getCompleteProfileHTML(customer) {
             notification.innerHTML = `
                 <div class="notification-content">
                     <div class="notification-icon">
-                        <i class="\${config.icon}"></i>
+                        <i class="${config.icon}"></i>
                     </div>
-                    <div class="notification-message">\${message}</div>
+                    <div class="notification-message">${message}</div>
                     <button class="notification-close" onclick="closeNotification(this)">
                         <i class="fas fa-times"></i>
                     </button>
