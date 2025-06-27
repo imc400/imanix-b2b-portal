@@ -1801,7 +1801,7 @@ function getCartHTML(customer) {
     <script>
         // Variables globales
         let cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
-        const customerDiscount = ${customerDiscount || 0};
+        const customerDiscount = ${customerDiscount};
 
         // Limpiar y migrar productos del carrito (productos añadidos antes de la actualización)
         let cartChanged = false;
@@ -1852,7 +1852,7 @@ function getCartHTML(customer) {
             const cartContent = document.getElementById('cartContent');
             
             if (cart.length === 0) {
-                cartContent.innerHTML = `
+                cartContent.innerHTML = \`
                     <div class="empty-cart">
                         <div class="empty-cart-icon">
                             <i class="fas fa-shopping-cart"></i>
@@ -1864,7 +1864,7 @@ function getCartHTML(customer) {
                             Continuar Comprando
                         </a>
                     </div>
-                `;
+                \`;
                 return;
             }
 
@@ -1880,7 +1880,7 @@ function getCartHTML(customer) {
                 const unitPriceNeto = calculateNetPrice(item.price);
                 const unitPriceIVA = calculateIVA(unitPriceNeto);
                 
-                return `
+                return \`
                     <div class="cart-item" data-product-id="${item.productId}" data-variant-id="${item.variantId}">
                         <img src="${item.image}" alt="${item.title}" class="item-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjFGNUY5Ii8+CjxwYXRoIGQ9Ik0zNSA0MEg2NVY2MEgzNVY0MFoiIGZpbGw9IiNCREMzQzciLz4KPC9zdmc+'" />
                         
@@ -1911,7 +1911,7 @@ function getCartHTML(customer) {
                             </div>
                         </div>
                     </div>
-                `;
+                \`;
             }).join('');
 
             // Calcular totales
@@ -1922,7 +1922,7 @@ function getCartHTML(customer) {
             const totalNetoConDescuento = calculateNetPrice(totalConDescuento);
             const totalIVAConDescuento = calculateIVA(totalNetoConDescuento);
 
-            cartContent.innerHTML = `
+            cartContent.innerHTML = \`
                 <div class="cart-content">
                     <div class="cart-items">
                         ${itemsHTML}
@@ -1982,7 +1982,7 @@ function getCartHTML(customer) {
                         </button>
                     </div>
                 </div>
-            `;
+            \`;
         }
 
         // Función para actualizar cantidad
@@ -2026,7 +2026,7 @@ function getCartHTML(customer) {
             }
             
             // Mostrar confirmación antes de enviar
-            const confirmMessage = `¿Confirmas tu pedido de ${cart.length} productos?\n\nTu solicitud será enviada a nuestro equipo para procesamiento.`;
+            const confirmMessage = \`¿Confirmas tu pedido de \${cart.length} productos?\n\nTu solicitud será enviada a nuestro equipo para procesamiento.\`;
             // Proceder directamente al checkout sin confirmación molesta
 
             // Mostrar loading
@@ -2081,7 +2081,7 @@ function getCartHTML(customer) {
         // Función para mostrar modal de pedido exitoso
         function showOrderSuccessModal(data) {
             const modal = document.createElement('div');
-            modal.style.cssText = `
+            modal.style.cssText = \`
                 position: fixed;
                 top: 0;
                 left: 0;
@@ -2093,9 +2093,9 @@ function getCartHTML(customer) {
                 justify-content: center;
                 z-index: 10000;
                 padding: 2rem;
-            `;
+            \`;
             
-            modal.innerHTML = `
+            modal.innerHTML = \`
                 <div style="
                     background: white;
                     border-radius: 20px;
@@ -2166,7 +2166,7 @@ function getCartHTML(customer) {
                         to { opacity: 1; transform: scale(1) translateY(0); }
                     }
                 </style>
-            `;
+            \`;
             
             document.body.appendChild(modal);
             
@@ -2193,11 +2193,11 @@ function getCartHTML(customer) {
         // Función para mostrar notificaciones
         function showNotification(message, type) {
             const notification = document.createElement('div');
-            notification.style.cssText = `
+            notification.style.cssText = \`
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                background: ${type === 'success' ? '#10b981' : '#ef4444'};
+                background: \${type === 'success' ? '#10b981' : '#ef4444'};
                 color: #1A202C;
                 padding: 1rem 1.5rem;
                 border-radius: 12px;
@@ -2206,7 +2206,7 @@ function getCartHTML(customer) {
                 font-weight: 600;
                 transform: translateX(100%);
                 transition: transform 0.3s ease;
-            `;
+            \`;
             notification.textContent = message;
             
             document.body.appendChild(notification);
@@ -3050,7 +3050,7 @@ function getLoginHTML() {
             const config = typeConfig[type] || typeConfig.info;
             
             notification.className = 'notification notification-' + type;
-            notification.innerHTML = `
+            notification.innerHTML = \`
                 <div class="notification-content">
                     <div class="notification-icon">
                         <i class="${config.icon}"></i>
@@ -3060,13 +3060,13 @@ function getLoginHTML() {
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-            `;
+            \`;
             
             // Estilos dinámicos
-            notification.style.cssText = `
+            notification.style.cssText = \`
                 background: linear-gradient(135deg, ${config.bgColor}, ${config.borderColor});
                 border-left: 4px solid ${config.borderColor};
-            `;
+            \`;
             
             container.appendChild(notification);
             
@@ -3889,7 +3889,7 @@ function getCompleteProfileHTML(customer) {
             const config = typeConfig[type] || typeConfig.info;
             
             notification.className = 'notification notification-' + type;
-            notification.innerHTML = `
+            notification.innerHTML = \`
                 <div class="notification-content">
                     <div class="notification-icon">
                         <i class="${config.icon}"></i>
@@ -3899,13 +3899,13 @@ function getCompleteProfileHTML(customer) {
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-            `;
+            \`;
             
             // Estilos dinámicos
-            notification.style.cssText = `
+            notification.style.cssText = \`
                 background: linear-gradient(135deg, ${config.bgColor}, ${config.borderColor});
                 border-left: 4px solid ${config.borderColor};
-            `;
+            \`;
             
             container.appendChild(notification);
             
