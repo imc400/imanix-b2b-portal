@@ -4170,8 +4170,8 @@ function getPortalHTML(products, customer) {
                 // Si se está mostrando el panel, inicializar filtros
                 if (panel.classList.contains('show')) {
                     setTimeout(function() {
-                        if (typeof initializeFilters === 'function') {
-                            initializeFilters();
+                        if (typeof window.initializeFilters === 'function') {
+                            window.initializeFilters();
                         }
                     }, 100);
                 }
@@ -4512,8 +4512,8 @@ function getPortalHTML(products, customer) {
             return value;
         }
         
-        // Función para inicializar los filtros con METACAMPOS de Shopify
-        window.initializeFilters = function() {
+        // Función principal para inicializar los filtros con METACAMPOS de Shopify
+        function initializeFilters() {
             console.log('🔍 Inicializando filtros con metacampos de Shopify...');
             
             var products = Array.from(document.querySelectorAll('.product-card'));
@@ -4659,7 +4659,10 @@ function getPortalHTML(products, customer) {
             }
             
             console.log('✅ Filtros poblados exitosamente');
-        };
+        }
+        
+        // Asignar función initializeFilters al scope global
+        window.initializeFilters = initializeFilters;
         
         // Inicializar cuando se carga la página
         document.addEventListener('DOMContentLoaded', function() {
@@ -6362,8 +6365,8 @@ function getPortalHTML(products, customer) {
         }
 
         // Función para inicializar los filtros con las etiquetas REALES de los productos
-        function initializeFilters() {
-            console.log('🔍 Inicializando filtros con etiquetas reales de Shopify...');
+        function initializeFiltersLegacy() {
+            console.log('🔍 Inicializando filtros con etiquetas reales de Shopify (legacy)...');
             
             var products = Array.from(document.querySelectorAll('.product-card'));
             var allTags = new Set();
@@ -6792,8 +6795,8 @@ function getPortalHTML(products, customer) {
             var panel = document.getElementById('filtersPanel');
             if (panel) {
                 panel.classList.toggle('show');
-                if (panel.classList.contains('show') && typeof initializeFilters === 'function') {
-                    initializeFilters();
+                if (panel.classList.contains('show') && typeof window.initializeFilters === 'function') {
+                    window.initializeFilters();
                 }
             }
         };
