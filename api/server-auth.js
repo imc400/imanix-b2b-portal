@@ -846,7 +846,7 @@ app.get('/perfil', requireAuth, async (req, res) => {
 
 // Función para generar HTML del carrito
 function getCartHTML(customer) {
-  const customerDiscount = customer.discount;
+  const customerDiscount = customer?.discount || 0;
   
   return `
 <!DOCTYPE html>
@@ -1801,7 +1801,7 @@ function getCartHTML(customer) {
     <script>
         // Variables globales
         let cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
-        const customerDiscount = ${customerDiscount};
+        const customerDiscount = ${customerDiscount || 0};
 
         // Limpiar y migrar productos del carrito (productos añadidos antes de la actualización)
         let cartChanged = false;
