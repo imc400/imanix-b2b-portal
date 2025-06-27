@@ -2405,6 +2405,7 @@ function getCartHTML(customer) {
 
         // Función para mostrar notificaciones
         function showNotification(message, type) {
+            console.log('DEBUG: Notification position updated to 140px');
             const notification = document.createElement('div');
             notification.style.cssText = \`
                 position: fixed;
