@@ -4358,9 +4358,19 @@ function getPortalHTML(products, customer) {
                 var metafieldsAttr = card.getAttribute('data-metafields');
                 if (metafieldsAttr) {
                     try {
-                        productMetafields = JSON.parse(metafieldsAttr.replace(/&#39;/g, "'"));
+                        // Limpieza más robusta del JSON
+                        var cleanedJson = metafieldsAttr
+                            .replace(/&#39;/g, "'")
+                            .replace(/\\r?\\n|\\r/g, " ")
+                            .replace(/\\t/g, " ")
+                            .replace(/\\s+/g, " ")
+                            .replace(/,\\s*}/g, "}")
+                            .replace(/,\\s*]/g, "]")
+                            .trim();
+                        productMetafields = JSON.parse(cleanedJson);
                     } catch (error) {
-                        console.error('Error parseando metacampos en filtro:', error);
+                        console.warn('Error parseando metacampos en filtro:', error);
+                        productMetafields = {}; // Fallback seguro
                     }
                 }
                 
@@ -4560,7 +4570,16 @@ function getPortalHTML(products, customer) {
                 
                 if (metafieldsAttr) {
                     try {
-                        var metafields = JSON.parse(metafieldsAttr.replace(/&#39;/g, "'"));
+                        // Limpieza más robusta del JSON
+                        var cleanedJson = metafieldsAttr
+                            .replace(/&#39;/g, "'")
+                            .replace(/\\r?\\n|\\r/g, " ")
+                            .replace(/\\t/g, " ")
+                            .replace(/\\s+/g, " ")
+                            .replace(/,\\s*}/g, "}")
+                            .replace(/,\\s*]/g, "]")
+                            .trim();
+                        var metafields = JSON.parse(cleanedJson);
                         
                         // Organizar metacampos por tipo
                         Object.keys(metafields).forEach(function(key) {
@@ -6508,9 +6527,19 @@ function getPortalHTML(products, customer) {
                 var metafields = {};
                 
                 try {
-                    metafields = JSON.parse(metafieldsStr.replace(/&#39;/g, "'"));
+                    // Limpieza más robusta del JSON
+                    var cleanedJson = metafieldsStr
+                        .replace(/&#39;/g, "'")
+                        .replace(/\\r?\\n|\\r/g, " ")
+                        .replace(/\\t/g, " ")
+                        .replace(/\\s+/g, " ")
+                        .replace(/,\\s*}/g, "}")
+                        .replace(/,\\s*]/g, "]")
+                        .trim();
+                    metafields = JSON.parse(cleanedJson);
                 } catch (e) {
                     console.warn('Error parsing metafields:', e);
+                    metafields = {}; // Fallback seguro
                 }
                 
                 // Convertir metacampos para comparación
