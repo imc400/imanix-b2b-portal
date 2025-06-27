@@ -3053,9 +3053,9 @@ function getLoginHTML() {
             notification.innerHTML = \`
                 <div class="notification-content">
                     <div class="notification-icon">
-                        <i class="${config.icon}"></i>
+                        <i class="\${config.icon}"></i>
                     </div>
-                    <div class="notification-message">${message}</div>
+                    <div class="notification-message">\${message}</div>
                     <button class="notification-close" onclick="closeNotification(this)">
                         <i class="fas fa-times"></i>
                     </button>
@@ -3064,8 +3064,8 @@ function getLoginHTML() {
             
             // Estilos dinámicos
             notification.style.cssText = \`
-                background: linear-gradient(135deg, ${config.bgColor}, ${config.borderColor});
-                border-left: 4px solid ${config.borderColor};
+                background: linear-gradient(135deg, \${config.bgColor}, \${config.borderColor});
+                border-left: 4px solid \${config.borderColor};
             \`;
             
             container.appendChild(notification);
@@ -3892,9 +3892,9 @@ function getCompleteProfileHTML(customer) {
             notification.innerHTML = \`
                 <div class="notification-content">
                     <div class="notification-icon">
-                        <i class="${config.icon}"></i>
+                        <i class="\${config.icon}"></i>
                     </div>
-                    <div class="notification-message">${message}</div>
+                    <div class="notification-message">\${message}</div>
                     <button class="notification-close" onclick="closeNotification(this)">
                         <i class="fas fa-times"></i>
                     </button>
@@ -3903,8 +3903,8 @@ function getCompleteProfileHTML(customer) {
             
             // Estilos dinámicos
             notification.style.cssText = \`
-                background: linear-gradient(135deg, ${config.bgColor}, ${config.borderColor});
-                border-left: 4px solid ${config.borderColor};
+                background: linear-gradient(135deg, \${config.bgColor}, \${config.borderColor});
+                border-left: 4px solid \${config.borderColor};
             \`;
             
             container.appendChild(notification);
