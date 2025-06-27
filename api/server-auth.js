@@ -403,8 +403,21 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
       });
     }
 
-    const { cartItems, paymentMethod } = req.body;
+    const { paymentMethod } = req.body;
     const comprobante = req.file;
+    
+    // Parse cartItems si viene como string JSON (FormData)
+    let cartItems;
+    try {
+      cartItems = typeof req.body.cartItems === 'string' 
+        ? JSON.parse(req.body.cartItems) 
+        : req.body.cartItems;
+    } catch (error) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Error parsing cart items' 
+      });
+    }
     
     if (!cartItems || cartItems.length === 0) {
       return res.status(400).json({ 
