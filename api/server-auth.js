@@ -4291,8 +4291,9 @@ function getPortalHTML(products, customer) {
             }
         };
         
-        window.applyFilters = function() {
-            console.log('🔍 Aplicando filtros con METACAMPOS...');
+        // ESTA FUNCIÓN SE MANTIENE PARA COMPATIBILIDAD PERO SE USA LA PRINCIPAL DEL BODY
+        window.applyFiltersHead = function() {
+            console.log('🔍 Aplicando filtros con METACAMPOS (HEAD)...');
             
             // Variables globales para filtros
             var activeFilters = {
@@ -6183,7 +6184,8 @@ function getPortalHTML(products, customer) {
         
         // FUNCIONES DUPLICADAS ELIMINADAS - SOLO USAR LAS DEL HEAD
         
-        window.applyFilters = function() {
+        // FUNCIÓN APPLYFILTERS DUPLICADA - SE ELIMINA PARA USAR LA DEL FINAL DEL BODY
+        window.applyFiltersBody = function() {
             // Recopilar filtros activos
             activeFilters.collections = Array.from(document.querySelectorAll('#collectionFilters input:checked')).map(function(cb) { return cb.value; });
             activeFilters.categories = Array.from(document.querySelectorAll('#categoryFilters input:checked')).map(function(cb) { return cb.value; });
@@ -6637,6 +6639,9 @@ function getPortalHTML(products, customer) {
             updateFilterGroupIndicators(activeFilters);
         }
         
+        // Asignar función applyFilters al scope global para los checkboxes
+        window.applyFilters = applyFilters;
+        
         // Función para actualizar indicadores visuales de filtros activos
         function updateFilterGroupIndicators(activeFilters) {
             // Actualizar grupo de colecciones
@@ -6879,8 +6884,7 @@ function getPortalHTML(products, customer) {
             }
         };
         
-        // Asignar función applyFilters al scope global
-        window.applyFilters = applyFilters;
+        // La función applyFilters ya está asignada globalmente arriba
         
         window.removeFilter = function(type, value) {
             try {
