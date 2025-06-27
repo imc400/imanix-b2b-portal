@@ -4153,9 +4153,30 @@ function getPortalHTML(products, customer) {
         var cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
         
         // FUNCIÓN GLOBAL CRÍTICA: applyFilters debe estar disponible desde el inicio
+        // FUNCIÓN CRÍTICA: applyFilters debe estar disponible desde el inicio
         window.applyFilters = function() {
-            console.log('🔍 applyFilters llamada (función temporal)');
+            console.log('🔍 applyFilters llamada (función global inicial)');
             // Esta función será reemplazada por la implementación completa más abajo
+            // Función básica que al menos no genera error
+            var searchTerm = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
+            var productCards = document.querySelectorAll('.product-card');
+            
+            productCards.forEach(function(card) {
+                var shouldShow = true;
+                
+                // Filtro básico por búsqueda
+                if (searchTerm) {
+                    var titleEl = card.querySelector('.product-title');
+                    var title = titleEl ? titleEl.textContent.toLowerCase() : '';
+                    var skuElement = card.querySelector('.sku');
+                    var sku = skuElement ? skuElement.textContent.toLowerCase() : '';
+                    if (!title.includes(searchTerm) && !sku.includes(searchTerm)) {
+                        shouldShow = false;
+                    }
+                }
+                
+                card.style.display = shouldShow ? 'block' : 'none';
+            });
         };
         
         // DEFINIR TODAS LAS FUNCIONES GLOBALMENTE ANTES QUE CUALQUIER HTML
@@ -6359,18 +6380,7 @@ function getPortalHTML(products, customer) {
             };
         }
 
-        // Función para mostrar/ocultar panel de filtros
-        function toggleFilters() {
-            var panel = document.getElementById('filtersPanel');
-            if (panel) {
-                panel.classList.toggle('show');
-                
-                // Si se está mostrando el panel, inicializar filtros
-                if (panel.classList.contains('show')) {
-                    initializeFilters();
-                }
-            }
-        }
+        // Función para mostrar/ocultar panel de filtros (ELIMINADA - usando window.toggleFilters global)
 
         // Función para inicializar los filtros con las etiquetas REALES de los productos
         function initializeFiltersLegacy() {
@@ -6802,15 +6812,7 @@ function getPortalHTML(products, customer) {
             }
         };
         
-        window.toggleFilters = function() {
-            var panel = document.getElementById('filtersPanel');
-            if (panel) {
-                panel.classList.toggle('show');
-                if (panel.classList.contains('show') && typeof window.initializeFilters === 'function') {
-                    window.initializeFilters();
-                }
-            }
-        };
+        // toggleFilters eliminada - usando la definición anterior window.toggleFilters
         
         window.showCart = function() {
             window.location.href = '/carrito';
@@ -6924,27 +6926,7 @@ function getPortalHTML(products, customer) {
             }
         }
         
-        function toggleFilters() {
-            console.log('✅ toggleFilters ejecutada');
-            var panel = document.getElementById('filtersPanel');
-            if (panel) {
-                panel.classList.toggle('show');
-                
-                // Si se está mostrando el panel, inicializar filtros
-                if (panel.classList.contains('show')) {
-                    console.log('🔍 Inicializando filtros al abrir panel...');
-                    setTimeout(function() {
-                        // Llamar la función de inicialización desde el head
-                        if (typeof window.initializeFilters === 'function') {
-                            window.initializeFilters();
-                        } else {
-                            console.log('⚠️ window.initializeFilters no encontrada, inicializando manualmente...');
-                            initializeFiltersManual();
-                        }
-                    }, 100);
-                }
-            }
-        }
+        // toggleFilters eliminada - usando definición global window.toggleFilters
         
         // Función de respaldo para inicializar filtros manualmente
         function initializeFiltersManual() {
@@ -7072,29 +7054,7 @@ function getPortalHTML(products, customer) {
             
             console.log('✅ Filtros poblados manualmente');
             
-            // CRÍTICO: Asegurar que applyFilters esté disponible después de la inicialización manual
-            if (typeof window.applyFilters !== 'function') {
-                window.applyFilters = function() {
-                    console.log('🔍 applyFilters ejecutada desde inicialización manual');
-                    // Función básica que al menos no genera error
-                    var searchTerm = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
-                    var productCards = document.querySelectorAll('.product-card');
-                    
-                    productCards.forEach(function(card) {
-                        var titleEl = card.querySelector('.product-title');
-                        var title = titleEl ? titleEl.textContent.toLowerCase() : '';
-                        var skuElement = card.querySelector('.sku');
-                        var sku = skuElement ? skuElement.textContent.toLowerCase() : '';
-                        
-                        if (!searchTerm || title.includes(searchTerm) || sku.includes(searchTerm)) {
-                            card.style.display = 'block';
-                        } else {
-                            card.style.display = 'none';
-                        }
-                    });
-                };
-                console.log('✅ applyFilters asignada desde inicialización manual');
-            }
+            // CRÍTICO: applyFilters ya está definida globalmente arriba, no necesitamos backup aquí
         }
         
         function addToCart(productId, variantId, title, price, image) {
@@ -7209,7 +7169,7 @@ function getPortalHTML(products, customer) {
         
         // Asignar funciones al objeto window para acceso global
         window.toggleUserDropdown = toggleUserDropdown;
-        window.toggleFilters = toggleFilters;
+        // window.toggleFilters ya está definida globalmente arriba
         window.addToCart = addToCart;
         window.updateCartBadge = updateCartBadge;
         window.showNotification = showNotification;
