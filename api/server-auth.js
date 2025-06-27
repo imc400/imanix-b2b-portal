@@ -620,18 +620,11 @@ MÉTODO DE PAGO: ${paymentMethod === 'transferencia' ? 'Transferencia Bancaria' 
             comprobanteUrl = uploadResult.secure_url;
             
             orderNote += `
-COMPROBANTE DE PAGO: ${comprobante.originalname}
-Tipo de archivo: ${comprobante.mimetype}
-Tamaño: ${(comprobante.size / 1024).toFixed(2)} KB
-📎 LINK DE DESCARGA: ${comprobanteUrl}
-✅ Archivo almacenado permanentemente`;
+COMPROBANTE DE PAGO: [Link para descargar](${comprobanteUrl})`;
         } catch (uploadError) {
             console.error('Error subiendo archivo a Cloudinary:', uploadError);
             orderNote += `
-COMPROBANTE DE PAGO: ${comprobante.originalname}
-Tipo de archivo: ${comprobante.mimetype}
-Tamaño: ${(comprobante.size / 1024).toFixed(2)} KB
-⚠️ Error al subir archivo - contactar soporte`;
+COMPROBANTE DE PAGO: ${comprobante.originalname} - ⚠️ Error al subir archivo`;
         }
     }
     
