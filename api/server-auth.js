@@ -11759,11 +11759,11 @@ if (require.main === module) {
     });
 }
 
-// Export the app and functions for Vercel and other modules
-module.exports = {
-  app,
-  findCustomerByEmail,
-  extractB2BDiscount,
-  hashPassword,
-  verifyPassword
-};
+// Export handler for Vercel serverless
+module.exports = app;
+
+// Also export functions for other modules  
+module.exports.findCustomerByEmail = findCustomerByEmail;
+module.exports.extractB2BDiscount = extractB2BDiscount;
+module.exports.hashPassword = hashPassword;
+module.exports.verifyPassword = verifyPassword;
