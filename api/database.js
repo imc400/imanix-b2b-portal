@@ -564,44 +564,45 @@ const database = {
     }
   },
 
-  // Session management for serverless compatibility
+  // Session management for serverless compatibility - SIMPLIFIED
   async ensureSessionsTable() {
-    if (!supabase) return false;
+    if (!supabase) {
+      console.log('⚠️ Supabase not configured, sessions will use memory fallback');
+      return false;
+    }
     
     try {
-      // Crear tabla de sesiones si no existe
-      const { error } = await supabase.rpc('exec_sql', {
-        sql: `
-          CREATE TABLE IF NOT EXISTS user_sessions (
-            id SERIAL PRIMARY KEY,
-            session_id TEXT UNIQUE NOT NULL,
-            user_email TEXT,
-            session_data JSONB NOT NULL,
-            expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-          );
-          
-          CREATE INDEX IF NOT EXISTS idx_user_sessions_session_id ON user_sessions(session_id);
-          CREATE INDEX IF NOT EXISTS idx_user_sessions_user_email ON user_sessions(user_email);
-          CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);
-          
-          -- Auto-cleanup expired sessions
-          CREATE OR REPLACE FUNCTION cleanup_expired_sessions()
-          RETURNS void AS $$
-          BEGIN
-            DELETE FROM user_sessions WHERE expires_at < NOW();
-          END;
-          $$ LANGUAGE plpgsql;
-        `
-      });
+      // Try to access the table first to see if it exists
+      const { data, error } = await supabase
+        .from('user_sessions')
+        .select('id')
+        .limit(1);
+      
+      if (error && error.code === 'PGRST116') {
+        console.log('📋 user_sessions table does not exist. Please create it manually in Supabase:');
+        console.log(`
+CREATE TABLE user_sessions (
+  id BIGSERIAL PRIMARY KEY,
+  session_id TEXT UNIQUE NOT NULL,
+  user_email TEXT,
+  session_data JSONB NOT NULL,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-      if (error) {
-        console.error('❌ Error creating sessions table:', error);
+CREATE INDEX idx_user_sessions_session_id ON user_sessions(session_id);
+CREATE INDEX idx_user_sessions_user_email ON user_sessions(user_email);
+CREATE INDEX idx_user_sessions_expires_at ON user_sessions(expires_at);`);
         return false;
       }
-
-      console.log('✅ Sessions table ensured');
+      
+      if (error) {
+        console.error('❌ Error checking sessions table:', error);
+        return false;
+      }
+      
+      console.log('✅ Sessions table is available');
       return true;
     } catch (error) {
       console.error('❌ Error in ensureSessionsTable:', error);
