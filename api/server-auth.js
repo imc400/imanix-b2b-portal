@@ -498,7 +498,13 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
       discount: draftOrder.total_discounts,
       status: 'pendiente',
       note: note,
-      nextSteps: nextSteps
+      nextSteps: nextSteps,
+      debug: {
+        customerTags: customer.tags,
+        isImaCustomer: isImaCustomer,
+        noteSelected: note,
+        customerEmail: customer.email
+      }
     });
 
   } catch (error) {
