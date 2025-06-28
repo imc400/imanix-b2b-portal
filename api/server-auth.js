@@ -17,13 +17,25 @@ cloudinary.config({
 });
 
 // Configuración de Nodemailer para Gmail
-const transporter = nodemailer.createTransporter({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER || 'tu-email@gmail.com',
-    pass: process.env.EMAIL_PASS || 'tu-app-password'
+let transporter = null;
+
+try {
+  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+    console.log('✅ Configuración de email inicializada correctamente');
+  } else {
+    console.log('⚠️ Variables de email no configuradas, emails deshabilitados');
   }
-});
+} catch (error) {
+  console.error('❌ Error configurando email:', error);
+  transporter = null;
+}
 
 const app = express();
 // Port is handled by Vercel automatically
@@ -205,6 +217,12 @@ function generateOrderEmailHTML(customer, cartItems, orderData) {
 // Función para enviar email de notificación del pedido
 async function sendOrderEmail(customer, cartItems, orderData) {
   try {
+    // Verificar si el transporter está configurado
+    if (!transporter) {
+      console.log('⚠️ Email no configurado, saltando envío');
+      return { success: false, error: 'Email transporter not configured' };
+    }
+    
     const emailHtml = generateOrderEmailHTML(customer, cartItems, orderData);
     const customerName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email;
     
