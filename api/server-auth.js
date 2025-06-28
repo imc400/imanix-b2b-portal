@@ -1398,6 +1398,50 @@ app.get('/', async (req, res) => {
   }
 });
 
+// Ruta específica para el portal B2B
+app.get('/portal', async (req, res) => {
+  try {
+    console.log('🏠 ACCEDIENDO A RUTA /portal');
+    console.log('👤 Sesión actual:', req.session?.customer?.email || 'No autenticado');
+    
+    // Verificar si el usuario está autenticado
+    if (!req.session.customer) {
+      console.log('❌ Usuario no autenticado, redirigiendo a login');
+      // Redirigir al login en lugar de mostrar directamente
+      return res.redirect('/');
+    }
+
+    console.log('✅ Usuario autenticado:', req.session.customer.email);
+
+    // Verificar si el perfil está completo
+    if (database) {
+      const profileCompleted = await database.checkProfileCompletion(req.session.customer.email);
+      console.log('🔍 Perfil completo:', profileCompleted);
+      
+      if (!profileCompleted) {
+        console.log('⚠️ Perfil incompleto, redirigiendo a complete-profile');
+        return res.redirect('/complete-profile');
+      }
+    }
+
+    console.log('✅ Perfil completo, cargando productos...');
+    
+    // Obtener productos desde Shopify directamente
+    const products = await fetchB2BProductsFromShopify();
+    console.log('📦 Productos cargados:', products?.length || 0);
+    
+    // Generar y enviar HTML del portal
+    const portalHTML = getPortalHTML(products, req.session.customer);
+    console.log('🎨 Portal HTML generado exitosamente');
+    
+    res.send(portalHTML);
+    
+  } catch (error) {
+    console.error('💥 Error en ruta /portal:', error);
+    res.status(500).send(`Error cargando portal: ${error.message}`);
+  }
+});
+
 // Ruta para completar perfil empresarial
 app.get('/complete-profile', (req, res) => {
   try {
