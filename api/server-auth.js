@@ -3968,6 +3968,136 @@ function getLoginHTML() {
             loadingSpinner.style.display = 'none';
             loginText.textContent = 'Acceder al Portal';
         }
+
+        let currentCustomerData = null;
+        
+        // Función para mostrar formulario de configuración de contraseña
+        function showPasswordSetupForm(customerData) {
+            currentCustomerData = customerData;
+            
+            // Ocultar formulario de login
+            document.getElementById('loginForm').style.display = 'none';
+            
+            // Mostrar formulario de setup
+            document.getElementById('passwordSetupForm').style.display = 'block';
+            
+            // Limpiar campos
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            
+            console.log('📝 Formulario de configuración de contraseña mostrado');
+        }
+        
+        // Función para validar contraseña
+        function validatePassword(password) {
+            if (password.length < 8) {
+                return 'La contraseña debe tener al menos 8 caracteres';
+            }
+            
+            if (!/[a-zA-Z]/.test(password)) {
+                return 'La contraseña debe contener al menos una letra';
+            }
+            
+            if (!/[0-9]/.test(password)) {
+                return 'La contraseña debe contener al menos un número';
+            }
+            
+            return null;
+        }
+        
+        // Event listener para formulario de setup de contraseña
+        document.getElementById('passwordSetupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const setupBtn = document.getElementById('setupButton');
+            const setupLoading = document.getElementById('setupLoadingSpinner');
+            const setupError = document.getElementById('setupErrorMessage');
+            const setupText = document.getElementById('setupText');
+            const setupIcon = document.getElementById('setupIcon');
+            
+            // Reset states
+            setupError.style.display = 'none';
+            setupBtn.disabled = true;
+            setupIcon.style.display = 'none';
+            setupLoading.style.display = 'inline-block';
+            setupText.textContent = 'Creando contraseña...';
+            
+            try {
+                // Validar contraseña
+                const passwordError = validatePassword(newPassword);
+                if (passwordError) {
+                    throw new Error(passwordError);
+                }
+                
+                // Verificar que las contraseñas coincidan
+                if (newPassword !== confirmPassword) {
+                    throw new Error('Las contraseñas no coinciden');
+                }
+                
+                if (!currentCustomerData || !currentCustomerData.email) {
+                    throw new Error('Datos de cliente no disponibles');
+                }
+                
+                const response = await fetch('/api/auth/setup-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        email: currentCustomerData.email, 
+                        password: newPassword 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.message || 'Error configurando contraseña');
+                }
+                
+                if (data.success) {
+                    setupText.textContent = '¡Contraseña creada!';
+                    showNotification('¡Contraseña creada exitosamente! Redirigiendo...', 'success', 2000);
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '/portal';
+                    }, 1500);
+                } else {
+                    throw new Error('Error configurando contraseña');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                setupError.textContent = error.message;
+                setupError.style.display = 'block';
+                setupBtn.disabled = false;
+                setupIcon.style.display = 'inline';
+                setupLoading.style.display = 'none';
+                setupText.textContent = 'Crear Contraseña';
+            }
+        });
+        
+        // Event listener para botón "Volver al Login"
+        document.getElementById('backToLogin').addEventListener('click', function() {
+            // Mostrar formulario de login
+            document.getElementById('loginForm').style.display = 'block';
+            
+            // Ocultar formulario de setup
+            document.getElementById('passwordSetupForm').style.display = 'none';
+            
+            // Limpiar campos del login
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            
+            // Limpiar estados
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('setupErrorMessage').style.display = 'none';
+            
+            currentCustomerData = null;
+            
+            console.log('↩️ Regresando al formulario de login');
+        });
     </script>
 </body>
 </html>`;
@@ -10951,6 +11081,22 @@ function getOrderDetailHTML(customer, order) {
     </html>
   `;
 }
+
+// Main route - serve IMANIX branded login page
+app.get('/', async (req, res) => {
+    try {
+        if (req.session.customer) {
+            // User already logged in, redirect to portal
+            res.redirect('/portal');
+        } else {
+            // Serve branded login page
+            res.send(getLoginHTML());
+        }
+    } catch (error) {
+        console.error('Error serving main page:', error);
+        res.status(500).send('Error loading page');
+    }
+});
 
 // Export the app for Vercel
 module.exports = app;
