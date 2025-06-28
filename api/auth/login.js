@@ -189,8 +189,17 @@ module.exports = async (req, res) => {
       
       console.log('✅ Contraseña correcta, estableciendo sesión...');
       
-      // Establecer sesión (simulada para serverless)
-      // En una implementación completa, aquí crearías un JWT o session token
+      // Establecer sesión real para el portal
+      req.session.customer = {
+        email: cleanEmail,
+        firstName: userProfile.first_name || 'Usuario',
+        lastName: userProfile.last_name || 'B2B',
+        company: userProfile.company_name || 'Empresa',
+        discount: 0,
+        isAuthenticated: true
+      };
+      
+      console.log('✅ Sesión establecida:', req.session.customer);
       
       // Respuesta exitosa de login
       console.log('✅ Login exitoso, retornando respuesta');
@@ -206,6 +215,7 @@ module.exports = async (req, res) => {
           company: userProfile.company_name || 'Empresa'
         },
         redirect: '/portal',
+        shouldRedirect: true,
         debug: {
           loginTime: new Date().toISOString(),
           mode: 'real_authentication'

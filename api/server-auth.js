@@ -4155,11 +4155,13 @@ function getLoginHTML() {
                             if (!data.profileCompleted) {
                                 window.location.href = '/complete-profile';
                             } else {
-                                // Store auth data and simply reload the page
-                                sessionStorage.setItem('authData', JSON.stringify(data.customerData));
-                                sessionStorage.setItem('isAuthenticated', 'true');
-                                // Simple reload - the page will detect auth and show portal
-                                window.location.reload();
+                                // Redirect directly to the portal
+                                if (data.shouldRedirect && data.redirect) {
+                                    window.location.href = data.redirect;
+                                } else {
+                                    // Fallback redirect to portal
+                                    window.location.href = '/portal';
+                                }
                             }
                         }, 1500);
                     } else {
@@ -4375,27 +4377,7 @@ function getLoginHTML() {
             console.log('↩️ Regresando al formulario de login');
         });
         
-        // Check if user is authenticated via sessionStorage (after login)
-        window.addEventListener('load', function() {
-            const isAuthenticated = sessionStorage.getItem('isAuthenticated');
-            const authData = sessionStorage.getItem('authData');
-            
-            if (isAuthenticated === 'true' && authData) {
-                console.log('✅ Usuario autenticado detectado, cargando portal completo...');
-                // Clear the auth flags to prevent loops
-                sessionStorage.removeItem('isAuthenticated');
-                
-                // Get user data
-                const userData = JSON.parse(authData);
-                console.log('👤 Datos del usuario:', userData);
-                
-                // Generate and display the full portal HTML directly
-                document.body.innerHTML = generateFullPortalHTML(userData);
-                
-                // Update page title
-                document.title = 'Portal B2B - IMANIX Chile';
-            }
-        });
+        // No need for client-side auth detection - using proper session-based authentication
         
         // Function to generate full portal HTML in JavaScript
         function generateFullPortalHTML(customerData) {
@@ -11915,46 +11897,19 @@ function getPortalHTML(customer) {
   `;
 }
 
-// Main route - serve IMANIX branded login page or full portal
+// Main route - serve IMANIX branded login page
 app.get('/', async (req, res) => {
     try {
         console.log('🏠 Main route accessed');
-        console.log('🏠 URL:', req.url);
-        console.log('🏠 Query params:', req.query);
-        console.log('🏠 Show param value:', req.query.show);
-        console.log('🏠 Show === portal?', req.query.show === 'portal');
+        console.log('🏠 Session customer:', !!req.session.customer);
         
-        // Check if we should show the full portal (multiple ways to be sure)
-        const shouldShowPortal = req.query.show === 'portal' || req.url.includes('show=portal');
-        console.log('🏠 Should show portal?', shouldShowPortal);
-        
-        if (shouldShowPortal) {
-            console.log('🎯 Serving full portal interface');
-            
-            // Create a customer object for the portal
-            const customer = {
-                email: 'user@portal.com',
-                firstName: 'Usuario',
-                lastName: 'Portal',
-                company: 'IMANIX Cliente',
-                discount: 0
-            };
-            
-            // Get products for the portal (empty array for now, can be enhanced later)
-            const products = [];
-            
-            // Serve the full portal with products
-            res.writeHead(200, {
-                'Content-Type': 'text/html; charset=utf-8',
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            });
-            res.end(getPortalHTML(products, customer));
-            return;
+        // Check if user is already authenticated
+        if (req.session.customer) {
+            console.log('✅ User already authenticated, redirecting to portal');
+            return res.redirect('/portal');
         }
         
-        // Default: serve the login page - client-side JavaScript will handle portal detection
+        // Serve login page
         res.writeHead(200, {
             'Content-Type': 'text/html; charset=utf-8',
             'Cache-Control': 'no-cache, no-store, must-revalidate',
