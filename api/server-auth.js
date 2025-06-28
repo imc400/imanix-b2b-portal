@@ -11748,10 +11748,16 @@ function getPortalHTML(customer) {
 app.get('/', async (req, res) => {
     try {
         console.log('🏠 Main route accessed');
+        console.log('🏠 URL:', req.url);
         console.log('🏠 Query params:', req.query);
+        console.log('🏠 Show param value:', req.query.show);
+        console.log('🏠 Show === portal?', req.query.show === 'portal');
         
-        // Check if we should show the full portal
-        if (req.query.show === 'portal') {
+        // Check if we should show the full portal (multiple ways to be sure)
+        const shouldShowPortal = req.query.show === 'portal' || req.url.includes('show=portal');
+        console.log('🏠 Should show portal?', shouldShowPortal);
+        
+        if (shouldShowPortal) {
             console.log('🎯 Serving full portal interface');
             
             // Create a customer object for the portal
