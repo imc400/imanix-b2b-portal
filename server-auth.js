@@ -53,11 +53,23 @@ function extractB2BDiscount(tags) {
   if (!tags) return null;
   
   const tagArray = tags.split(',').map(tag => tag.trim().toLowerCase());
-  const b2bTag = tagArray.find(tag => tag.startsWith('b2b') && tag.match(/b2b\d+/));
   
+  // Buscar etiquetas B2B (mantener funcionalidad existente)
+  const b2bTag = tagArray.find(tag => tag.startsWith('b2b') && tag.match(/b2b\d+/));
   if (b2bTag) {
     const discount = parseInt(b2bTag.replace('b2b', ''));
     return isNaN(discount) ? null : discount;
+  }
+  
+  // Buscar etiquetas IMA (nueva funcionalidad)
+  const imaTag = tagArray.find(tag => tag.startsWith('ima') && tag.match(/ima.*\d+/));
+  if (imaTag) {
+    // Extraer número de descuento de etiquetas como "imab2b40"
+    const match = imaTag.match(/\d+/);
+    if (match) {
+      const discount = parseInt(match[0]);
+      return isNaN(discount) ? null : discount;
+    }
   }
   
   return null;
