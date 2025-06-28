@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   -- Sistema B2B
   discount_percentage INTEGER DEFAULT 0,
   discount_tag VARCHAR(50),
+  password_hash VARCHAR(255),
   is_active BOOLEAN DEFAULT true,
   -- Control de perfil completo
   profile_completed BOOLEAN DEFAULT false,

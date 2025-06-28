@@ -4,6 +4,7 @@ const session = require('express-session');
 const axios = require('axios');
 const multer = require('multer');
 const path = require('path');
+const bcrypt = require('bcrypt');
 const cloudinary = require('cloudinary').v2;
 const nodemailer = require('nodemailer');
 const database = require('./database');
@@ -265,6 +266,27 @@ async function sendOrderEmail(customer, cartItems, orderData) {
   }
 }
 
+// Funciones para manejo de contraseñas
+async function hashPassword(password) {
+  const saltRounds = 10;
+  return await bcrypt.hash(password, saltRounds);
+}
+
+async function verifyPassword(password, hash) {
+  return await bcrypt.compare(password, hash);
+}
+
+function validatePassword(password) {
+  // Mínimo 8 caracteres, al menos una letra y un número
+  if (password.length < 8) {
+    return { valid: false, message: 'La contraseña debe tener al menos 8 caracteres' };
+  }
+  if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
+    return { valid: false, message: 'La contraseña debe contener al menos una letra y un número' };
+  }
+  return { valid: true };
+}
+
 // Función para extraer descuento de etiquetas B2B
 function extractB2BDiscount(tags) {
   if (!tags) return null;
@@ -348,12 +370,19 @@ async function createOrUpdateUserProfile(customer) {
 // Endpoint para autenticación de clientes B2B
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, password } = req.body;
     
     if (!email) {
       return res.status(400).json({ 
         success: false, 
         message: 'Email es requerido' 
+      });
+    }
+    
+    if (!password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Contraseña es requerida' 
       });
     }
 
@@ -377,6 +406,37 @@ app.post('/api/auth/login', async (req, res) => {
         success: false, 
         message: 'Este cliente no tiene acceso al portal B2B' 
       });
+    }
+
+    // Verificar contraseña del portal B2B
+    if (database) {
+      const profile = await database.getProfile(email);
+      
+      if (!profile || !profile.password_hash) {
+        // Primera vez - necesita configurar contraseña
+        return res.json({
+          success: true,
+          requiresPasswordSetup: true,
+          message: 'Primera vez en el portal. Necesitas configurar tu contraseña.',
+          customerData: {
+            email: customer.email,
+            firstName: customer.first_name,
+            lastName: customer.last_name,
+            discount: discount,
+            tags: customer.tags
+          }
+        });
+      }
+      
+      // Verificar contraseña
+      const isValidPassword = await verifyPassword(password, profile.password_hash);
+      if (!isValidPassword) {
+        console.log(`❌ Contraseña incorrecta para: ${email}`);
+        return res.status(401).json({
+          success: false,
+          message: 'Contraseña incorrecta'
+        });
+      }
     }
 
     // Guardar datos del cliente en sesión
@@ -429,6 +489,78 @@ app.post('/api/auth/login', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Error interno del servidor' 
+    });
+  }
+});
+
+// Endpoint para configurar contraseña por primera vez
+app.post('/api/auth/setup-password', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email y contraseña son requeridos'
+      });
+    }
+    
+    // Validar contraseña
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: passwordValidation.message
+      });
+    }
+    
+    // Verificar que el cliente existe y tiene acceso B2B
+    const customer = await findCustomerByEmail(email);
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Cliente no encontrado'
+      });
+    }
+    
+    const discount = extractB2BDiscount(customer.tags);
+    if (discount === null) {
+      return res.status(403).json({
+        success: false,
+        message: 'Sin acceso al portal B2B'
+      });
+    }
+    
+    // Hashear contraseña y actualizar perfil
+    const hashedPassword = await hashPassword(password);
+    
+    if (database) {
+      await database.updateProfile(email, { password_hash: hashedPassword });
+    }
+    
+    // Crear sesión
+    req.session.customer = {
+      id: customer.id,
+      email: customer.email,
+      firstName: customer.first_name,
+      lastName: customer.last_name,
+      discount: discount,
+      tags: customer.tags
+    };
+    
+    console.log(`✅ Contraseña configurada para: ${email}`);
+    
+    res.json({
+      success: true,
+      message: 'Contraseña configurada exitosamente',
+      redirect: '/portal'
+    });
+    
+  } catch (error) {
+    console.error('Error configurando contraseña:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
     });
   }
 });
@@ -3531,6 +3663,22 @@ function getLoginHTML() {
                 </div>
             </div>
 
+            <div class="form-group">
+                <label class="form-label" for="password">Contraseña del portal B2B</label>
+                <div style="position: relative;">
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        class="form-input"
+                        placeholder="Tu contraseña del portal"
+                        required
+                        autocomplete="current-password"
+                    >
+                    <i class="fas fa-lock form-icon"></i>
+                </div>
+            </div>
+
             <div class="error-message" id="errorMessage"></div>
 
             <button type="submit" class="login-button" id="loginButton">
@@ -3644,6 +3792,7 @@ function getLoginHTML() {
             e.preventDefault();
             
             const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('errorMessage');
             const loginButton = document.getElementById('loginButton');
             const loginIcon = document.getElementById('loginIcon');
@@ -3652,6 +3801,11 @@ function getLoginHTML() {
             
             if (!email) {
                 showNotification('Por favor ingresa tu email para acceder al portal', 'warning');
+                return;
+            }
+            
+            if (!password) {
+                showNotification('Por favor ingresa tu contraseña', 'warning');
                 return;
             }
 
@@ -3670,7 +3824,7 @@ function getLoginHTML() {
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ email })
+                    body: JSON.stringify({ email, password })
                 });
 
                 const data = await response.json();
