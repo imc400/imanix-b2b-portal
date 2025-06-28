@@ -53,7 +53,6 @@ app.use(session({
 }));
 
 app.use(express.json());
-app.use(express.static('.'));
 
 // Configuración de multer para upload de comprobantes (memory storage para Vercel)
 const upload = multer({ 
@@ -11089,15 +11088,23 @@ app.get('/', async (req, res) => {
             // User already logged in, redirect to portal
             res.redirect('/portal');
         } else {
-            // Serve branded login page with correct Content-Type
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
-            res.send(getLoginHTML());
+            // Serve branded login page with proper headers
+            res.writeHead(200, {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            });
+            res.end(getLoginHTML());
         }
     } catch (error) {
         console.error('Error serving main page:', error);
-        res.status(500).send('Error loading page');
+        res.status(500).json({ error: 'Error loading page' });
     }
 });
+
+// Static files - after routes to avoid conflicts
+app.use(express.static('.'));
 
 // Start server for local development
 const PORT = process.env.PORT || 3000;
@@ -11106,6 +11113,7 @@ if (require.main === module) {
         console.log(`🚀 Portal B2B IMANIX corriendo en http://localhost:${PORT}`);
         console.log(`🔐 Sistema de autenticación por contraseña activo`);
         console.log(`🎨 Branding IMANIX amarillo aplicado`);
+        console.log(`📱 Accede desde: http://localhost:${PORT}`);
     });
 }
 
