@@ -1,4 +1,4 @@
-// Versión mínima para debugging - sin imports complejos
+// Check-email endpoint con verificación real de base de datos
 console.log('📦 MODULO CHECK-EMAIL CARGÁNDOSE...');
 
 try {
@@ -7,6 +7,18 @@ try {
 } catch (error) {
   console.error('❌ Error cargando dotenv:', error);
 }
+
+// Importar Supabase para verificación real
+const { createClient } = require('@supabase/supabase-js');
+
+// Configurar Supabase directamente
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+
+console.log('🔍 SUPABASE_URL configurado:', !!supabaseUrl);
+console.log('🔍 SUPABASE_SERVICE_KEY configurado:', !!supabaseKey);
+
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 // Función para parsear el body manualmente en Vercel
 async function parseRequestBody(req) {
@@ -111,28 +123,116 @@ module.exports = async (req, res) => {
     
     console.log('✅ Email válido:', cleanEmail);
     
-    // Respuesta temporal que simula usuario existente sin contraseña (primera vez)
-    // Esto permitirá que el frontend proceda al siguiente paso del flujo
-    console.log('✅ Retornando respuesta temporal de primera vez');
-    return res.status(200).json({
-      success: true,
-      status: 'first_time',
-      message: 'Primera vez en el portal',
-      nextStep: 'create_password',
-      email: cleanEmail,
-      customerData: {
-        email: cleanEmail,
-        firstName: 'Usuario',
-        lastName: 'Temporal',
-        company: 'Empresa Test',
-        discount: 40,
-        tags: 'b2b40'
-      },
-      debug: {
-        mode: 'temporal_testing',
-        timestamp: new Date().toISOString()
+    // Verificar que Supabase esté configurado
+    if (!supabase) {
+      console.error('❌ Supabase no está configurado');
+      return res.status(500).json({
+        success: false,
+        message: 'Base de datos no disponible',
+        debug: {
+          supabaseConfigured: false,
+          hasUrl: !!supabaseUrl,
+          hasKey: !!supabaseKey
+        }
+      });
+    }
+    
+    // Consultar la base de datos para verificar si el usuario ya tiene contraseña
+    console.log('🔍 Consultando base de datos para verificar usuario...');
+    try {
+      const { data: userProfile, error: fetchError } = await supabase
+        .from('user_profiles')
+        .select('email, password_hash, first_name, last_name, company_name')
+        .eq('email', cleanEmail)
+        .single();
+      
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        // Error diferente a "no encontrado"
+        console.error('❌ Error consultando base de datos:', fetchError);
+        throw fetchError;
       }
-    });
+      
+      if (!userProfile) {
+        // Usuario no encontrado en nuestra base de datos
+        console.log('👤 Usuario no encontrado en base de datos');
+        return res.json({
+          success: true,
+          status: 'not_found',
+          message: 'Usuario no encontrado en base de datos',
+          nextStep: 'register',
+          email: cleanEmail,
+          debug: {
+            userInDatabase: false,
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+      
+      console.log('👤 Usuario encontrado en base de datos');
+      console.log('🔍 Tiene password_hash:', !!userProfile.password_hash);
+      
+      // Verificar si tiene contraseña
+      const hasPassword = userProfile.password_hash && userProfile.password_hash.trim().length > 0;
+      
+      if (hasPassword) {
+        // Usuario existente con contraseña - debe hacer login
+        console.log('✅ Usuario existente con contraseña, requiere login');
+        return res.json({
+          success: true,
+          status: 'existing_user',
+          message: 'Usuario encontrado con contraseña',
+          nextStep: 'password',
+          email: cleanEmail,
+          customerData: {
+            email: cleanEmail,
+            firstName: userProfile.first_name || 'Usuario',
+            lastName: userProfile.last_name || 'B2B',
+            company: userProfile.company_name || 'Empresa',
+            hasPassword: true
+          },
+          debug: {
+            userInDatabase: true,
+            hasPassword: true,
+            mode: 'real_database_check',
+            timestamp: new Date().toISOString()
+          }
+        });
+      } else {
+        // Usuario existe pero no tiene contraseña - primera vez
+        console.log('✅ Usuario existe pero sin contraseña, primera vez');
+        return res.json({
+          success: true,
+          status: 'first_time',
+          message: 'Primera vez en el portal',
+          nextStep: 'create_password',
+          email: cleanEmail,
+          customerData: {
+            email: cleanEmail,
+            firstName: userProfile.first_name || 'Usuario',
+            lastName: userProfile.last_name || 'B2B',
+            company: userProfile.company_name || 'Empresa',
+            hasPassword: false
+          },
+          debug: {
+            userInDatabase: true,
+            hasPassword: false,
+            mode: 'real_database_check',
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+      
+    } catch (dbError) {
+      console.error('❌ Error en consulta de base de datos:', dbError);
+      return res.status(500).json({
+        success: false,
+        message: 'Error consultando base de datos: ' + dbError.message,
+        debug: {
+          error: dbError.message,
+          code: dbError.code
+        }
+      });
+    }
     
   } catch (error) {
     console.error('💥 ERROR EN ENDPOINT MÍNIMO:', error);
