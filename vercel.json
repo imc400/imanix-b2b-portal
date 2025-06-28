@@ -3,14 +3,36 @@
   "name": "imanix-b2b-portal",
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/api/index"
+    },
+    {
       "source": "/(.*)",
-      "destination": "/api/server-auth"
+      "destination": "/api/index"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/html; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
     }
   ],
   "env": {
     "NODE_ENV": "production"
   },
   "functions": {
+    "api/index.js": {
+      "maxDuration": 30
+    },
     "api/server-auth.js": {
       "maxDuration": 30
     }
