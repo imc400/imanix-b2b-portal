@@ -4381,12 +4381,16 @@ function getLoginHTML() {
             const authData = sessionStorage.getItem('authData');
             
             if (isAuthenticated === 'true' && authData) {
-                console.log('✅ Usuario autenticado detectado, mostrando portal...');
+                console.log('✅ Usuario autenticado detectado, redirigiendo al portal completo...');
                 // Clear the auth flags to prevent loops
                 sessionStorage.removeItem('isAuthenticated');
                 
-                // Hide login form and show portal content directly
-                document.body.innerHTML = getPortalContent(JSON.parse(authData));
+                // Redirect to the full portal with session data
+                const userData = JSON.parse(authData);
+                // Store user data for the portal to access
+                sessionStorage.setItem('portalUserData', JSON.stringify(userData));
+                // Redirect to the portal route
+                window.location.href = '/api/server-auth?show=portal';
             }
         });
         
@@ -11740,12 +11744,40 @@ function getPortalHTML(customer) {
   `;
 }
 
-// Main route - serve IMANIX branded login page (with client-side portal detection)
+// Main route - serve IMANIX branded login page or full portal
 app.get('/', async (req, res) => {
     try {
         console.log('🏠 Main route accessed');
+        console.log('🏠 Query params:', req.query);
         
-        // Always serve the login page - client-side JavaScript will handle portal display
+        // Check if we should show the full portal
+        if (req.query.show === 'portal') {
+            console.log('🎯 Serving full portal interface');
+            
+            // Create a customer object for the portal
+            const customer = {
+                email: 'user@portal.com',
+                firstName: 'Usuario',
+                lastName: 'Portal',
+                company: 'IMANIX Cliente',
+                discount: 0
+            };
+            
+            // Get products for the portal (empty array for now, can be enhanced later)
+            const products = [];
+            
+            // Serve the full portal with products
+            res.writeHead(200, {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            });
+            res.end(getPortalHTML(products, customer));
+            return;
+        }
+        
+        // Default: serve the login page - client-side JavaScript will handle portal detection
         res.writeHead(200, {
             'Content-Type': 'text/html; charset=utf-8',
             'Cache-Control': 'no-cache, no-store, must-revalidate',
