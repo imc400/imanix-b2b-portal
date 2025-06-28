@@ -4148,22 +4148,39 @@ function getLoginHTML() {
                     if (data.success) {
                         // Login exitoso
                         console.log('✅ Autenticación exitosa');
+                        console.log('🔍 Datos de respuesta completos:', data);
                         loginText.textContent = '¡Acceso autorizado!';
                         showNotification('¡Bienvenido al Portal B2B IMANIX! Acceso autorizado exitosamente.', 'success', 2000);
-                        setTimeout(() => {
-                            // Verificar si necesita completar perfil
-                            if (!data.profileCompleted) {
-                                window.location.href = '/complete-profile';
-                            } else {
-                                // Redirect directly to the portal
-                                if (data.shouldRedirect && data.redirect) {
-                                    window.location.href = data.redirect;
-                                } else {
-                                    // Fallback redirect to portal
+                        
+                        // Esperar más tiempo y verificar sesión antes de redirigir
+                        setTimeout(async () => {
+                            try {
+                                // Verificar que la sesión esté establecida
+                                console.log('🔍 Verificando sesión antes de redirigir...');
+                                const sessionCheck = await fetch('/api/session-check', {
+                                    method: 'GET',
+                                    credentials: 'include'
+                                });
+                                
+                                if (sessionCheck.ok) {
+                                    console.log('✅ Sesión verificada, redirigiendo al portal...');
+                                    // Redirect directo al portal simplificado
                                     window.location.href = '/portal';
+                                } else {
+                                    console.log('⚠️ Sesión no verificada, forzando recarga y redirect...');
+                                    // Forzar recarga y redirect como fallback
+                                    window.location.reload();
+                                    setTimeout(() => {
+                                        window.location.href = '/portal';
+                                    }, 500);
                                 }
+                            } catch (error) {
+                                console.error('❌ Error verificando sesión:', error);
+                                // Fallback directo al portal
+                                console.log('🔄 Fallback: redirigiendo directamente al portal...');
+                                window.location.href = '/portal';
                             }
-                        }, 1500);
+                        }, 2000);
                     } else {
                         console.log('❌ Error de autenticación:', data.message);
                         showError(data.message || 'Contraseña incorrecta');
