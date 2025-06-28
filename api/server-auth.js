@@ -3329,6 +3329,37 @@ function getLoginHTML() {
             to { transform: rotate(360deg); }
         }
 
+        .password-requirements {
+            color: #666;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .back-button {
+            width: 100%;
+            padding: 0.75rem 1.5rem;
+            margin-top: 1rem;
+            background: transparent;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .back-button:hover {
+            border-color: #FFCE36;
+            color: #333;
+            background: rgba(255, 206, 54, 0.1);
+        }
+
         .info-section {
             margin-top: 2.5rem;
             padding-top: 2.5rem;
@@ -3688,6 +3719,64 @@ function getLoginHTML() {
             </button>
         </form>
 
+        <!-- Formulario para configurar contraseña (primera vez) -->
+        <form class="login-form" id="passwordSetupForm" style="display: none;">
+            <h2 class="form-title">
+                <i class="fas fa-key"></i>
+                Configura tu Contraseña
+            </h2>
+            <p class="form-subtitle">Primera vez en el portal B2B. Crea una contraseña segura para acceder.</p>
+
+            <div class="form-group">
+                <label class="form-label" for="newPassword">Nueva Contraseña</label>
+                <div style="position: relative;">
+                    <input 
+                        type="password" 
+                        id="newPassword" 
+                        name="newPassword" 
+                        class="form-input"
+                        placeholder="Mínimo 8 caracteres, letra y número"
+                        required
+                        autocomplete="new-password"
+                    >
+                    <i class="fas fa-lock form-icon"></i>
+                </div>
+                <small class="password-requirements">
+                    • Mínimo 8 caracteres<br>
+                    • Al menos una letra y un número
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="confirmPassword">Confirmar Contraseña</label>
+                <div style="position: relative;">
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        name="confirmPassword" 
+                        class="form-input"
+                        placeholder="Repite tu contraseña"
+                        required
+                        autocomplete="new-password"
+                    >
+                    <i class="fas fa-lock form-icon"></i>
+                </div>
+            </div>
+
+            <div class="error-message" id="setupErrorMessage"></div>
+
+            <button type="submit" class="login-button" id="setupButton">
+                <span class="loading-spinner" id="setupLoadingSpinner"></span>
+                <i class="fas fa-key" id="setupIcon"></i>
+                <span id="setupText">Crear Contraseña</span>
+            </button>
+
+            <button type="button" class="back-button" id="backToLogin">
+                <i class="fas fa-arrow-left"></i>
+                Volver al Login
+            </button>
+        </form>
+
         <div class="info-section">
             <div class="distributor-info">
                 <h3 class="info-title">
@@ -3831,17 +3920,25 @@ function getLoginHTML() {
                 console.log('📝 Respuesta del servidor:', data);
 
                 if (data.success) {
-                    console.log('✅ Autenticación exitosa');
-                    loginText.textContent = '¡Acceso autorizado!';
-                    showNotification('¡Bienvenido al Portal B2B IMANIX! Acceso autorizado exitosamente.', 'success', 2000);
-                    setTimeout(() => {
-                        // Verificar si necesita completar perfil
-                        if (!data.profileCompleted) {
-                            window.location.href = '/complete-profile';
-                        } else {
-                            window.location.reload();
-                        }
-                    }, 1500);
+                    if (data.requiresPasswordSetup) {
+                        // Primera vez - necesita configurar contraseña
+                        console.log('🔑 Requiere configuración de contraseña');
+                        resetButton();
+                        showPasswordSetupForm(data.customerData);
+                    } else {
+                        // Login exitoso normal
+                        console.log('✅ Autenticación exitosa');
+                        loginText.textContent = '¡Acceso autorizado!';
+                        showNotification('¡Bienvenido al Portal B2B IMANIX! Acceso autorizado exitosamente.', 'success', 2000);
+                        setTimeout(() => {
+                            // Verificar si necesita completar perfil
+                            if (!data.profileCompleted) {
+                                window.location.href = '/complete-profile';
+                            } else {
+                                window.location.reload();
+                            }
+                        }, 1500);
+                    }
                 } else {
                     console.log('❌ Error de autenticación:', data.message);
                     showNotification(data.message || 'Error de autenticación. Verifica tus credenciales.', 'error');
