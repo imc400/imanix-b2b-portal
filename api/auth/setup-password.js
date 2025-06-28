@@ -8,6 +8,16 @@ try {
   console.error('❌ Error cargando dotenv:', error);
 }
 
+// Importar dependencias para guardado real
+const bcrypt = require('bcrypt');
+const database = require('../database');
+
+// Función para hashear contraseña
+async function hashPassword(password) {
+  const saltRounds = 10;
+  return await bcrypt.hash(password, saltRounds);
+}
+
 // Función para parsear el body manualmente en Vercel
 async function parseRequestBody(req) {
   return new Promise((resolve, reject) => {
@@ -190,12 +200,76 @@ module.exports = async (req, res) => {
     console.log('✅ Email válido:', cleanEmail);
     console.log('✅ Contraseña válida y confirmada');
     
-    // Simular guardado exitoso de contraseña
-    // En la implementación completa aquí se hashearía la contraseña y se guardaría en la BD
-    console.log('🗄️ Simulando guardado de contraseña en base de datos...');
+    // Hashear la contraseña
+    console.log('🔐 Hasheando contraseña...');
+    const hashedPassword = await hashPassword(password);
+    console.log('✅ Contraseña hasheada exitosamente');
     
-    // Respuesta exitosa que permite continuar el flujo
-    console.log('✅ Retornando respuesta de configuración exitosa');
+    // Guardar en la base de datos real
+    console.log('🗄️ Guardando contraseña en base de datos...');
+    try {
+      // Primero verificar si el usuario ya existe
+      const { data: existingUser, error: fetchError } = await database.supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('email', cleanEmail)
+        .single();
+      
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        // Error diferente a "no encontrado"
+        throw fetchError;
+      }
+      
+      if (existingUser) {
+        // Usuario existe, actualizar contraseña
+        console.log('👤 Usuario existente encontrado, actualizando contraseña...');
+        const { error: updateError } = await database.supabase
+          .from('user_profiles')
+          .update({ 
+            password_hash: hashedPassword,
+            updated_at: new Date().toISOString()
+          })
+          .eq('email', cleanEmail);
+        
+        if (updateError) {
+          throw updateError;
+        }
+        console.log('✅ Contraseña actualizada exitosamente');
+      } else {
+        // Usuario no existe, crear nuevo registro
+        console.log('🆕 Creando nuevo usuario en base de datos...');
+        const { error: insertError } = await database.supabase
+          .from('user_profiles')
+          .insert([{
+            email: cleanEmail,
+            password_hash: hashedPassword,
+            first_name: 'Usuario',
+            last_name: 'B2B',
+            company: 'Empresa',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }]);
+        
+        if (insertError) {
+          throw insertError;
+        }
+        console.log('✅ Usuario creado exitosamente en base de datos');
+      }
+      
+    } catch (dbError) {
+      console.error('❌ Error en base de datos:', dbError);
+      return res.status(500).json({
+        success: false,
+        message: 'Error guardando contraseña en base de datos: ' + dbError.message,
+        debug: {
+          error: dbError.message,
+          code: dbError.code
+        }
+      });
+    }
+    
+    // Respuesta exitosa con guardado real
+    console.log('✅ Contraseña guardada exitosamente, retornando respuesta');
     return res.status(200).json({
       success: true,
       message: 'Contraseña configurada exitosamente',
@@ -203,16 +277,15 @@ module.exports = async (req, res) => {
       customerData: {
         email: cleanEmail,
         firstName: 'Usuario',
-        lastName: 'Temporal', 
-        company: 'Empresa Test',
-        discount: 40,
-        tags: 'b2b40',
+        lastName: 'B2B', 
+        company: 'Empresa',
         hasPassword: true
       },
       debug: {
-        mode: 'temporal_password_setup',
+        mode: 'real_password_setup',
         timestamp: new Date().toISOString(),
-        passwordLength: password.length
+        passwordLength: password.length,
+        databaseSaved: true
       }
     });
     
