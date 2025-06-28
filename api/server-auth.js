@@ -1510,10 +1510,10 @@ app.get('/portal', async (req, res) => {
       console.log('🚨 REDIRECT COMENTADO PARA DEBUG - continuando...');
     }
 
-    console.log('✅ Usuario autenticado:', req.session.customer.email);
+    console.log('✅ Usuario autenticado:', req.session.customer?.email || 'No customer data');
 
     // Verificar si el perfil está completo
-    if (database) {
+    if (database && req.session.customer?.email) {
       const profileCompleted = await database.checkProfileCompletion(req.session.customer.email);
       console.log('🔍 Perfil completo:', profileCompleted);
       
