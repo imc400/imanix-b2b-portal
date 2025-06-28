@@ -11089,7 +11089,8 @@ app.get('/', async (req, res) => {
             // User already logged in, redirect to portal
             res.redirect('/portal');
         } else {
-            // Serve branded login page
+            // Serve branded login page with correct Content-Type
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
             res.send(getLoginHTML());
         }
     } catch (error) {
@@ -11097,6 +11098,16 @@ app.get('/', async (req, res) => {
         res.status(500).send('Error loading page');
     }
 });
+
+// Start server for local development
+const PORT = process.env.PORT || 3000;
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`🚀 Portal B2B IMANIX corriendo en http://localhost:${PORT}`);
+        console.log(`🔐 Sistema de autenticación por contraseña activo`);
+        console.log(`🎨 Branding IMANIX amarillo aplicado`);
+    });
+}
 
 // Export the app for Vercel
 module.exports = app;
