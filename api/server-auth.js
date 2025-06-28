@@ -404,9 +404,13 @@ app.post('/api/profile/update', async (req, res) => {
 
 // Función helper para verificar si el usuario tiene etiquetas "ima"
 function hasImaTag(customer) {
+  console.log('🔍 DEBUG hasImaTag - customer.tags:', customer.tags);
   if (!customer.tags) return false;
   const tagArray = customer.tags.split(',').map(tag => tag.trim().toLowerCase());
-  return tagArray.some(tag => tag.startsWith('ima'));
+  console.log('🔍 DEBUG hasImaTag - tagArray:', tagArray);
+  const hasIma = tagArray.some(tag => tag.startsWith('ima'));
+  console.log('🔍 DEBUG hasImaTag - result:', hasIma);
+  return hasIma;
 }
 
 // Endpoint para procesar checkout y crear draft order
@@ -463,11 +467,13 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
 
     // Verificar si el cliente tiene etiquetas "ima" para personalizar el mensaje
     const isImaCustomer = hasImaTag(customer);
+    console.log('🔍 DEBUG checkout - isImaCustomer:', isImaCustomer);
     
     // Mensajes personalizados según el tipo de cliente
     const note = isImaCustomer 
       ? 'Pedido realizado. Los pagos son según el acuerdo comercial que tengan.'
       : 'Tu pedido está siendo revisado por nuestro equipo. Te contactaremos pronto para confirmar los detalles.';
+    console.log('🔍 DEBUG checkout - note selected:', note);
     
     const nextSteps = isImaCustomer 
       ? [
