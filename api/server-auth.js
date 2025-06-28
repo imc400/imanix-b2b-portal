@@ -1932,6 +1932,14 @@ function getCartHTML(customer) {
         // Variables globales
         let cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
         const customerDiscount = ${customerDiscount};
+        const customerTags = '${customer.tags || ''}';
+        
+        // Función para verificar si el usuario tiene etiquetas "ima"
+        function hasImaTagFrontend() {
+            if (!customerTags) return false;
+            const tagArray = customerTags.split(',').map(tag => tag.trim().toLowerCase());
+            return tagArray.some(tag => tag.startsWith('ima'));
+        }
 
         // Limpiar y migrar productos del carrito (productos añadidos antes de la actualización)
         let cartChanged = false;
@@ -2148,6 +2156,50 @@ function getCartHTML(customer) {
             }
         }
 
+        // Función para checkout directo de usuarios IMA
+        async function processDirectCheckout() {
+            try {
+                console.log('🔍 DEBUG: Processing direct checkout for IMA user');
+                showNotification('Procesando pedido...', 'info');
+                
+                const formData = new FormData();
+                formData.append('cartItems', JSON.stringify(cart.map(item => ({
+                    variantId: item.variantId,
+                    quantity: item.quantity,
+                    price: item.price,
+                    title: item.title
+                }))));
+                formData.append('paymentMethod', 'ima_agreement'); // Método especial para usuarios IMA
+                
+                const response = await fetch('/api/checkout', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                console.log('🔍 DEBUG: Direct checkout response:', data);
+
+                if (data.success) {
+                    // Éxito - limpiar carrito y mostrar mensaje personalizado
+                    localStorage.removeItem('b2bCart');
+                    cart = [];
+                    
+                    // Mostrar modal de éxito con mensaje personalizado para usuarios IMA
+                    showOrderSuccessModal(data);
+                    
+                    // Redirigir después de mostrar el mensaje
+                    setTimeout(() => {
+                        window.location.href = '/perfil';
+                    }, 6000);
+                } else {
+                    showNotification(data.message || 'Error procesando el pedido', 'error');
+                }
+            } catch (error) {
+                console.error('Error en checkout directo:', error);
+                showNotification('Error de conexión. Inténtalo nuevamente.', 'error');
+            }
+        }
+
         // Función para proceder al checkout
         function proceedToCheckout() {
             console.log('🔍 DEBUG: proceedToCheckout called, cart length:', cart.length);
@@ -2156,9 +2208,19 @@ function getCartHTML(customer) {
                 return;
             }
             
-            // Mostrar modal de método de pago
-            console.log('🔍 DEBUG: Showing payment method modal');
-            showPaymentMethodModal();
+            // Verificar si el usuario tiene etiquetas IMA
+            const isImaUser = hasImaTagFrontend();
+            console.log('🔍 DEBUG: Is IMA user:', isImaUser, 'Tags:', customerTags);
+            
+            if (isImaUser) {
+                // Checkout directo para usuarios IMA
+                console.log('🔍 DEBUG: Processing direct checkout for IMA user');
+                processDirectCheckout();
+            } else {
+                // Modal de métodos de pago para usuarios regulares
+                console.log('🔍 DEBUG: Showing payment method modal for regular user');
+                showPaymentMethodModal();
+            }
         }
 
         function showPaymentMethodModal() {
