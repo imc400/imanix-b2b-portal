@@ -41,15 +41,18 @@ try {
 const app = express();
 // Port is handled by Vercel automatically
 
-// Configuración de sesiones
+// Configuración de sesiones optimizada para Vercel
 app.use(session({
-  secret: 'b2b-portal-secret-key',
+  secret: process.env.SESSION_SECRET || 'b2b-portal-secret-key-production-2024',
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: false, // En producción cambiar a true con HTTPS
-    maxAge: 24 * 60 * 60 * 1000 // 24 horas
-  }
+    secure: process.env.NODE_ENV === 'production', // HTTPS en producción
+    httpOnly: true, // Prevenir XSS
+    maxAge: 24 * 60 * 60 * 1000, // 24 horas
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // Para iframe/cross-origin en producción
+  },
+  name: 'imanix.b2b.session' // Nombre personalizado de cookie
 }));
 
 app.use(express.json({ limit: '10mb' }));
