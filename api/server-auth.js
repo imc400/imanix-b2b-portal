@@ -100,27 +100,38 @@ function generateOrderEmailHTML(customer, cartItems, orderData) {
   const companyName = customer.company || 'N/A';
   const discountPercentage = customer.discount || 0;
   
-  // Calcular totales
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const discountAmount = subtotal * (discountPercentage / 100);
-  const total = subtotal - discountAmount;
+  // Calcular totales con desglose de IVA
+  const subtotalConIva = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotalNeto = subtotalConIva / 1.19;
+  const ivaTotal = subtotalConIva - subtotalNeto;
+  const discountAmount = subtotalConIva * (discountPercentage / 100);
+  const total = subtotalConIva - discountAmount;
   
   const formatPrice = (price) => new Intl.NumberFormat('es-CL', {
     style: 'currency',
     currency: 'CLP'
   }).format(price);
   
-  const productRows = cartItems.map(item => `
+  const productRows = cartItems.map(item => {
+    const precioConIva = item.price;
+    const precioNeto = precioConIva / 1.19;
+    const iva = precioConIva - precioNeto;
+    const totalLinea = precioConIva * item.quantity;
+    
+    return `
     <tr style="border-bottom: 1px solid #eee;">
       <td style="padding: 15px; border-right: 1px solid #eee;">
         <div style="font-weight: 600; color: #333; margin-bottom: 5px;">${item.title}</div>
         <div style="font-size: 12px; color: #666;">ID: ${item.variantId}</div>
       </td>
       <td style="padding: 15px; text-align: center; border-right: 1px solid #eee;">${item.quantity}</td>
-      <td style="padding: 15px; text-align: right; border-right: 1px solid #eee;">${formatPrice(item.price)}</td>
-      <td style="padding: 15px; text-align: right; font-weight: 600;">${formatPrice(item.price * item.quantity)}</td>
+      <td style="padding: 15px; text-align: right; border-right: 1px solid #eee;">${formatPrice(precioNeto)}</td>
+      <td style="padding: 15px; text-align: right; border-right: 1px solid #eee; color: #666;">${formatPrice(iva)}</td>
+      <td style="padding: 15px; text-align: right; border-right: 1px solid #eee; font-weight: 600;">${formatPrice(precioConIva)}</td>
+      <td style="padding: 15px; text-align: right; font-weight: 600;">${formatPrice(totalLinea)}</td>
     </tr>
-  `).join('');
+    `;
+  }).join('');
   
   return `
     <!DOCTYPE html>
@@ -163,9 +174,11 @@ function generateOrderEmailHTML(customer, cartItems, orderData) {
             <thead>
               <tr style="background: #FFCE36; color: #333;">
                 <th style="padding: 15px; text-align: left; font-weight: 600;">Producto</th>
-                <th style="padding: 15px; text-align: center; font-weight: 600;">Cantidad</th>
-                <th style="padding: 15px; text-align: right; font-weight: 600;">Precio Unit.</th>
-                <th style="padding: 15px; text-align: right; font-weight: 600;">Total</th>
+                <th style="padding: 15px; text-align: center; font-weight: 600;">Cant.</th>
+                <th style="padding: 15px; text-align: right; font-weight: 600;">Precio Neto</th>
+                <th style="padding: 15px; text-align: right; font-weight: 600;">IVA (19%)</th>
+                <th style="padding: 15px; text-align: right; font-weight: 600;">Precio c/IVA</th>
+                <th style="padding: 15px; text-align: right; font-weight: 600;">Total Línea</th>
               </tr>
             </thead>
             <tbody>
@@ -176,17 +189,25 @@ function generateOrderEmailHTML(customer, cartItems, orderData) {
         
         <!-- Totales -->
         <div style="padding: 30px; background: #f8f9fa;">
-          <div style="max-width: 300px; margin-left: auto;">
+          <div style="max-width: 350px; margin-left: auto;">
             <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #ddd;">
-              <span style="color: #666;">Subtotal:</span>
-              <span style="font-weight: 600;">${formatPrice(subtotal)}</span>
+              <span style="color: #666;">Subtotal Neto:</span>
+              <span style="font-weight: 600;">${formatPrice(subtotalNeto)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #ddd;">
+              <span style="color: #666;">IVA (19%):</span>
+              <span style="font-weight: 600;">${formatPrice(ivaTotal)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #ddd;">
+              <span style="color: #666;">Subtotal con IVA:</span>
+              <span style="font-weight: 600;">${formatPrice(subtotalConIva)}</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #ddd; color: #28a745;">
               <span>Descuento B2B (${discountPercentage}%):</span>
               <span style="font-weight: 600;">-${formatPrice(discountAmount)}</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 15px 0; font-size: 18px; font-weight: 700; color: #333; border-top: 2px solid #FFCE36;">
-              <span>TOTAL:</span>
+              <span>TOTAL FINAL:</span>
               <span>${formatPrice(total)}</span>
             </div>
           </div>
