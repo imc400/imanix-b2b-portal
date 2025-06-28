@@ -147,6 +147,11 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='user_profiles' AND column_name='profile_completed') THEN
         ALTER TABLE user_profiles ADD COLUMN profile_completed BOOLEAN DEFAULT false;
     END IF;
+    
+    -- Agregar columna password_hash si no existe
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='user_profiles' AND column_name='password_hash') THEN
+        ALTER TABLE user_profiles ADD COLUMN password_hash VARCHAR(255);
+    END IF;
 END $$;
 
 -- Índices para mejor rendimiento
