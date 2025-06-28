@@ -2160,7 +2160,7 @@ function getCartHTML(customer) {
         async function processDirectCheckout() {
             try {
                 console.log('🔍 DEBUG: Processing direct checkout for IMA user');
-                showNotification('Procesando pedido...', 'info');
+                showNotification('Procesando pedido...', 'success');
                 
                 const formData = new FormData();
                 formData.append('cartItems', JSON.stringify(cart.map(item => ({
@@ -2190,7 +2190,7 @@ function getCartHTML(customer) {
                     // Redirigir después de mostrar el mensaje
                     setTimeout(() => {
                         window.location.href = '/perfil';
-                    }, 6000);
+                    }, 10000);
                 } else {
                     showNotification(data.message || 'Error procesando el pedido', 'error');
                 }
