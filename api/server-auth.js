@@ -55,6 +55,19 @@ app.use(session({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Middleware de debugging global para capturar todas las requests a auth
+app.use('/api/auth/*', (req, res, next) => {
+  console.log('🚀 DEBUGGING MIDDLEWARE - Interceptando request a:', req.path);
+  console.log('🚀 Method:', req.method);
+  console.log('🚀 Headers completos:', JSON.stringify(req.headers, null, 2));
+  console.log('🚀 Content-Type:', req.get('Content-Type'));
+  console.log('🚀 Request body antes de parsing:', JSON.stringify(req.body, null, 2));
+  console.log('🚀 Body type:', typeof req.body);
+  console.log('🚀 Body keys:', req.body ? Object.keys(req.body) : 'No body');
+  console.log('🚀 Raw body available:', !!req.rawBody);
+  next();
+});
+
 // Configuración de multer para upload de comprobantes (memory storage para Vercel)
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -598,10 +611,14 @@ app.post('/api/auth/logout', (req, res) => {
 
 // Endpoint para verificar email y determinar siguiente paso
 app.post('/api/auth/check-email', async (req, res) => {
+  console.log('🎯 ENDPOINT EJECUTÁNDOSE - /api/auth/check-email hit!');
+  console.log('🎯 Timestamp:', new Date().toISOString());
+  
   try {
     console.log('🔍 Backend - Headers:', req.headers);
     console.log('🔍 Backend - Request body completo:', JSON.stringify(req.body, null, 2));
     console.log('🔍 Backend - Content-Type:', req.get('Content-Type'));
+    console.log('🔍 Backend - Body is empty?', Object.keys(req.body || {}).length === 0);
     
     const { email } = req.body;
     
@@ -705,10 +722,23 @@ app.post('/api/auth/check-email', async (req, res) => {
     }
     
   } catch (error) {
-    console.error('Error verificando email:', error);
+    console.error('💥 ERROR EN CATCH - check-email endpoint:', error);
+    console.error('💥 Error stack:', error.stack);
+    console.error('💥 Error message:', error.message);
+    console.error('💥 Request data cuando error:', {
+      body: req.body,
+      headers: req.headers,
+      method: req.method,
+      path: req.path
+    });
+    
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor'
+      message: 'Error interno del servidor: ' + error.message,
+      debug: {
+        error: error.message,
+        stack: error.stack
+      }
     });
   }
 });
