@@ -2150,12 +2150,14 @@ function getCartHTML(customer) {
 
         // Función para proceder al checkout
         function proceedToCheckout() {
+            console.log('🔍 DEBUG: proceedToCheckout called, cart length:', cart.length);
             if (cart.length === 0) {
                 showNotification('Tu carrito está vacío', 'error');
                 return;
             }
             
             // Mostrar modal de método de pago
+            console.log('🔍 DEBUG: Showing payment method modal');
             showPaymentMethodModal();
         }
 
@@ -2307,12 +2309,17 @@ function getCartHTML(customer) {
                     formData.append('comprobante', comprobanteFile);
                 }
 
+                console.log('🔍 DEBUG: Sending checkout request, paymentMethod:', paymentMethod);
+                console.log('🔍 DEBUG: Cart items:', cart.length);
+                
                 const response = await fetch('/api/checkout', {
                     method: 'POST',
                     body: formData
                 });
 
+                console.log('🔍 DEBUG: Checkout response received, status:', response.status);
                 const data = await response.json();
+                console.log('🔍 DEBUG: Checkout data:', data);
 
                 if (data.success) {
                     // Éxito - limpiar carrito y mostrar mensaje detallado
