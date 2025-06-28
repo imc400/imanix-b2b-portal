@@ -85,15 +85,26 @@ app.use(async (req, res, next) => {
         }
       },
       save: async function() {
-        if (this.sessionId) {
-          const sessionData = { ...this };
-          delete sessionData.sessionId;
-          delete sessionData.regenerate;
-          delete sessionData.destroy;
-          delete sessionData.save;
-          await sessionStore.setSession(this.sessionId, sessionData);
-          console.log('💾 Session saved:', this.sessionId);
+        if (!this.sessionId) {
+          // Crear sessionId si no existe
+          const newSessionId = sessionStore.generateSessionId();
+          this.sessionId = newSessionId;
+          res.cookie('imanix.b2b.session', newSessionId, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60 * 1000, // 24 horas
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+          });
+          console.log('🆔 SessionId created on save:', newSessionId);
         }
+        
+        const sessionData = { ...this };
+        delete sessionData.sessionId;
+        delete sessionData.regenerate;
+        delete sessionData.destroy;
+        delete sessionData.save;
+        await sessionStore.setSession(this.sessionId, sessionData);
+        console.log('💾 Session saved:', this.sessionId);
       }
     };
 
@@ -111,14 +122,16 @@ app.use(async (req, res, next) => {
         await req.session.regenerate();
       }
     } else {
-      console.log('🆕 No sessionId found, will create on first save');
+      console.log('🆕 No sessionId found, creating new session immediately');
+      // Crear sessionId inmediatamente
+      await req.session.regenerate();
     }
 
     // Intercept res.end to auto-save session changes
     const originalEnd = res.end;
     res.end = function(...args) {
-      // Guardar sesión automáticamente antes de enviar respuesta
-      if (req.session.sessionId && (req.session.customer || req.session.authenticated)) {
+      // Guardar sesión automáticamente antes de enviar respuesta si hay cambios
+      if (req.session.customer || req.session.authenticated) {
         req.session.save().catch(console.error);
       }
       originalEnd.apply(this, args);
