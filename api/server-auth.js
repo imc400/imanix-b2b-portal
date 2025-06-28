@@ -11354,6 +11354,348 @@ function getOrderDetailHTML(customer, order) {
   `;
 }
 
+// Generate Portal HTML for authenticated users
+function getPortalHTML(customer) {
+  return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Portal B2B - IMANIX Chile</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
+                min-height: 100vh;
+                color: #1A202C;
+            }
+            
+            .portal-header {
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+                padding: 1rem 2rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            
+            .logo {
+                font-size: 1.8rem;
+                font-weight: 900;
+                color: #1A202C;
+                text-decoration: none;
+            }
+            
+            .user-info {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+            }
+            
+            .user-name {
+                font-weight: 600;
+                color: #1A202C;
+            }
+            
+            .logout-btn {
+                background: #1A202C;
+                color: #FFCE36;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+            
+            .logout-btn:hover {
+                background: #2D3748;
+                transform: translateY(-2px);
+            }
+            
+            .portal-container {
+                max-width: 1200px;
+                margin: 2rem auto;
+                padding: 0 2rem;
+            }
+            
+            .welcome-card {
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                border-radius: 20px;
+                padding: 2rem;
+                margin-bottom: 2rem;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+            
+            .welcome-title {
+                font-size: 2rem;
+                font-weight: 900;
+                color: #1A202C;
+                margin-bottom: 0.5rem;
+            }
+            
+            .welcome-subtitle {
+                color: #64748b;
+                font-size: 1.1rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .user-details {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1rem;
+                margin-top: 1.5rem;
+            }
+            
+            .detail-item {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.75rem;
+                background: rgba(255, 206, 54, 0.1);
+                border-radius: 10px;
+                border: 1px solid rgba(255, 206, 54, 0.2);
+            }
+            
+            .detail-icon {
+                color: #F7B500;
+                font-size: 1.2rem;
+            }
+            
+            .detail-label {
+                font-weight: 600;
+                color: #1A202C;
+            }
+            
+            .detail-value {
+                color: #64748b;
+                margin-left: auto;
+            }
+            
+            .actions-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 1.5rem;
+                margin-top: 2rem;
+            }
+            
+            .action-card {
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                border-radius: 16px;
+                padding: 2rem;
+                text-align: center;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                transition: all 0.3s ease;
+                cursor: pointer;
+            }
+            
+            .action-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+            }
+            
+            .action-icon {
+                font-size: 3rem;
+                color: #FFCE36;
+                margin-bottom: 1rem;
+            }
+            
+            .action-title {
+                font-size: 1.3rem;
+                font-weight: 700;
+                color: #1A202C;
+                margin-bottom: 0.5rem;
+            }
+            
+            .action-description {
+                color: #64748b;
+                line-height: 1.5;
+            }
+            
+            .status-badge {
+                display: inline-block;
+                background: #10B981;
+                color: white;
+                padding: 0.25rem 0.75rem;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                font-weight: 600;
+                margin-left: 0.5rem;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="portal-header">
+            <a href="/" class="logo">
+                <i class="fas fa-cube"></i> IMANIX
+            </a>
+            <div class="user-info">
+                <span class="user-name">
+                    <i class="fas fa-user"></i> 
+                    ${customer.firstName || 'Usuario'} ${customer.lastName || ''}
+                </span>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </div>
+        </div>
+        
+        <div class="portal-container">
+            <div class="welcome-card">
+                <h1 class="welcome-title">
+                    ¡Bienvenido al Portal B2B! 
+                    <span class="status-badge">
+                        <i class="fas fa-check"></i> Autenticado
+                    </span>
+                </h1>
+                <p class="welcome-subtitle">
+                    Accede a precios especiales, realiza pedidos y gestiona tu cuenta empresarial.
+                </p>
+                
+                <div class="user-details">
+                    <div class="detail-item">
+                        <i class="fas fa-envelope detail-icon"></i>
+                        <span class="detail-label">Email:</span>
+                        <span class="detail-value">${customer.email || 'No disponible'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-building detail-icon"></i>
+                        <span class="detail-label">Empresa:</span>
+                        <span class="detail-value">${customer.company || 'No especificada'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-percent detail-icon"></i>
+                        <span class="detail-label">Descuento B2B:</span>
+                        <span class="detail-value">${customer.discount || 0}%</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-tags detail-icon"></i>
+                        <span class="detail-label">Categoría:</span>
+                        <span class="detail-value">${customer.tags || 'B2B'}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="actions-grid">
+                <div class="action-card" onclick="window.location.href='/'">
+                    <i class="fas fa-shopping-cart action-icon"></i>
+                    <h3 class="action-title">Catálogo de Productos</h3>
+                    <p class="action-description">
+                        Explora nuestro catálogo completo con precios especiales B2B
+                    </p>
+                </div>
+                
+                <div class="action-card" onclick="showComingSoon()">
+                    <i class="fas fa-history action-icon"></i>
+                    <h3 class="action-title">Historial de Pedidos</h3>
+                    <p class="action-description">
+                        Revisa tus pedidos anteriores y realiza seguimiento
+                    </p>
+                </div>
+                
+                <div class="action-card" onclick="showComingSoon()">
+                    <i class="fas fa-user-cog action-icon"></i>
+                    <h3 class="action-title">Mi Perfil</h3>
+                    <p class="action-description">
+                        Actualiza tu información personal y empresarial
+                    </p>
+                </div>
+                
+                <div class="action-card" onclick="showComingSoon()">
+                    <i class="fas fa-headset action-icon"></i>
+                    <h3 class="action-title">Soporte</h3>
+                    <p class="action-description">
+                        Contacta con nuestro equipo de atención al cliente
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            function logout() {
+                if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+                    fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = '/';
+                        } else {
+                            alert('Error cerrando sesión');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        // Force redirect anyway
+                        window.location.href = '/';
+                    });
+                }
+            }
+            
+            function showComingSoon() {
+                alert('Esta funcionalidad estará disponible próximamente.');
+            }
+            
+            // Success notification
+            setTimeout(() => {
+                const notification = document.createElement('div');
+                notification.style.cssText = \`
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #10B981;
+                    color: white;
+                    padding: 1rem 1.5rem;
+                    border-radius: 10px;
+                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                    z-index: 1000;
+                    font-weight: 600;
+                    animation: slideIn 0.3s ease;
+                \`;
+                notification.innerHTML = '<i class="fas fa-check"></i> ¡Bienvenido al Portal B2B!';
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }, 500);
+        </script>
+        
+        <style>
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        </style>
+    </body>
+    </html>
+  `;
+}
+
 // Main route - serve IMANIX branded login page
 app.get('/', async (req, res) => {
     try {
@@ -11373,6 +11715,33 @@ app.get('/', async (req, res) => {
     } catch (error) {
         console.error('Error serving main page:', error);
         res.status(500).json({ error: 'Error loading page' });
+    }
+});
+
+// Portal route - handle authenticated users
+app.get('/portal', async (req, res) => {
+    try {
+        console.log('🏠 Portal route accessed');
+        console.log('🏠 Session customer:', !!req.session.customer);
+        
+        if (req.session.customer) {
+            // User is authenticated, serve the main portal page
+            console.log('✅ Authenticated user accessing portal');
+            res.writeHead(200, {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            });
+            res.end(getPortalHTML(req.session.customer));
+        } else {
+            // User not authenticated, redirect to login
+            console.log('❌ Unauthenticated access to portal, redirecting to login');
+            res.redirect('/');
+        }
+    } catch (error) {
+        console.error('Error serving portal page:', error);
+        res.status(500).json({ error: 'Error loading portal' });
     }
 });
 
