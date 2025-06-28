@@ -10,7 +10,16 @@ try {
 
 // Importar dependencias para guardado real
 const bcrypt = require('bcrypt');
-const database = require('../database');
+const { createClient } = require('@supabase/supabase-js');
+
+// Configurar Supabase directamente
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+
+console.log('🔍 SUPABASE_URL configurado:', !!supabaseUrl);
+console.log('🔍 SUPABASE_SERVICE_KEY configurado:', !!supabaseKey);
+
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 // Función para hashear contraseña
 async function hashPassword(password) {
@@ -205,11 +214,25 @@ module.exports = async (req, res) => {
     const hashedPassword = await hashPassword(password);
     console.log('✅ Contraseña hasheada exitosamente');
     
+    // Verificar que Supabase esté configurado
+    if (!supabase) {
+      console.error('❌ Supabase no está configurado');
+      return res.status(500).json({
+        success: false,
+        message: 'Base de datos no disponible',
+        debug: {
+          supabaseConfigured: false,
+          hasUrl: !!supabaseUrl,
+          hasKey: !!supabaseKey
+        }
+      });
+    }
+    
     // Guardar en la base de datos real
     console.log('🗄️ Guardando contraseña en base de datos...');
     try {
       // Primero verificar si el usuario ya existe
-      const { data: existingUser, error: fetchError } = await database.supabase
+      const { data: existingUser, error: fetchError } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('email', cleanEmail)
@@ -223,7 +246,7 @@ module.exports = async (req, res) => {
       if (existingUser) {
         // Usuario existe, actualizar contraseña
         console.log('👤 Usuario existente encontrado, actualizando contraseña...');
-        const { error: updateError } = await database.supabase
+        const { error: updateError } = await supabase
           .from('user_profiles')
           .update({ 
             password_hash: hashedPassword,
@@ -238,7 +261,7 @@ module.exports = async (req, res) => {
       } else {
         // Usuario no existe, crear nuevo registro
         console.log('🆕 Creando nuevo usuario en base de datos...');
-        const { error: insertError } = await database.supabase
+        const { error: insertError } = await supabase
           .from('user_profiles')
           .insert([{
             email: cleanEmail,
