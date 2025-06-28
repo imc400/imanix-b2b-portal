@@ -595,6 +595,91 @@ app.post('/api/auth/logout', (req, res) => {
   });
 });
 
+// Endpoint para verificar email y determinar siguiente paso
+app.post('/api/auth/check-email', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email es requerido'
+      });
+    }
+    
+    console.log(`🔍 Verificando estado de email: ${email}`);
+    
+    // Buscar cliente en Shopify
+    const customer = await findCustomerByEmail(email);
+    if (!customer) {
+      return res.json({
+        success: true,
+        status: 'not_found',
+        message: 'Usuario no encontrado',
+        nextStep: 'register',
+        email: email
+      });
+    }
+    
+    // Verificar acceso B2B
+    const discount = extractB2BDiscount(customer.tags);
+    if (discount === null) {
+      return res.json({
+        success: true,
+        status: 'no_b2b_access',
+        message: 'Sin acceso al portal B2B',
+        nextStep: 'no_access'
+      });
+    }
+    
+    // Verificar si tiene contraseña configurada
+    let hasPassword = false;
+    if (database) {
+      try {
+        const profile = await database.getProfile(email);
+        hasPassword = profile && profile.password_hash;
+      } catch (error) {
+        console.log('No se pudo verificar contraseña en BD:', error.message);
+      }
+    }
+    
+    const customerData = {
+      email: customer.email,
+      firstName: customer.first_name,
+      lastName: customer.last_name,
+      discount: discount,
+      tags: customer.tags
+    };
+    
+    if (hasPassword) {
+      // Usuario existente con contraseña
+      return res.json({
+        success: true,
+        status: 'existing_user',
+        message: 'Usuario encontrado',
+        nextStep: 'password',
+        customerData: customerData
+      });
+    } else {
+      // Usuario existente sin contraseña (primera vez)
+      return res.json({
+        success: true,
+        status: 'first_time',
+        message: 'Primera vez en el portal',
+        nextStep: 'create_password',
+        customerData: customerData
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error verificando email:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+});
+
 // Endpoint para obtener datos actuales del perfil
 app.get('/api/profile/current', requireAuth, async (req, res) => {
   try {
@@ -3677,6 +3762,7 @@ function getLoginHTML() {
                         <p class="login-subtitle">Acceso exclusivo para clientes IMANIX</p>
         
         <form class="login-form" id="loginForm">
+            <!-- Paso 1: Solo Email -->
             <div class="form-group">
                 <label class="form-label" for="email">Email del distribuidor</label>
                 <div style="position: relative;">
@@ -3693,7 +3779,8 @@ function getLoginHTML() {
                 </div>
             </div>
 
-            <div class="form-group">
+            <!-- Paso 2: Contraseña (oculto inicialmente) -->
+            <div class="form-group" id="passwordGroup" style="display: none;">
                 <label class="form-label" for="password">Contraseña del portal B2B</label>
                 <div style="position: relative;">
                     <input 
@@ -3702,7 +3789,6 @@ function getLoginHTML() {
                         name="password" 
                         class="form-input"
                         placeholder="Tu contraseña del portal"
-                        required
                         autocomplete="current-password"
                     >
                     <i class="fas fa-lock form-icon"></i>
@@ -3710,11 +3796,17 @@ function getLoginHTML() {
             </div>
 
             <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage" style="display: none; background: #e8f5e8; color: #155724; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem;"></div>
 
             <button type="submit" class="login-button" id="loginButton">
                 <span class="loading-spinner" id="loadingSpinner"></span>
-                <i class="fas fa-sign-in-alt" id="loginIcon"></i>
-                <span id="loginText">Acceder al Portal</span>
+                <i class="fas fa-arrow-right" id="loginIcon"></i>
+                <span id="loginText">Continuar</span>
+            </button>
+            
+            <button type="button" class="login-button" id="backButton" style="display: none; background: transparent; border: 2px solid #FFCE36; color: #333; margin-top: 10px;">
+                <i class="fas fa-arrow-left"></i>
+                <span>Volver</span>
             </button>
         </form>
 
@@ -3876,12 +3968,15 @@ function getLoginHTML() {
             }
         }
 
+        let currentStep = 'email'; // 'email' o 'password'
+        let currentUserData = null;
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
             const loginButton = document.getElementById('loginButton');
             const loginIcon = document.getElementById('loginIcon');
             const loginText = document.getElementById('loginText');
@@ -3891,41 +3986,91 @@ function getLoginHTML() {
                 showNotification('Por favor ingresa tu email para acceder al portal', 'warning');
                 return;
             }
-            
-            if (!password) {
-                showNotification('Por favor ingresa tu contraseña', 'warning');
-                return;
-            }
 
             // Mostrar estado de carga
             loginButton.disabled = true;
             loginIcon.style.display = 'none';
             loadingSpinner.style.display = 'block';
-            loginText.textContent = 'Verificando acceso...';
             errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
 
-            try {
-                console.log('🔐 Intentando autenticar:', email);
+            if (currentStep === 'email') {
+                // Paso 1: Verificar email
+                loginText.textContent = 'Verificando email...';
                 
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
+                try {
+                    console.log('🔍 Verificando email:', email);
+                    
+                    const response = await fetch('/api/auth/check-email', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email })
+                    });
 
-                const data = await response.json();
-                console.log('📝 Respuesta del servidor:', data);
+                    const data = await response.json();
+                    console.log('📝 Estado del email:', data);
 
-                if (data.success) {
-                    if (data.requiresPasswordSetup) {
-                        // Primera vez - necesita configurar contraseña
-                        console.log('🔑 Requiere configuración de contraseña');
-                        resetButton();
-                        showPasswordSetupForm(data.customerData);
+                    if (data.success) {
+                        if (data.status === 'existing_user') {
+                            // Usuario existente con contraseña
+                            showPasswordStep('Ingresa tu contraseña para acceder');
+                            currentUserData = data.customerData;
+                        } else if (data.status === 'first_time') {
+                            // Usuario sin contraseña (primera vez)
+                            resetButton();
+                            showPasswordSetupForm(data.customerData);
+                        } else if (data.status === 'not_found') {
+                            // Usuario no encontrado - redirigir a registro
+                            successDiv.textContent = '📝 Usuario nuevo. Redirigiendo al formulario de registro...';
+                            successDiv.style.display = 'block';
+                            setTimeout(() => {
+                                window.location.href = '/complete-profile?email=' + encodeURIComponent(email);
+                            }, 2000);
+                        } else if (data.status === 'no_b2b_access') {
+                            // Sin acceso B2B
+                            showError('Tu cuenta no tiene acceso al portal B2B. Contacta a tu representante IMANIX.');
+                        }
                     } else {
-                        // Login exitoso normal
+                        showError(data.message || 'Error verificando email');
+                    }
+                } catch (error) {
+                    console.error('💥 Error verificando email:', error);
+                    showError('Error de conexión. Inténtalo nuevamente.');
+                } finally {
+                    if (currentStep === 'email') {
+                        resetButton();
+                    }
+                }
+            } else if (currentStep === 'password') {
+                // Paso 2: Autenticar con contraseña
+                const password = document.getElementById('password').value;
+                
+                if (!password) {
+                    showError('Por favor ingresa tu contraseña');
+                    resetButton();
+                    return;
+                }
+                
+                loginText.textContent = 'Iniciando sesión...';
+                
+                try {
+                    console.log('🔐 Intentando autenticar:', email);
+                    
+                    const response = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const data = await response.json();
+                    console.log('📝 Respuesta del servidor:', data);
+
+                    if (data.success) {
+                        // Login exitoso
                         console.log('✅ Autenticación exitosa');
                         loginText.textContent = '¡Acceso autorizado!';
                         showNotification('¡Bienvenido al Portal B2B IMANIX! Acceso autorizado exitosamente.', 'success', 2000);
@@ -3937,17 +4082,68 @@ function getLoginHTML() {
                                 window.location.reload();
                             }
                         }, 1500);
+                    } else {
+                        console.log('❌ Error de autenticación:', data.message);
+                        showError(data.message || 'Contraseña incorrecta');
+                        resetButton();
                     }
-                } else {
-                    console.log('❌ Error de autenticación:', data.message);
-                    showNotification(data.message || 'Error de autenticación. Verifica tus credenciales.', 'error');
+                } catch (error) {
+                    console.error('💥 Error de conexión:', error);
+                    showError('Error de conexión. Inténtalo nuevamente.');
                     resetButton();
                 }
-            } catch (error) {
-                console.error('💥 Error de conexión:', error);
-                showNotification('Error de conexión con el servidor. Por favor, inténtalo nuevamente.', 'error');
-                resetButton();
             }
+        });
+
+        // Función para mostrar el paso de contraseña
+        function showPasswordStep(message) {
+            currentStep = 'password';
+            
+            // Mostrar grupo de contraseña
+            document.getElementById('passwordGroup').style.display = 'block';
+            document.getElementById('password').required = true;
+            
+            // Cambiar botón
+            document.getElementById('loginIcon').className = 'fas fa-sign-in-alt';
+            document.getElementById('loginText').textContent = 'Iniciar Sesión';
+            
+            // Mostrar botón volver
+            document.getElementById('backButton').style.display = 'block';
+            
+            // Mostrar mensaje
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = '✅ ' + message;
+            successDiv.style.display = 'block';
+            
+            // Focus en contraseña
+            document.getElementById('password').focus();
+            
+            resetButton();
+        }
+
+        // Botón volver
+        document.getElementById('backButton').addEventListener('click', function() {
+            currentStep = 'email';
+            currentUserData = null;
+            
+            // Ocultar grupo de contraseña
+            document.getElementById('passwordGroup').style.display = 'none';
+            document.getElementById('password').required = false;
+            document.getElementById('password').value = '';
+            
+            // Ocultar botón volver
+            document.getElementById('backButton').style.display = 'none';
+            
+            // Cambiar botón
+            document.getElementById('loginIcon').className = 'fas fa-arrow-right';
+            document.getElementById('loginText').textContent = 'Continuar';
+            
+            // Ocultar mensajes
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            // Focus en email
+            document.getElementById('email').focus();
         });
 
         function showError(message) {
