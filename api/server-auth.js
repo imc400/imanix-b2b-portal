@@ -4158,6 +4158,7 @@ function getLoginHTML() {
                                 // Store auth data and simply reload the page
                                 sessionStorage.setItem('authData', JSON.stringify(data.customerData));
                                 sessionStorage.setItem('isAuthenticated', 'true');
+                                // Simple reload - the page will detect auth and show portal
                                 window.location.reload();
                             }
                         }, 1500);
@@ -4380,13 +4381,39 @@ function getLoginHTML() {
             const authData = sessionStorage.getItem('authData');
             
             if (isAuthenticated === 'true' && authData) {
-                console.log('✅ Usuario autenticado detectado, redirigiendo al portal...');
+                console.log('✅ Usuario autenticado detectado, mostrando portal...');
                 // Clear the auth flags to prevent loops
                 sessionStorage.removeItem('isAuthenticated');
-                // Redirect to portal with auth data
-                window.location.href = '/api/server-auth?portal=true&auth=' + encodeURIComponent(authData);
+                
+                // Hide login form and show portal content directly
+                document.body.innerHTML = getPortalContent(JSON.parse(authData));
             }
         });
+        
+        // Function to generate portal content in JavaScript
+        function getPortalContent(customerData) {
+            return \`
+                <div style="font-family: Arial, sans-serif; padding: 20px; background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%); min-height: 100vh;">
+                    <div style="max-width: 1200px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                        <h1 style="color: #333; text-align: center; margin-bottom: 30px;">
+                            🎯 Portal B2B IMANIX Chile
+                        </h1>
+                        <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 15px;">
+                            <h2 style="color: #28a745; margin-bottom: 20px;">¡Bienvenido, \${customerData.firstName}!</h2>
+                            <p style="font-size: 18px; color: #666; margin-bottom: 20px;">
+                                Email: \${customerData.email}
+                            </p>
+                            <p style="font-size: 16px; color: #666; margin-bottom: 30px;">
+                                Has ingresado exitosamente al portal B2B de IMANIX Chile.
+                            </p>
+                            <button onclick="location.reload()" style="background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%); color: #333; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">
+                                🔄 Recargar Portal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            \`;
+        }
     </script>
 </body>
 </html>`;
@@ -11713,42 +11740,20 @@ function getPortalHTML(customer) {
   `;
 }
 
-// Main route - serve IMANIX branded login page or portal
+// Main route - serve IMANIX branded login page (with client-side portal detection)
 app.get('/', async (req, res) => {
     try {
-        // Check if user is accessing portal with auth data
-        if (req.query.portal === 'true' && req.query.auth) {
-            // User authenticated, serve portal with their data
-            console.log('✅ User authenticated via login, serving portal');
-            try {
-                const authData = JSON.parse(decodeURIComponent(req.query.auth));
-                console.log('📋 Auth data received:', authData);
-                
-                res.writeHead(200, {
-                    'Content-Type': 'text/html; charset=utf-8',
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                });
-                res.end(getPortalHTML(authData));
-                return;
-            } catch (error) {
-                console.error('❌ Error parsing auth data:', error);
-                // Fall through to login page
-            }
-        } else if (req.session.customer) {
-            // User already logged in, redirect to portal
-            res.redirect('/portal');
-        } else {
-            // Serve branded login page with proper headers
-            res.writeHead(200, {
-                'Content-Type': 'text/html; charset=utf-8',
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            });
-            res.end(getLoginHTML());
-        }
+        console.log('🏠 Main route accessed');
+        
+        // Always serve the login page - client-side JavaScript will handle portal display
+        res.writeHead(200, {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        });
+        res.end(getLoginHTML());
+        
     } catch (error) {
         console.error('Error serving main page:', error);
         res.status(500).json({ error: 'Error loading page' });
