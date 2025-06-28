@@ -5,6 +5,7 @@ const axios = require('axios');
 const multer = require('multer');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
+const nodemailer = require('nodemailer');
 const database = require('./database');
 require('dotenv').config();
 
@@ -13,6 +14,15 @@ cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'imanix-b2b',
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configuración de Nodemailer para Gmail
+const transporter = nodemailer.createTransporter({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER || 'tu-email@gmail.com',
+    pass: process.env.EMAIL_PASS || 'tu-app-password'
+  }
 });
 
 const app = express();
@@ -69,6 +79,150 @@ async function findCustomerByEmail(email) {
   } catch (error) {
     console.error('Error buscando cliente:', error);
     return null;
+  }
+}
+
+// Función para generar template HTML del email
+function generateOrderEmailHTML(customer, cartItems, orderData) {
+  const customerName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'N/A';
+  const companyName = customer.company || 'N/A';
+  const discountPercentage = customer.discount || 0;
+  
+  // Calcular totales
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const discountAmount = subtotal * (discountPercentage / 100);
+  const total = subtotal - discountAmount;
+  
+  const formatPrice = (price) => new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP'
+  }).format(price);
+  
+  const productRows = cartItems.map(item => `
+    <tr style="border-bottom: 1px solid #eee;">
+      <td style="padding: 15px; border-right: 1px solid #eee;">
+        <div style="font-weight: 600; color: #333; margin-bottom: 5px;">${item.title}</div>
+        <div style="font-size: 12px; color: #666;">ID: ${item.variantId}</div>
+      </td>
+      <td style="padding: 15px; text-align: center; border-right: 1px solid #eee;">${item.quantity}</td>
+      <td style="padding: 15px; text-align: right; border-right: 1px solid #eee;">${formatPrice(item.price)}</td>
+      <td style="padding: 15px; text-align: right; font-weight: 600;">${formatPrice(item.price * item.quantity)}</td>
+    </tr>
+  `).join('');
+  
+  return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Nuevo Pedido B2B - IMANIX</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+      <div style="max-width: 800px; margin: 0 auto; background-color: white; box-shadow: 0 0 20px rgba(0,0,0,0.1);">
+        
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #FFCE36 0%, #E6B800 100%); color: #333; padding: 30px; text-align: center;">
+          <h1 style="margin: 0; font-size: 28px; font-weight: 700;">🎯 NUEVO PEDIDO B2B</h1>
+          <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Portal IMANIX Chile - Usuario IMA</p>
+        </div>
+        
+        <!-- Información del cliente -->
+        <div style="padding: 30px; background-color: #f8f9fa; border-bottom: 3px solid #FFCE36;">
+          <h2 style="margin: 0 0 20px 0; color: #333; font-size: 20px;">👤 Información del Cliente</h2>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+              <strong style="color: #555;">Nombre:</strong> ${customerName}<br>
+              <strong style="color: #555;">Email:</strong> ${customer.email}<br>
+              <strong style="color: #555;">Empresa:</strong> ${companyName}
+            </div>
+            <div>
+              <strong style="color: #555;">Descuento B2B:</strong> ${discountPercentage}%<br>
+              <strong style="color: #555;">Tipo:</strong> <span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">Usuario IMA</span><br>
+              <strong style="color: #555;">Pedido #:</strong> D${orderData.draftOrderId}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Productos -->
+        <div style="padding: 30px;">
+          <h2 style="margin: 0 0 20px 0; color: #333; font-size: 20px;">🛒 Productos Solicitados</h2>
+          <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;">
+            <thead>
+              <tr style="background: #FFCE36; color: #333;">
+                <th style="padding: 15px; text-align: left; font-weight: 600;">Producto</th>
+                <th style="padding: 15px; text-align: center; font-weight: 600;">Cantidad</th>
+                <th style="padding: 15px; text-align: right; font-weight: 600;">Precio Unit.</th>
+                <th style="padding: 15px; text-align: right; font-weight: 600;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${productRows}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Totales -->
+        <div style="padding: 30px; background: #f8f9fa;">
+          <div style="max-width: 300px; margin-left: auto;">
+            <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #ddd;">
+              <span style="color: #666;">Subtotal:</span>
+              <span style="font-weight: 600;">${formatPrice(subtotal)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #ddd; color: #28a745;">
+              <span>Descuento B2B (${discountPercentage}%):</span>
+              <span style="font-weight: 600;">-${formatPrice(discountAmount)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 15px 0; font-size: 18px; font-weight: 700; color: #333; border-top: 2px solid #FFCE36;">
+              <span>TOTAL:</span>
+              <span>${formatPrice(total)}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Método de pago -->
+        <div style="padding: 30px; background: #e8f5e8; border-left: 5px solid #28a745;">
+          <h3 style="margin: 0 0 10px 0; color: #155724;">💳 Método de Pago</h3>
+          <p style="margin: 0; font-size: 16px; color: #155724;">
+            <strong>Acuerdo Comercial IMA</strong> - Los pagos se rigen según el convenio establecido con el cliente.
+          </p>
+        </div>
+        
+        <!-- Footer -->
+        <div style="background: #333; color: white; padding: 20px; text-align: center;">
+          <p style="margin: 0; font-size: 14px;">
+            Este pedido fue generado automáticamente desde el Portal B2B de IMANIX Chile<br>
+            <span style="opacity: 0.7;">Fecha: ${new Date().toLocaleString('es-CL')}</span>
+          </p>
+        </div>
+        
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// Función para enviar email de notificación del pedido
+async function sendOrderEmail(customer, cartItems, orderData) {
+  try {
+    const emailHtml = generateOrderEmailHTML(customer, cartItems, orderData);
+    const customerName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email;
+    
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_TO || 'administracion@imanix.com',
+      subject: `🎯 Nuevo Pedido B2B IMA - ${customerName} - #D${orderData.draftOrderId}`,
+      html: emailHtml
+    };
+    
+    console.log('📧 Enviando email de notificación del pedido...');
+    const result = await transporter.sendMail(mailOptions);
+    console.log('✅ Email enviado exitosamente:', result.messageId);
+    
+    return { success: true, messageId: result.messageId };
+  } catch (error) {
+    console.error('❌ Error enviando email:', error);
+    return { success: false, error: error.message };
   }
 }
 
@@ -488,6 +642,26 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
           'Procesaremos el pedido una vez confirmado',
           'Coordinaremos la entrega según tus preferencias'
         ];
+
+    // Enviar email de notificación para usuarios IMA
+    if (isImaCustomer) {
+      console.log('📧 Enviando email de notificación para usuario IMA...');
+      try {
+        const emailResult = await sendOrderEmail(customer, cartItems, {
+          draftOrderId: draftOrder.id,
+          total: draftOrder.total_price,
+          discount: draftOrder.total_discounts
+        });
+        
+        if (emailResult.success) {
+          console.log('✅ Email de notificación enviado exitosamente');
+        } else {
+          console.log('⚠️ No se pudo enviar el email de notificación:', emailResult.error);
+        }
+      } catch (emailError) {
+        console.error('❌ Error enviando email de notificación:', emailError);
+      }
+    }
 
     res.json({ 
       success: true, 
