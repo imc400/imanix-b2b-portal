@@ -4196,35 +4196,12 @@ function getLoginHTML() {
                         loginText.textContent = '¡Acceso autorizado!';
                         showNotification('¡Bienvenido al Portal B2B IMANIX! Acceso autorizado exitosamente.', 'success', 2000);
                         
-                        // Esperar más tiempo y verificar sesión antes de redirigir
-                        setTimeout(async () => {
-                            try {
-                                // Verificar que la sesión esté establecida
-                                console.log('🔍 Verificando sesión antes de redirigir...');
-                                const sessionCheck = await fetch('/api/session-check', {
-                                    method: 'GET',
-                                    credentials: 'include'
-                                });
-                                
-                                if (sessionCheck.ok) {
-                                    console.log('✅ Sesión verificada, redirigiendo al portal...');
-                                    // Redirect directo al portal simplificado
-                                    window.location.href = '/portal';
-                                } else {
-                                    console.log('⚠️ Sesión no verificada, forzando recarga y redirect...');
-                                    // Forzar recarga y redirect como fallback
-                                    window.location.reload();
-                                    setTimeout(() => {
-                                        window.location.href = '/portal';
-                                    }, 500);
-                                }
-                            } catch (error) {
-                                console.error('❌ Error verificando sesión:', error);
-                                // Fallback directo al portal
-                                console.log('🔄 Fallback: redirigiendo directamente al portal...');
-                                window.location.href = '/portal';
-                            }
-                        }, 2000);
+                        // Simplificación MÁXIMA - solo recargar la página
+                        console.log('✅ Login exitoso, recargando página para mostrar portal...');
+                        setTimeout(() => {
+                            // La ruta principal (/) ya maneja toda la lógica de autenticación
+                            window.location.reload();
+                        }, 1500);
                     } else {
                         console.log('❌ Error de autenticación:', data.message);
                         showError(data.message || 'Contraseña incorrecta');
