@@ -198,6 +198,7 @@ module.exports = async (req, res) => {
         success: true,
         message: 'Login exitoso',
         nextStep: 'portal_access',
+        profileCompleted: true, // User has successfully logged in, assume profile is complete
         customerData: {
           email: cleanEmail,
           firstName: userProfile.first_name || 'Usuario',
