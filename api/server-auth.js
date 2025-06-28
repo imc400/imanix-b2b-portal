@@ -4389,8 +4389,8 @@ function getLoginHTML() {
                 const userData = JSON.parse(authData);
                 // Store user data for the portal to access
                 sessionStorage.setItem('portalUserData', JSON.stringify(userData));
-                // Redirect to the portal route
-                window.location.href = '/api/server-auth?show=portal';
+                // Redirect to the root with portal parameter
+                window.location.href = '/?show=portal';
             }
         });
         

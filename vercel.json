@@ -5,6 +5,10 @@
     {
       "source": "/",
       "destination": "/api/server-auth"
+    },
+    {
+      "source": "/((?!api).*)",
+      "destination": "/api/server-auth"
     }
   ],
   "headers": [
