@@ -562,6 +562,51 @@ const database = {
         recentOrdersList: []
       };
     }
+  },
+
+  // Session management for serverless compatibility
+  async ensureSessionsTable() {
+    if (!supabase) return false;
+    
+    try {
+      // Crear tabla de sesiones si no existe
+      const { error } = await supabase.rpc('exec_sql', {
+        sql: `
+          CREATE TABLE IF NOT EXISTS user_sessions (
+            id SERIAL PRIMARY KEY,
+            session_id TEXT UNIQUE NOT NULL,
+            user_email TEXT,
+            session_data JSONB NOT NULL,
+            expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+          );
+          
+          CREATE INDEX IF NOT EXISTS idx_user_sessions_session_id ON user_sessions(session_id);
+          CREATE INDEX IF NOT EXISTS idx_user_sessions_user_email ON user_sessions(user_email);
+          CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);
+          
+          -- Auto-cleanup expired sessions
+          CREATE OR REPLACE FUNCTION cleanup_expired_sessions()
+          RETURNS void AS $$
+          BEGIN
+            DELETE FROM user_sessions WHERE expires_at < NOW();
+          END;
+          $$ LANGUAGE plpgsql;
+        `
+      });
+
+      if (error) {
+        console.error('❌ Error creating sessions table:', error);
+        return false;
+      }
+
+      console.log('✅ Sessions table ensured');
+      return true;
+    } catch (error) {
+      console.error('❌ Error in ensureSessionsTable:', error);
+      return false;
+    }
   }
 };
 

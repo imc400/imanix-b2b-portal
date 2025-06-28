@@ -1,6 +1,5 @@
 const express = require('express');
 const fs = require('fs').promises;
-const session = require('express-session');
 const axios = require('axios');
 const multer = require('multer');
 const path = require('path');
@@ -8,6 +7,7 @@ const bcrypt = require('bcrypt');
 const cloudinary = require('cloudinary').v2;
 const nodemailer = require('nodemailer');
 const database = require('./database');
+const SupabaseSessionStore = require('./session-store');
 require('dotenv').config();
 
 // Configuración de Cloudinary
@@ -41,19 +41,95 @@ try {
 const app = express();
 // Port is handled by Vercel automatically
 
-// Configuración de sesiones optimizada para Vercel
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'b2b-portal-secret-key-production-2024',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production', // HTTPS en producción
-    httpOnly: true, // Prevenir XSS
-    maxAge: 24 * 60 * 60 * 1000, // 24 horas
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // Para iframe/cross-origin en producción
-  },
-  name: 'imanix.b2b.session' // Nombre personalizado de cookie
-}));
+// Inicializar Session Store de Supabase
+const sessionStore = new SupabaseSessionStore();
+
+// Inicializar tabla de sesiones al arrancar
+sessionStore.ensureSessionsTable().then(success => {
+  if (success) {
+    console.log('✅ Sessions table ready');
+  } else {
+    console.log('⚠️ Sessions table initialization failed, using memory fallback');
+  }
+});
+
+// Middleware personalizado de sesiones serverless-compatible
+app.use(async (req, res, next) => {
+  try {
+    // Obtener sessionId de las cookies
+    const sessionId = req.headers.cookie?.split(';')
+      .find(c => c.trim().startsWith('imanix.b2b.session='))
+      ?.split('=')[1] || null;
+
+    console.log('🔍 Session middleware - SessionId from cookie:', sessionId);
+
+    // Inicializar objeto session en req
+    req.session = {
+      sessionId: sessionId,
+      regenerate: async function() {
+        const newSessionId = sessionStore.generateSessionId();
+        this.sessionId = newSessionId;
+        res.cookie('imanix.b2b.session', newSessionId, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 24 * 60 * 60 * 1000, // 24 horas
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+        });
+        console.log('🔄 Session regenerated:', newSessionId);
+      },
+      destroy: async function() {
+        if (this.sessionId) {
+          await sessionStore.destroySession(this.sessionId);
+          res.clearCookie('imanix.b2b.session');
+          console.log('🗑️ Session destroyed:', this.sessionId);
+        }
+      },
+      save: async function() {
+        if (this.sessionId) {
+          const sessionData = { ...this };
+          delete sessionData.sessionId;
+          delete sessionData.regenerate;
+          delete sessionData.destroy;
+          delete sessionData.save;
+          await sessionStore.setSession(this.sessionId, sessionData);
+          console.log('💾 Session saved:', this.sessionId);
+        }
+      }
+    };
+
+    // Cargar datos de sesión existente si hay sessionId
+    if (sessionId) {
+      const sessionData = await sessionStore.getSession(sessionId);
+      if (sessionData) {
+        // Fusionar datos de sesión existentes
+        Object.assign(req.session, sessionData);
+        req.session.sessionId = sessionId; // Asegurar que sessionId se mantenga
+        console.log('✅ Session loaded for:', sessionData.customer?.email || 'anonymous');
+      } else {
+        console.log('📭 No valid session found, creating new session');
+        // Crear nueva sesión si no existe o expiró
+        await req.session.regenerate();
+      }
+    } else {
+      console.log('🆕 No sessionId found, will create on first save');
+    }
+
+    // Intercept res.end to auto-save session changes
+    const originalEnd = res.end;
+    res.end = function(...args) {
+      // Guardar sesión automáticamente antes de enviar respuesta
+      if (req.session.sessionId && (req.session.customer || req.session.authenticated)) {
+        req.session.save().catch(console.error);
+      }
+      originalEnd.apply(this, args);
+    };
+
+    next();
+  } catch (error) {
+    console.error('❌ Session middleware error:', error);
+    next();
+  }
+});
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -4199,11 +4275,11 @@ function getLoginHTML() {
                         loginText.textContent = '¡Acceso autorizado!';
                         showNotification('¡Bienvenido al Portal B2B IMANIX! Acceso autorizado exitosamente.', 'success', 2000);
                         
-                        // Simplificación MÁXIMA - solo recargar la página
-                        console.log('✅ Login exitoso, recargando página para mostrar portal...');
+                        // Optimización para sesiones Supabase - redirect directo sin reload
+                        console.log('✅ Login exitoso, redirigiendo al portal...');
                         setTimeout(() => {
-                            // La ruta principal (/) ya maneja toda la lógica de autenticación
-                            window.location.reload();
+                            // Redirect directo al portal - las sesiones Supabase persisten
+                            window.location.href = '/portal';
                         }, 1500);
                     } else {
                         console.log('❌ Error de autenticación:', data.message);
@@ -11938,78 +12014,11 @@ function getPortalHTML(customer) {
   `;
 }
 
-// Main route - serve IMANIX branded login page
-app.get('/', async (req, res) => {
-    try {
-        console.log('🏠 Main route accessed');
-        console.log('🏠 Session customer:', !!req.session.customer);
-        
-        // Check if user is already authenticated
-        if (req.session.customer) {
-            console.log('✅ User already authenticated, redirecting to portal');
-            return res.redirect('/portal');
-        }
-        
-        // Serve login page
-        res.writeHead(200, {
-            'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-        });
-        res.end(getLoginHTML());
-        
-    } catch (error) {
-        console.error('Error serving main page:', error);
-        res.status(500).json({ error: 'Error loading page' });
-    }
-});
-
-// Portal route - handle authenticated users
-app.get('/portal', async (req, res) => {
-    try {
-        console.log('🏠 Portal route accessed');
-        console.log('🏠 Session customer:', !!req.session.customer);
-        
-        if (req.session.customer) {
-            // User is authenticated, serve the main portal page
-            console.log('✅ Authenticated user accessing portal');
-            res.writeHead(200, {
-                'Content-Type': 'text/html; charset=utf-8',
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            });
-            res.end(getPortalHTML(req.session.customer));
-        } else {
-            // User not authenticated, redirect to login
-            console.log('❌ Unauthenticated access to portal, redirecting to login');
-            res.redirect('/');
-        }
-    } catch (error) {
-        console.error('Error serving portal page:', error);
-        res.status(500).json({ error: 'Error loading portal' });
-    }
-});
-
-// Static files - after routes to avoid conflicts
-app.use(express.static('.'));
-
-// Start server for local development
-const PORT = process.env.PORT || 3000;
-if (require.main === module) {
-    app.listen(PORT, () => {
-        console.log(`🚀 Portal B2B IMANIX corriendo en http://localhost:${PORT}`);
-        console.log(`🔐 Sistema de autenticación por contraseña activo`);
-        console.log(`🎨 Branding IMANIX amarillo aplicado`);
-        console.log(`📱 Accede desde: http://localhost:${PORT}`);
-    });
-}
 
 // Export handler for Vercel serverless
 module.exports = app;
 
-// Also export functions for other modules  
+// Also export functions for other modules
 module.exports.findCustomerByEmail = findCustomerByEmail;
 module.exports.extractB2BDiscount = extractB2BDiscount;
 module.exports.hashPassword = hashPassword;
