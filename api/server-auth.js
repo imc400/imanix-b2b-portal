@@ -11389,5 +11389,11 @@ if (require.main === module) {
     });
 }
 
-// Export the app for Vercel
-module.exports = app;
+// Export the app and functions for Vercel and other modules
+module.exports = {
+  app,
+  findCustomerByEmail,
+  extractB2BDiscount,
+  hashPassword,
+  verifyPassword
+};
