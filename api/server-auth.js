@@ -4155,7 +4155,9 @@ function getLoginHTML() {
                             if (!data.profileCompleted) {
                                 window.location.href = '/complete-profile';
                             } else {
-                                window.location.reload();
+                                // Store auth data and redirect to portal
+                                sessionStorage.setItem('authData', JSON.stringify(data.customerData));
+                                window.location.href = '/api/server-auth?authenticated=true';
                             }
                         }, 1500);
                     } else {
@@ -11696,10 +11698,21 @@ function getPortalHTML(customer) {
   `;
 }
 
-// Main route - serve IMANIX branded login page
+// Main route - serve IMANIX branded login page or portal
 app.get('/', async (req, res) => {
     try {
-        if (req.session.customer) {
+        // Check if user is authenticated via URL parameter (post-login)
+        if (req.query.authenticated === 'true') {
+            // User just authenticated, serve portal directly
+            console.log('✅ User authenticated via login, serving portal');
+            res.writeHead(200, {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            });
+            res.end(getPortalHTML());
+        } else if (req.session.customer) {
             // User already logged in, redirect to portal
             res.redirect('/portal');
         } else {
