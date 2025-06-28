@@ -11693,7 +11693,7 @@ function getOrderDetailHTML(customer, order) {
 }
 
 // Generate Portal HTML for authenticated users
-function getPortalHTML(customer) {
+function getBasicPortalHTML(customer) {
   return `
     <!DOCTYPE html>
     <html lang="es">
