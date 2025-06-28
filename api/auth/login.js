@@ -11,6 +11,7 @@ try {
 // Importar dependencias
 const bcrypt = require('bcrypt');
 const { createClient } = require('@supabase/supabase-js');
+const session = require('express-session');
 
 // Configurar Supabase directamente
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -20,6 +21,17 @@ console.log('🔍 SUPABASE_URL configurado:', !!supabaseUrl);
 console.log('🔍 SUPABASE_SERVICE_KEY configurado:', !!supabaseKey);
 
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+
+// Configurar sesión para serverless
+const sessionMiddleware = session({
+  secret: 'b2b-portal-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+    secure: false,
+    maxAge: 1000 * 60 * 60 * 24 // 24 horas
+  }
+});
 
 // Función para verificar contraseña
 async function verifyPassword(password, hash) {
@@ -52,12 +64,25 @@ async function parseRequestBody(req) {
   });
 }
 
-// Vercel serverless function handler
+// Vercel serverless function handler with session support
 module.exports = async (req, res) => {
   console.log('🔐 LOGIN ENDPOINT EJECUTÁNDOSE');
   console.log('🔐 Timestamp:', new Date().toISOString());
   console.log('🔐 Method:', req.method);
   console.log('🔐 Headers completos:', JSON.stringify(req.headers, null, 2));
+  
+  // Apply session middleware
+  await new Promise((resolve, reject) => {
+    sessionMiddleware(req, res, (err) => {
+      if (err) {
+        console.error('❌ Error configurando sesión:', err);
+        reject(err);
+      } else {
+        console.log('✅ Sesión configurada correctamente');
+        resolve();
+      }
+    });
+  });
   
   try {
     // Only allow POST requests
