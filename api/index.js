@@ -643,10 +643,7 @@ app.post('/api/auth/check-email', async (req, res) => {
     console.log('🔍 Backend - Email limpio:', cleanEmail);
     
     // Validación básica de formato de email
-    const emailRegex = /^[^
-@]+@[^
-@]+\.[^
-@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(cleanEmail)) {
       console.log('❌ Backend - Email con formato inválido:', cleanEmail);
       console.log('❌ Backend - Regex test result:', emailRegex.test(cleanEmail));
@@ -2001,3 +1998,471 @@ function getCartHTML(customer) {
             right: 0;
             height: 3px;
             background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .cart-empty {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #64748b;
+        }
+
+        .cart-empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.5;
+        }
+
+        .cart-empty h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #374151;
+        }
+
+        .continue-shopping-btn {
+            background: linear-gradient(135deg, #FFCE36, #FFC107);
+            color: #1A202C;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .continue-shopping-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 206, 54, 0.4);
+        }
+
+        .cart-summary {
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 32px;
+            padding: 3rem;
+            position: sticky;
+            top: 2rem;
+            height: fit-content;
+        }
+
+        .summary-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1A202C;
+            margin-bottom: 2rem;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #1A202C, #374151);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checkout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(26, 32, 44, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .cart-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .cart-summary {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">
+                <div class="brand-logo">🎯</div>
+                <div class="brand-text">
+                    <h1>IMANIX Chile</h1>
+                    <p>Portal B2B Exclusivo</p>
+                </div>
+            </div>
+
+            <div class="navbar-actions">
+                <button class="cart-navbar-btn" onclick="window.location.href='/carrito'">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-navbar-badge" id="cartBadge">0</span>
+                </button>
+
+                <div class="user-account" onclick="toggleUserDropdown()">
+                    <i class="fas fa-user"></i>
+                    <span>Mi Cuenta</span>
+                    <i class="fas fa-chevron-down"></i>
+                    
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-header">
+                            <div class="user-name">${customer.firstName} ${customer.lastName}</div>
+                            <div class="user-email">${customer.email}</div>
+                        </div>
+                        
+                        <div class="dropdown-menu">
+                            <a href="/perfil" class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                <span>Mi Perfil</span>
+                            </a>
+                            <a href="/portal" class="dropdown-item">
+                                <i class="fas fa-store"></i>
+                                <span>Catálogo</span>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <button onclick="logout()" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Cerrar Sesión</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="cart-container">
+        <div class="cart-header">
+            <h1 class="cart-title">🛒 Mi Carrito de Compras</h1>
+            <p class="cart-subtitle">Revisa y confirma tu pedido B2B con descuento del ${customerDiscount}%</p>
+        </div>
+
+        <div class="cart-content">
+            <div class="cart-items">
+                <div class="cart-empty">
+                    <div class="cart-empty-icon">🛒</div>
+                    <h3>Tu carrito está vacío</h3>
+                    <p>Agrega productos desde nuestro catálogo para comenzar tu pedido B2B</p>
+                    <a href="/portal" class="continue-shopping-btn">
+                        <i class="fas fa-store"></i> Ir al Catálogo
+                    </a>
+                </div>
+            </div>
+
+            <div class="cart-summary">
+                <h2 class="summary-title">Resumen del Pedido</h2>
+                <div id="cartSummary">
+                    <p>No hay productos en el carrito</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function logout() {
+            fetch('/api/auth/logout', { method: 'POST' })
+                .then(() => window.location.href = '/')
+                .catch(console.error);
+        }
+
+        // Cerrar dropdown al hacer click fuera
+        document.addEventListener('click', function(event) {
+            const userAccount = document.querySelector('.user-account');
+            const dropdown = document.getElementById('userDropdown');
+            
+            if (!userAccount.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Cargar carrito desde localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCart();
+            updateCartDisplay();
+        });
+
+        function loadCart() {
+            const cart = getCart();
+            updateCartBadge(cart.length);
+            
+            if (cart.length > 0) {
+                displayCartItems(cart);
+            }
+        }
+
+        function getCart() {
+            return JSON.parse(localStorage.getItem('b2b-cart') || '[]');
+        }
+
+        function updateCartBadge(count) {
+            document.getElementById('cartBadge').textContent = count;
+        }
+
+        function displayCartItems(cart) {
+            // Implementation for displaying cart items
+            console.log('Cart items:', cart);
+        }
+
+        function updateCartDisplay() {
+            // Implementation for updating cart display
+            console.log('Updating cart display');
+        }
+    </script>
+</body>
+</html>
+  `;
+}
+
+// Middleware de autenticación
+function requireAuth(req, res, next) {
+  if (!req.session.customer) {
+    return res.status(401).json({
+      success: false,
+      message: 'Acceso denegado'
+    });
+  }
+  next();
+}
+
+// Función para generar HTML del portal
+function getPortalHTML(products, customer) {
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal B2B - IMANIX Chile</title>
+    <style>
+        /* Portal styles */
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: #333; color: white; padding: 1rem 0; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .product-card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>Portal B2B - IMANIX Chile</h1>
+            <p>Bienvenido ${customer.firstName} ${customer.lastName} - Descuento: ${customer.discount}%</p>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="products-grid">
+            ${products.map(product => `
+                <div class="product-card">
+                    <h3>${product.title}</h3>
+                    <p>Producto B2B disponible</p>
+                </div>
+            `).join('')}
+        </div>
+    </div>
+</body>
+</html>`;
+}
+
+// Función para generar HTML de login
+function getLoginHTML() {
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Portal B2B IMANIX</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+        .login-container { max-width: 400px; margin: 100px auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 20px; }
+        .form-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; }
+        .login-button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .login-button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Portal B2B - IMANIX Chile</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <input type="email" id="email" class="form-input" placeholder="Email" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" class="form-input" placeholder="Contraseña" required>
+            </div>
+            <button type="submit" class="login-button">Iniciar Sesión</button>
+        </form>
+    </div>
+    
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/portal';
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión');
+            }
+        });
+    </script>
+</body>
+</html>`;
+}
+
+// Función para generar HTML de completar perfil
+function getCompleteProfileHTML(customer) {
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completar Perfil - Portal B2B IMANIX</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 20px; }
+        .form-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; }
+        .submit-button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .submit-button:hover { background: #218838; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Completar Perfil Empresarial</h2>
+        <p>Hola ${customer.firstName}, completa tu información empresarial para acceder al portal B2B.</p>
+        
+        <form id="profileForm">
+            <div class="form-group">
+                <input type="text" id="first_name" class="form-input" placeholder="Nombre" required>
+            </div>
+            <div class="form-group">
+                <input type="text" id="last_name" class="form-input" placeholder="Apellido" required>
+            </div>
+            <div class="form-group">
+                <input type="text" id="company_name" class="form-input" placeholder="Razón Social" required>
+            </div>
+            <div class="form-group">
+                <input type="text" id="company_rut" class="form-input" placeholder="RUT Empresa" required>
+            </div>
+            <div class="form-group">
+                <input type="text" id="mobile_phone" class="form-input" placeholder="Teléfono" required>
+            </div>
+            <button type="submit" class="submit-button">Guardar Perfil</button>
+        </form>
+    </div>
+    
+    <script>
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                company_name: document.getElementById('company_name').value,
+                company_rut: document.getElementById('company_rut').value,
+                mobile_phone: document.getElementById('mobile_phone').value
+            };
+            
+            try {
+                const response = await fetch('/api/profile/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/portal';
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión');
+            }
+        });
+    </script>
+</body>
+</html>`;
+}
+
+// Función para generar HTML del perfil
+function getProfileHTML(customer, profile, addresses, orders, stats) {
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - Portal B2B IMANIX</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+        .container { max-width: 800px; margin: 50px auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .profile-header { border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="profile-header">
+            <h1>Mi Perfil B2B</h1>
+            <p>Gestiona tu información empresarial y revisa tu actividad</p>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Pedidos Totales</h3>
+                <p>${stats?.totalOrders || 0}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Monto Total</h3>
+                <p>$${stats?.totalAmount || 0}</p>
+            </div>
+        </div>
+        
+        <div class="profile-info">
+            <h3>Información Empresarial</h3>
+            <p><strong>Empresa:</strong> ${profile.company_name || 'No especificada'}</p>
+            <p><strong>RUT:</strong> ${profile.company_rut || 'No especificado'}</p>
+            <p><strong>Contacto:</strong> ${profile.first_name} ${profile.last_name}</p>
+            <p><strong>Email:</strong> ${profile.email}</p>
+            <p><strong>Teléfono:</strong> ${profile.mobile_phone || 'No especificado'}</p>
+        </div>
+        
+        <div class="actions">
+            <a href="/portal" style="display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; margin-right: 10px;">Ir al Catálogo</a>
+            <a href="/complete-profile" style="display: inline-block; padding: 10px 20px; background: #28a745; color: white; text-decoration: none; border-radius: 4px;">Editar Perfil</a>
+        </div>
+    </div>
+</body>
+</html>`;
+}
+
+// Servir archivos estáticos desde public
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Export the app for Vercel
+module.exports = app;
