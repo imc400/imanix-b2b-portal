@@ -600,24 +600,40 @@ app.post('/api/auth/check-email', async (req, res) => {
   try {
     const { email } = req.body;
     
-    if (!email) {
+    console.log('🔍 Backend - Request body:', req.body);
+    console.log('🔍 Backend - Email extraído:', email);
+    
+    if (!email || typeof email !== 'string' || email.trim().length === 0) {
+      console.log('❌ Backend - Email inválido o vacío');
       return res.status(400).json({
         success: false,
         message: 'Email es requerido'
       });
     }
     
-    console.log(`🔍 Verificando estado de email: ${email}`);
+    const cleanEmail = email.trim();
+    
+    // Validación básica de formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      console.log('❌ Backend - Email con formato inválido');
+      return res.status(400).json({
+        success: false,
+        message: 'Formato de email inválido'
+      });
+    }
+    
+    console.log(`🔍 Verificando estado de email: ${cleanEmail}`);
     
     // Buscar cliente en Shopify
-    const customer = await findCustomerByEmail(email);
+    const customer = await findCustomerByEmail(cleanEmail);
     if (!customer) {
       return res.json({
         success: true,
         status: 'not_found',
         message: 'Usuario no encontrado',
         nextStep: 'register',
-        email: email
+        email: cleanEmail
       });
     }
     
@@ -636,7 +652,7 @@ app.post('/api/auth/check-email', async (req, res) => {
     let hasPassword = false;
     if (database) {
       try {
-        const profile = await database.getProfile(email);
+        const profile = await database.getProfile(cleanEmail);
         hasPassword = profile && profile.password_hash;
       } catch (error) {
         console.log('No se pudo verificar contraseña en BD:', error.message);
@@ -3974,7 +3990,8 @@ function getLoginHTML() {
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const email = document.getElementById('email').value.trim();
+            const emailInput = document.getElementById('email');
+            const email = emailInput ? emailInput.value.trim() : '';
             const errorDiv = document.getElementById('errorMessage');
             const successDiv = document.getElementById('successMessage');
             const loginButton = document.getElementById('loginButton');
@@ -3982,8 +3999,20 @@ function getLoginHTML() {
             const loginText = document.getElementById('loginText');
             const loadingSpinner = document.getElementById('loadingSpinner');
             
-            if (!email) {
-                showNotification('Por favor ingresa tu email para acceder al portal', 'warning');
+            console.log('🔍 Debug - Email capturado:', email);
+            console.log('🔍 Debug - Input element:', emailInput);
+            
+            if (!email || email.length === 0) {
+                console.log('❌ Email vacío o inválido');
+                showError('Por favor ingresa tu email para acceder al portal');
+                return;
+            }
+            
+            // Validación básica de email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                console.log('❌ Email con formato inválido');
+                showError('Por favor ingresa un email válido');
                 return;
             }
 
