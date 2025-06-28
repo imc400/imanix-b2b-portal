@@ -30,17 +30,63 @@ module.exports = async (req, res) => {
     
     console.log('✅ Método POST confirmado');
     
-    // Respuesta mínima de éxito para probar que el endpoint funciona
-    console.log('✅ Retornando respuesta de prueba exitosa');
+    // Validación básica de email
+    const { email } = req.body || {};
+    console.log('🔍 Email extraído:', email);
+    console.log('🔍 Tipo de email:', typeof email);
+    
+    if (!email || typeof email !== 'string' || email.trim().length === 0) {
+      console.log('❌ Email inválido o vacío');
+      return res.status(400).json({
+        success: false,
+        message: 'Email es requerido',
+        debug: {
+          received: email,
+          type: typeof email,
+          body: req.body
+        }
+      });
+    }
+    
+    const cleanEmail = email.trim();
+    console.log('🔍 Email limpio:', cleanEmail);
+    
+    // Validación básica de formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      console.log('❌ Email con formato inválido:', cleanEmail);
+      return res.status(400).json({
+        success: false,
+        message: 'Formato de email inválido',
+        debug: {
+          email: cleanEmail,
+          regexTest: emailRegex.test(cleanEmail)
+        }
+      });
+    }
+    
+    console.log('✅ Email válido:', cleanEmail);
+    
+    // Respuesta temporal que simula usuario existente sin contraseña (primera vez)
+    // Esto permitirá que el frontend proceda al siguiente paso del flujo
+    console.log('✅ Retornando respuesta temporal de primera vez');
     return res.status(200).json({
       success: true,
-      status: 'test_mode',
-      message: 'Endpoint funcionando - modo prueba',
+      status: 'first_time',
+      message: 'Primera vez en el portal',
+      nextStep: 'create_password',
+      email: cleanEmail,
+      customerData: {
+        email: cleanEmail,
+        firstName: 'Usuario',
+        lastName: 'Temporal',
+        company: 'Empresa Test',
+        discount: 40,
+        tags: 'b2b40'
+      },
       debug: {
-        timestamp: new Date().toISOString(),
-        method: req.method,
-        hasBody: !!req.body,
-        bodyType: typeof req.body
+        mode: 'temporal_testing',
+        timestamp: new Date().toISOString()
       }
     });
     
