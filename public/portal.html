@@ -168,10 +168,20 @@
     </footer>
 
     <script>
-        // Simular obtener datos del usuario (en producción vendría del servidor)
-        document.addEventListener('DOMContentLoaded', function() {
-            const userEmail = localStorage.getItem('userEmail') || 'usuario@empresa.com';
-            document.getElementById('userEmail').textContent = userEmail;
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/api/session-check');
+                const data = await response.json();
+
+                if (data.authenticated) {
+                    document.getElementById('userEmail').textContent = data.customer.email;
+                } else {
+                    window.location.href = '/completar-perfil.html';
+                }
+            } catch (error) {
+                console.error('Error al verificar la sesión:', error);
+                window.location.href = '/completar-perfil.html';
+            }
         });
     </script>
 </body>
