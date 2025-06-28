@@ -1496,11 +1496,18 @@ app.get('/portal', async (req, res) => {
     console.log('🏠 ACCEDIENDO A RUTA /portal');
     console.log('👤 Sesión actual:', req.session?.customer?.email || 'No autenticado');
     
+    // DEBUGGING COMPLETO DE LA SESIÓN
+    console.log('🔍 DEBUG PORTAL - Session completa:', JSON.stringify(req.session, null, 2));
+    console.log('🔍 DEBUG PORTAL - req.session.customer:', req.session.customer);
+    console.log('🔍 DEBUG PORTAL - req.session.authenticated:', req.session.authenticated);
+    console.log('🔍 DEBUG PORTAL - req.session.sessionId:', req.session.sessionId);
+    
+    // COMENTAR TEMPORALMENTE EL REDIRECT PARA DEBUG
     // Verificar si el usuario está autenticado
     if (!req.session.customer) {
       console.log('❌ Usuario no autenticado, redirigiendo a login');
-      // Redirigir al login en lugar de mostrar directamente
-      return res.redirect('/');
+      // COMENTADO PARA DEBUG: return res.redirect('/');
+      console.log('🚨 REDIRECT COMENTADO PARA DEBUG - continuando...');
     }
 
     console.log('✅ Usuario autenticado:', req.session.customer.email);
