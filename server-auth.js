@@ -64,8 +64,8 @@ function extractB2BDiscount(tags) {
   // Buscar etiquetas IMA (nueva funcionalidad)
   const imaTag = tagArray.find(tag => tag.startsWith('ima') && tag.match(/ima.*\d+/));
   if (imaTag) {
-    // Extraer número de descuento de etiquetas como "imab2b40"
-    const match = imaTag.match(/\d+/);
+    // Extraer número de descuento de etiquetas como "imab2b40" (tomar el número al final)
+    const match = imaTag.match(/\d+$/);
     if (match) {
       const discount = parseInt(match[0]);
       return isNaN(discount) ? null : discount;
