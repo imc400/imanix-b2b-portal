@@ -4381,41 +4381,212 @@ function getLoginHTML() {
             const authData = sessionStorage.getItem('authData');
             
             if (isAuthenticated === 'true' && authData) {
-                console.log('✅ Usuario autenticado detectado, redirigiendo al portal completo...');
+                console.log('✅ Usuario autenticado detectado, cargando portal completo...');
                 // Clear the auth flags to prevent loops
                 sessionStorage.removeItem('isAuthenticated');
                 
-                // Redirect to the full portal with session data
+                // Get user data
                 const userData = JSON.parse(authData);
-                // Store user data for the portal to access
-                sessionStorage.setItem('portalUserData', JSON.stringify(userData));
-                // Redirect to the root with portal parameter
-                window.location.href = '/?show=portal';
+                console.log('👤 Datos del usuario:', userData);
+                
+                // Generate and display the full portal HTML directly
+                document.body.innerHTML = generateFullPortalHTML(userData);
+                
+                // Update page title
+                document.title = 'Portal B2B - IMANIX Chile';
             }
         });
         
-        // Function to generate portal content in JavaScript
-        function getPortalContent(customerData) {
+        // Function to generate full portal HTML in JavaScript
+        function generateFullPortalHTML(customerData) {
             return \`
-                <div style="font-family: Arial, sans-serif; padding: 20px; background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%); min-height: 100vh;">
-                    <div style="max-width: 1200px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-                        <h1 style="color: #333; text-align: center; margin-bottom: 30px;">
-                            🎯 Portal B2B IMANIX Chile
-                        </h1>
-                        <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 15px;">
-                            <h2 style="color: #28a745; margin-bottom: 20px;">¡Bienvenido, \${customerData.firstName}!</h2>
-                            <p style="font-size: 18px; color: #666; margin-bottom: 20px;">
-                                Email: \${customerData.email}
-                            </p>
-                            <p style="font-size: 16px; color: #666; margin-bottom: 30px;">
-                                Has ingresado exitosamente al portal B2B de IMANIX Chile.
-                            </p>
-                            <button onclick="location.reload()" style="background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%); color: #333; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">
-                                🔄 Recargar Portal
-                            </button>
-                        </div>
-                    </div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal B2B - IMANIX Chile</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
+            min-height: 100vh;
+        }
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 206, 54, 0.3);
+            padding: 1rem 0;
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: #374151;
+            font-weight: 600;
+        }
+        .main-content {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .welcome-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            margin-bottom: 2rem;
+        }
+        .welcome-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        .welcome-subtitle {
+            font-size: 1.2rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-icon {
+            font-size: 3rem;
+            color: #FFCE36;
+            margin-bottom: 1rem;
+        }
+        .stat-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #1f2937;
+        }
+        .cta-button {
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
+            color: #1f2937;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(247, 181, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">🎯 IMANIX</div>
+            <div class="user-info">
+                <i class="fas fa-user"></i>
+                <span>\${customerData.firstName} \${customerData.lastName}</span>
+                <span>|</span>
+                <span>\${customerData.email}</span>
+            </div>
+        </div>
+    </header>
+    
+    <main class="main-content">
+        <div class="welcome-card">
+            <h1 class="welcome-title">¡Bienvenido, \${customerData.firstName}!</h1>
+            <p class="welcome-subtitle">Portal B2B Exclusivo - IMANIX Chile</p>
+            <p style="color: #64748b; margin-bottom: 2rem;">
+                Has ingresado exitosamente al portal B2B de IMANIX Chile. 
+                Aquí podrás realizar pedidos con precios especiales y gestionar tu cuenta empresarial.
+            </p>
+            <button class="cta-button" onclick="location.reload()">
+                <i class="fas fa-shopping-cart"></i>
+                Ver Catálogo de Productos
+            </button>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-box"></i>
                 </div>
+                <div class="stat-title">Productos Disponibles</div>
+                <div class="stat-value">150+</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="stat-title">Descuento B2B</div>
+                <div class="stat-value">Hasta 40%</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <div class="stat-title">Envío Gratuito</div>
+                <div class="stat-value">Pedidos +$50.000</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <div class="stat-title">Soporte Dedicado</div>
+                <div class="stat-value">24/7</div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
             \`;
         }
     </script>
