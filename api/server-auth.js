@@ -390,6 +390,13 @@ app.post('/api/profile/update', async (req, res) => {
   }
 });
 
+// Función helper para verificar si el usuario tiene etiquetas "ima"
+function hasImaTag(customer) {
+  if (!customer.tags) return false;
+  const tagArray = customer.tags.split(',').map(tag => tag.trim().toLowerCase());
+  return tagArray.some(tag => tag.startsWith('ima'));
+}
+
 // Endpoint para procesar checkout y crear draft order
 app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
   try {
@@ -442,6 +449,28 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
     console.log(`🎯 Draft Order #${draftOrder.id} creado para cliente B2B: ${customer.email}`);
     console.log(`💰 Total items: ${cartItems.length}, Descuento aplicado: ${discountPercentage}%`);
 
+    // Verificar si el cliente tiene etiquetas "ima" para personalizar el mensaje
+    const isImaCustomer = hasImaTag(customer);
+    
+    // Mensajes personalizados según el tipo de cliente
+    const note = isImaCustomer 
+      ? 'Pedido realizado. Los pagos son según el acuerdo comercial que tengan.'
+      : 'Tu pedido está siendo revisado por nuestro equipo. Te contactaremos pronto para confirmar los detalles.';
+    
+    const nextSteps = isImaCustomer 
+      ? [
+          'Tu pedido ha sido procesado según tu acuerdo comercial',
+          'Los términos de pago se rigen por tu convenio IMANIX',
+          'Revisaremos disponibilidad de stock y confirmaremos entrega',
+          'Coordinaremos la entrega según tus preferencias'
+        ]
+      : [
+          'Revisaremos tu pedido y disponibilidad de stock',
+          'Te contactaremos para confirmar detalles y método de pago',
+          'Procesaremos el pedido una vez confirmado',
+          'Coordinaremos la entrega según tus preferencias'
+        ];
+
     res.json({ 
       success: true, 
       message: `¡Pedido enviado exitosamente! Tu solicitud #D${draftOrder.id} está siendo procesada por nuestro equipo.`,
@@ -450,13 +479,8 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
       total: draftOrder.total_price,
       discount: draftOrder.total_discounts,
       status: 'pendiente',
-      note: 'Tu pedido está siendo revisado por nuestro equipo. Te contactaremos pronto para confirmar los detalles.',
-      nextSteps: [
-        'Revisaremos tu pedido y disponibilidad de stock',
-        'Te contactaremos para confirmar detalles y método de pago',
-        'Procesaremos el pedido una vez confirmado',
-        'Coordinaremos la entrega según tus preferencias'
-      ]
+      note: note,
+      nextSteps: nextSteps
     });
 
   } catch (error) {
@@ -2050,7 +2074,7 @@ function getCartHTML(customer) {
                         
                         <button class="checkout-btn" onclick="proceedToCheckout()">
                             <i class="fas fa-credit-card"></i>
-                            Proceder al Pago
+                            Realizar Pedido
                         </button>
                         
                         <a href="/" class="nav-button" style="width: 100%; justify-content: center; margin-top: 1rem; text-decoration: none;">

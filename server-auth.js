@@ -1450,7 +1450,7 @@ function getCartHTML(customer) {
                         
                         <button class="checkout-btn" onclick="proceedToCheckout()">
                             <i class="fas fa-credit-card"></i>
-                            Proceder al Pago
+                            Realizar Pedido
                         </button>
                         
                         <a href="/" class="nav-button" style="width: 100%; justify-content: center; margin-top: 1rem; text-decoration: none;">
