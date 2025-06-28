@@ -4155,9 +4155,10 @@ function getLoginHTML() {
                             if (!data.profileCompleted) {
                                 window.location.href = '/complete-profile';
                             } else {
-                                // Store auth data and redirect to portal
+                                // Store auth data and simply reload the page
                                 sessionStorage.setItem('authData', JSON.stringify(data.customerData));
-                                window.location.href = '/api/server-auth?authenticated=true';
+                                sessionStorage.setItem('isAuthenticated', 'true');
+                                window.location.reload();
                             }
                         }, 1500);
                     } else {
@@ -4371,6 +4372,20 @@ function getLoginHTML() {
             currentCustomerData = null;
             
             console.log('↩️ Regresando al formulario de login');
+        });
+        
+        // Check if user is authenticated via sessionStorage (after login)
+        window.addEventListener('load', function() {
+            const isAuthenticated = sessionStorage.getItem('isAuthenticated');
+            const authData = sessionStorage.getItem('authData');
+            
+            if (isAuthenticated === 'true' && authData) {
+                console.log('✅ Usuario autenticado detectado, redirigiendo al portal...');
+                // Clear the auth flags to prevent loops
+                sessionStorage.removeItem('isAuthenticated');
+                // Redirect to portal with auth data
+                window.location.href = '/api/server-auth?portal=true&auth=' + encodeURIComponent(authData);
+            }
         });
     </script>
 </body>
@@ -11701,17 +11716,26 @@ function getPortalHTML(customer) {
 // Main route - serve IMANIX branded login page or portal
 app.get('/', async (req, res) => {
     try {
-        // Check if user is authenticated via URL parameter (post-login)
-        if (req.query.authenticated === 'true') {
-            // User just authenticated, serve portal directly
+        // Check if user is accessing portal with auth data
+        if (req.query.portal === 'true' && req.query.auth) {
+            // User authenticated, serve portal with their data
             console.log('✅ User authenticated via login, serving portal');
-            res.writeHead(200, {
-                'Content-Type': 'text/html; charset=utf-8',
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            });
-            res.end(getPortalHTML());
+            try {
+                const authData = JSON.parse(decodeURIComponent(req.query.auth));
+                console.log('📋 Auth data received:', authData);
+                
+                res.writeHead(200, {
+                    'Content-Type': 'text/html; charset=utf-8',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                });
+                res.end(getPortalHTML(authData));
+                return;
+            } catch (error) {
+                console.error('❌ Error parsing auth data:', error);
+                // Fall through to login page
+            }
         } else if (req.session.customer) {
             // User already logged in, redirect to portal
             res.redirect('/portal');
