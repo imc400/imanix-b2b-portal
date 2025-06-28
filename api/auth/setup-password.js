@@ -68,6 +68,11 @@ module.exports = async (req, res) => {
     console.log('🔍 Email:', email);
     console.log('🔍 Password length:', password ? password.length : 'No password');
     console.log('🔍 Confirm password length:', confirmPassword ? confirmPassword.length : 'No confirm password');
+    console.log('🔍 RequestBody completo:', JSON.stringify(requestBody, null, 2));
+    console.log('🔍 Password primeros 3 chars:', password ? password.substring(0, 3) + '...' : 'No password');
+    console.log('🔍 ConfirmPassword primeros 3 chars:', confirmPassword ? confirmPassword.substring(0, 3) + '...' : 'No confirm password');
+    console.log('🔍 Password últimos 3 chars:', password ? '...' + password.substring(password.length - 3) : 'No password');
+    console.log('🔍 ConfirmPassword últimos 3 chars:', confirmPassword ? '...' + confirmPassword.substring(confirmPassword.length - 3) : 'No confirm password');
     
     // Validar email
     if (!email || typeof email !== 'string' || email.trim().length === 0) {
@@ -104,12 +109,54 @@ module.exports = async (req, res) => {
       });
     }
     
-    // Validar confirmación de contraseña
-    if (!confirmPassword || password !== confirmPassword) {
-      console.log('❌ Las contraseñas no coinciden');
+    // Validar confirmación de contraseña con debugging detallado
+    console.log('🔍 Validando coincidencia de contraseñas...');
+    console.log('🔍 Password está definido:', !!password);
+    console.log('🔍 ConfirmPassword está definido:', !!confirmPassword);
+    console.log('🔍 Password === confirmPassword:', password === confirmPassword);
+    
+    if (!confirmPassword) {
+      console.log('❌ ConfirmPassword faltante');
       return res.status(400).json({
         success: false,
-        message: 'Las contraseñas no coinciden'
+        message: 'Confirmación de contraseña es requerida',
+        debug: {
+          hasPassword: !!password,
+          hasConfirmPassword: !!confirmPassword,
+          requestBody: requestBody
+        }
+      });
+    }
+    
+    if (password !== confirmPassword) {
+      console.log('❌ Las contraseñas no coinciden - debugging detallado:');
+      console.log('❌ Password length:', password ? password.length : 'undefined');
+      console.log('❌ ConfirmPassword length:', confirmPassword ? confirmPassword.length : 'undefined');
+      console.log('❌ Password type:', typeof password);
+      console.log('❌ ConfirmPassword type:', typeof confirmPassword);
+      
+      // Comparar character por character
+      if (password && confirmPassword) {
+        const minLength = Math.min(password.length, confirmPassword.length);
+        for (let i = 0; i < minLength; i++) {
+          if (password[i] !== confirmPassword[i]) {
+            console.log(`❌ Primer carácter diferente en posición ${i}: '${password[i]}' vs '${confirmPassword[i]}'`);
+            console.log(`❌ Código ASCII: ${password.charCodeAt(i)} vs ${confirmPassword.charCodeAt(i)}`);
+            break;
+          }
+        }
+      }
+      
+      return res.status(400).json({
+        success: false,
+        message: 'Las contraseñas no coinciden',
+        debug: {
+          passwordLength: password ? password.length : 'undefined',
+          confirmPasswordLength: confirmPassword ? confirmPassword.length : 'undefined',
+          passwordType: typeof password,
+          confirmPasswordType: typeof confirmPassword,
+          requestBody: requestBody
+        }
       });
     }
     
