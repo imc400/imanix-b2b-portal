@@ -4318,7 +4318,8 @@ function getLoginHTML() {
                     },
                     body: JSON.stringify({ 
                         email: currentCustomerData.email, 
-                        password: newPassword 
+                        password: newPassword,
+                        confirmPassword: confirmPassword
                     })
                 });
                 
