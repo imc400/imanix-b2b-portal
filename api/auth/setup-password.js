@@ -62,17 +62,41 @@ module.exports = async (req, res) => {
       console.log('📦 Body parseado manualmente:', requestBody);
     }
     
-    // Extraer datos del request
-    const { email, password, confirmPassword } = requestBody || {};
+    // Extraer datos del request con múltiples variantes de nombres
+    const { 
+      email, 
+      password,
+      confirmPassword,
+      confirm_password,
+      passwordConfirm,
+      password_confirm,
+      confirmPass,
+      confirm_pass
+    } = requestBody || {};
+    
+    // Determinar qué campo de confirmación usar
+    const actualConfirmPassword = confirmPassword || confirm_password || passwordConfirm || password_confirm || confirmPass || confirm_pass;
+    
     console.log('🔍 Datos extraídos:');
     console.log('🔍 Email:', email);
     console.log('🔍 Password length:', password ? password.length : 'No password');
-    console.log('🔍 Confirm password length:', confirmPassword ? confirmPassword.length : 'No confirm password');
     console.log('🔍 RequestBody completo:', JSON.stringify(requestBody, null, 2));
-    console.log('🔍 Password primeros 3 chars:', password ? password.substring(0, 3) + '...' : 'No password');
-    console.log('🔍 ConfirmPassword primeros 3 chars:', confirmPassword ? confirmPassword.substring(0, 3) + '...' : 'No confirm password');
-    console.log('🔍 Password últimos 3 chars:', password ? '...' + password.substring(password.length - 3) : 'No password');
-    console.log('🔍 ConfirmPassword últimos 3 chars:', confirmPassword ? '...' + confirmPassword.substring(confirmPassword.length - 3) : 'No confirm password');
+    console.log('🔍 Campos de confirmación disponibles:');
+    console.log('🔍   confirmPassword:', !!confirmPassword);
+    console.log('🔍   confirm_password:', !!confirm_password);
+    console.log('🔍   passwordConfirm:', !!passwordConfirm);
+    console.log('🔍   password_confirm:', !!password_confirm);
+    console.log('🔍   confirmPass:', !!confirmPass);
+    console.log('🔍   confirm_pass:', !!confirm_pass);
+    console.log('🔍 Campo de confirmación usado:', actualConfirmPassword ? 'Encontrado' : 'No encontrado');
+    console.log('🔍 Confirm password length:', actualConfirmPassword ? actualConfirmPassword.length : 'No confirm password');
+    
+    if (password && actualConfirmPassword) {
+      console.log('🔍 Password primeros 3 chars:', password.substring(0, 3) + '...');
+      console.log('🔍 ConfirmPassword primeros 3 chars:', actualConfirmPassword.substring(0, 3) + '...');
+      console.log('🔍 Password últimos 3 chars:', '...' + password.substring(password.length - 3));
+      console.log('🔍 ConfirmPassword últimos 3 chars:', '...' + actualConfirmPassword.substring(actualConfirmPassword.length - 3));
+    }
     
     // Validar email
     if (!email || typeof email !== 'string' || email.trim().length === 0) {
@@ -112,36 +136,37 @@ module.exports = async (req, res) => {
     // Validar confirmación de contraseña con debugging detallado
     console.log('🔍 Validando coincidencia de contraseñas...');
     console.log('🔍 Password está definido:', !!password);
-    console.log('🔍 ConfirmPassword está definido:', !!confirmPassword);
-    console.log('🔍 Password === confirmPassword:', password === confirmPassword);
+    console.log('🔍 ActualConfirmPassword está definido:', !!actualConfirmPassword);
+    console.log('🔍 Password === actualConfirmPassword:', password === actualConfirmPassword);
     
-    if (!confirmPassword) {
-      console.log('❌ ConfirmPassword faltante');
+    if (!actualConfirmPassword) {
+      console.log('❌ ConfirmPassword faltante en todos los campos posibles');
       return res.status(400).json({
         success: false,
         message: 'Confirmación de contraseña es requerida',
         debug: {
           hasPassword: !!password,
-          hasConfirmPassword: !!confirmPassword,
+          hasConfirmPassword: !!actualConfirmPassword,
+          availableFields: Object.keys(requestBody || {}),
           requestBody: requestBody
         }
       });
     }
     
-    if (password !== confirmPassword) {
+    if (password !== actualConfirmPassword) {
       console.log('❌ Las contraseñas no coinciden - debugging detallado:');
       console.log('❌ Password length:', password ? password.length : 'undefined');
-      console.log('❌ ConfirmPassword length:', confirmPassword ? confirmPassword.length : 'undefined');
+      console.log('❌ ActualConfirmPassword length:', actualConfirmPassword ? actualConfirmPassword.length : 'undefined');
       console.log('❌ Password type:', typeof password);
-      console.log('❌ ConfirmPassword type:', typeof confirmPassword);
+      console.log('❌ ActualConfirmPassword type:', typeof actualConfirmPassword);
       
       // Comparar character por character
-      if (password && confirmPassword) {
-        const minLength = Math.min(password.length, confirmPassword.length);
+      if (password && actualConfirmPassword) {
+        const minLength = Math.min(password.length, actualConfirmPassword.length);
         for (let i = 0; i < minLength; i++) {
-          if (password[i] !== confirmPassword[i]) {
-            console.log(`❌ Primer carácter diferente en posición ${i}: '${password[i]}' vs '${confirmPassword[i]}'`);
-            console.log(`❌ Código ASCII: ${password.charCodeAt(i)} vs ${confirmPassword.charCodeAt(i)}`);
+          if (password[i] !== actualConfirmPassword[i]) {
+            console.log(`❌ Primer carácter diferente en posición ${i}: '${password[i]}' vs '${actualConfirmPassword[i]}'`);
+            console.log(`❌ Código ASCII: ${password.charCodeAt(i)} vs ${actualConfirmPassword.charCodeAt(i)}`);
             break;
           }
         }
@@ -152,9 +177,10 @@ module.exports = async (req, res) => {
         message: 'Las contraseñas no coinciden',
         debug: {
           passwordLength: password ? password.length : 'undefined',
-          confirmPasswordLength: confirmPassword ? confirmPassword.length : 'undefined',
+          confirmPasswordLength: actualConfirmPassword ? actualConfirmPassword.length : 'undefined',
           passwordType: typeof password,
-          confirmPasswordType: typeof confirmPassword,
+          confirmPasswordType: typeof actualConfirmPassword,
+          availableFields: Object.keys(requestBody || {}),
           requestBody: requestBody
         }
       });
