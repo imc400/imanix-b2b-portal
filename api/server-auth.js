@@ -151,7 +151,7 @@ function generateOrderEmailHTML(customer, cartItems, orderData) {
             <div>
               <strong style="color: #555;">Descuento B2B:</strong> ${discountPercentage}%<br>
               <strong style="color: #555;">Tipo:</strong> <span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">Usuario IMA</span><br>
-              <strong style="color: #555;">Pedido #:</strong> D${orderData.draftOrderId}
+              <strong style="color: #555;">Pedido #:</strong> ${orderData.draftOrderNumber}
             </div>
           </div>
         </div>
@@ -229,7 +229,7 @@ async function sendOrderEmail(customer, cartItems, orderData) {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_TO || 'administracion@imanix.com',
-      subject: `🎯 Nuevo Pedido B2B IMA - ${customerName} - #D${orderData.draftOrderId}`,
+      subject: `🎯 Nuevo Pedido B2B IMA - ${customerName} - #${orderData.draftOrderNumber}`,
       html: emailHtml
     };
     
@@ -667,6 +667,7 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
       try {
         const emailResult = await sendOrderEmail(customer, cartItems, {
           draftOrderId: draftOrder.id,
+          draftOrderNumber: draftOrder.name || `D${draftOrder.id}`,
           total: draftOrder.total_price,
           discount: draftOrder.total_discounts
         });
@@ -681,11 +682,13 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
       }
     }
 
+    const orderNumber = draftOrder.name || `D${draftOrder.id}`;
+    
     res.json({ 
       success: true, 
-      message: `¡Pedido enviado exitosamente! Tu solicitud #D${draftOrder.id} está siendo procesada por nuestro equipo.`,
+      message: `¡Pedido enviado exitosamente! Tu solicitud #${orderNumber} está siendo procesada por nuestro equipo.`,
       draftOrderId: draftOrder.id,
-      draftOrderNumber: `D${draftOrder.id}`,
+      draftOrderNumber: orderNumber,
       total: draftOrder.total_price,
       discount: draftOrder.total_discounts,
       status: 'pendiente',
