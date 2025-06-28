@@ -598,28 +598,44 @@ app.post('/api/auth/logout', (req, res) => {
 // Endpoint para verificar email y determinar siguiente paso
 app.post('/api/auth/check-email', async (req, res) => {
   try {
+    console.log('🔍 Backend - Headers:', req.headers);
+    console.log('🔍 Backend - Request body completo:', JSON.stringify(req.body, null, 2));
+    console.log('🔍 Backend - Content-Type:', req.get('Content-Type'));
+    
     const { email } = req.body;
     
-    console.log('🔍 Backend - Request body:', req.body);
     console.log('🔍 Backend - Email extraído:', email);
+    console.log('🔍 Backend - Tipo de email:', typeof email);
     
     if (!email || typeof email !== 'string' || email.trim().length === 0) {
       console.log('❌ Backend - Email inválido o vacío');
+      console.log('❌ Backend - Condiciones: !email =', !email, ', typeof =', typeof email, ', trim length =', email ? email.trim().length : 'N/A');
       return res.status(400).json({
         success: false,
-        message: 'Email es requerido'
+        message: 'Email es requerido',
+        debug: {
+          received: email,
+          type: typeof email,
+          body: req.body
+        }
       });
     }
     
     const cleanEmail = email.trim();
+    console.log('🔍 Backend - Email limpio:', cleanEmail);
     
     // Validación básica de formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(cleanEmail)) {
-      console.log('❌ Backend - Email con formato inválido');
+      console.log('❌ Backend - Email con formato inválido:', cleanEmail);
+      console.log('❌ Backend - Regex test result:', emailRegex.test(cleanEmail));
       return res.status(400).json({
         success: false,
-        message: 'Formato de email inválido'
+        message: 'Formato de email inválido',
+        debug: {
+          email: cleanEmail,
+          regexTest: emailRegex.test(cleanEmail)
+        }
       });
     }
     
