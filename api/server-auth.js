@@ -2955,13 +2955,24 @@ function getCartHTML(customer) {
                 showNotification('Procesando pedido...', 'success');
                 
                 const formData = new FormData();
-                formData.append('cartItems', JSON.stringify(cart.map(item => ({
+                const cartItemsJSON = JSON.stringify(cart.map(item => ({
                     variantId: item.variantId,
                     quantity: item.quantity,
                     price: item.price,
                     title: item.title
-                }))));
+                })));
+                
+                console.log('🔍 DEBUG: Cart data to send:', cart);
+                console.log('🔍 DEBUG: CartItems JSON string:', cartItemsJSON);
+                
+                formData.append('cartItems', cartItemsJSON);
                 formData.append('paymentMethod', 'ima_agreement'); // Método especial para usuarios IMA
+                
+                // Debug FormData contents
+                console.log('🔍 DEBUG: FormData contents:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`  ${key}:`, value);
+                }
                 
                 console.log('🔍 DEBUG: Sending checkout request with formData');
                 const response = await fetch('/api/checkout', {
