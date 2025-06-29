@@ -609,7 +609,7 @@ app.post('/api/auth/login', async (req, res) => {
         lastName: userProfile.last_name || shopifyCustomer?.last_name || 'B2B',
         company: userProfile.company_name || shopifyCustomer?.default_address?.company || 'Empresa',
         tags: shopifyCustomer?.tags || '',
-        discount: 0, // Se calculará desde tags
+        discount: extractB2BDiscount(shopifyCustomer?.tags || '') || 0,
         isAuthenticated: true
       };
       
