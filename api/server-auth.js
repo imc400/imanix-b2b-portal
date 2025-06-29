@@ -116,6 +116,7 @@ app.use(async (req, res, next) => {
         Object.assign(req.session, sessionData);
         req.session.sessionId = sessionId; // Asegurar que sessionId se mantenga
         console.log('✅ Session loaded for:', sessionData.customer?.email || 'anonymous');
+        console.log('🔍 Session data loaded - customer tags:', sessionData.customer?.tags || 'NO_TAGS_IN_SESSION');
       } else {
         console.log('📭 No valid session found, creating new session');
         // Crear nueva sesión si no existe o expiró
