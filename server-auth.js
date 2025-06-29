@@ -3,6 +3,7 @@ const fs = require('fs').promises;
 const session = require('express-session');
 const axios = require('axios');
 const database = require('./database');
+const multer = require('multer');
 require('dotenv').config();
 
 const app = express();
@@ -21,6 +22,12 @@ app.use(session({
 
 app.use(express.json());
 app.use(express.static('.'));
+
+// Configuración de multer para upload de comprobantes
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB máximo
+});
 
 // Configuración de Shopify API
 const SHOPIFY_SHOP_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN || 'braintoys-chile.myshopify.com';
@@ -371,19 +378,43 @@ app.post('/api/profile/update', async (req, res) => {
 });
 
 // Endpoint para procesar checkout y crear draft order
-app.post('/api/checkout', async (req, res) => {
+app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
   try {
+    console.log('🚀 DEBUG ROOT checkout - Starting checkout process');
+    console.log('🔍 DEBUG ROOT checkout - req.body type:', typeof req.body);
+    console.log('🔍 DEBUG ROOT checkout - req.body keys:', req.body ? Object.keys(req.body) : 'null/undefined');
+    
     // Verificar autenticación
     if (!req.session.customer) {
+      console.log('❌ DEBUG ROOT checkout - No authenticated user');
       return res.status(401).json({ 
         success: false, 
         message: 'Usuario no autenticado' 
       });
     }
 
-    const { cartItems } = req.body;
+    // Parse cartItems si viene como string JSON (FormData)
+    let cartItems;
+    try {
+      if (req.body.cartItems) {
+        cartItems = typeof req.body.cartItems === 'string' 
+          ? JSON.parse(req.body.cartItems) 
+          : req.body.cartItems;
+        console.log('✅ DEBUG ROOT checkout - CartItems parsed successfully, length:', cartItems?.length);
+      } else {
+        console.log('❌ DEBUG ROOT checkout - No cartItems in req.body');
+        cartItems = null;
+      }
+    } catch (parseError) {
+      console.log('❌ DEBUG ROOT checkout - Error parsing cartItems:', parseError.message);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Error parsing cart items: ' + parseError.message 
+      });
+    }
     
     if (!cartItems || cartItems.length === 0) {
+      console.log('❌ DEBUG ROOT checkout - Cart is empty, cartItems:', cartItems);
       return res.status(400).json({ 
         success: false, 
         message: 'El carrito está vacío' 
