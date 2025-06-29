@@ -477,126 +477,184 @@ async function createOrUpdateUserProfile(customer) {
 
 // Endpoint para autenticación de clientes B2B
 app.post('/api/auth/login', async (req, res) => {
+  console.log('🔐 LOGIN ENDPOINT EJECUTÁNDOSE (EXPRESS UNIFIED)');
+  console.log('🔐 Timestamp:', new Date().toISOString());
+  console.log('🔐 Method:', req.method);
+  
   try {
-    const { email, password } = req.body;
+    // Extraer datos del request
+    const { email, password } = req.body || {};
+    console.log('🔍 Datos extraídos:');
+    console.log('🔍 Email:', email);
+    console.log('🔍 Password length:', password ? password.length : 'No password');
     
-    if (!email) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Email es requerido' 
+    // Validar email
+    if (!email || typeof email !== 'string' || email.trim().length === 0) {
+      console.log('❌ Email inválido o vacío');
+      return res.status(400).json({
+        success: false,
+        message: 'Email es requerido'
       });
     }
     
-    if (!password) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Contraseña es requerida' 
-      });
-    }
-
-    console.log(`🔍 Buscando cliente B2B: ${email}`);
-
-    const customer = await findCustomerByEmail(email);
+    const cleanEmail = email.trim();
     
-    if (!customer) {
-      console.log(`❌ Cliente no encontrado: ${email}`);
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Cliente no encontrado en nuestro sistema' 
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      console.log('❌ Email con formato inválido:', cleanEmail);
+      return res.status(400).json({
+        success: false,
+        message: 'Formato de email inválido'
       });
     }
-
-    const discount = extractB2BDiscount(customer.tags);
     
-    if (discount === null) {
-      console.log(`❌ Cliente sin acceso B2B: ${email} - Etiquetas: ${customer.tags}`);
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Este cliente no tiene acceso al portal B2B' 
+    // Validar contraseña
+    if (!password || typeof password !== 'string' || password.length === 0) {
+      console.log('❌ Contraseña inválida o vacía');
+      return res.status(400).json({
+        success: false,
+        message: 'Contraseña es requerida'
       });
     }
-
-    // Verificar contraseña del portal B2B
-    if (database) {
-      const profile = await database.getProfile(email);
+    
+    console.log('✅ Datos de entrada validados');
+    
+    // Verificar que Supabase esté configurado
+    const { createClient } = require('@supabase/supabase-js');
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('❌ Supabase no está configurado');
+      return res.status(500).json({
+        success: false,
+        message: 'Base de datos no disponible'
+      });
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Consultar usuario en la base de datos
+    console.log('🔍 Consultando usuario en base de datos...');
+    try {
+      const { data: userProfile, error: fetchError } = await supabase
+        .from('user_profiles')
+        .select('email, password_hash, first_name, last_name, company_name')
+        .eq('email', cleanEmail)
+        .single();
       
-      if (!profile || !profile.password_hash) {
-        // Primera vez - necesita configurar contraseña
-        return res.json({
-          success: true,
-          requiresPasswordSetup: true,
-          message: 'Primera vez en el portal. Necesitas configurar tu contraseña.',
-          customerData: {
-            email: customer?.email || 'no-email@example.com',
-            firstName: customer.first_name,
-            lastName: customer.last_name,
-            discount: discount,
-            tags: customer.tags
-          }
-        });
+      if (fetchError) {
+        console.error('❌ Error consultando base de datos:', fetchError);
+        if (fetchError.code === 'PGRST116') {
+          // Usuario no encontrado
+          return res.status(401).json({
+            success: false,
+            message: 'Credenciales inválidas'
+          });
+        }
+        throw fetchError;
       }
       
-      // Verificar contraseña
-      const isValidPassword = await verifyPassword(password, profile.password_hash);
-      if (!isValidPassword) {
-        console.log(`❌ Contraseña incorrecta para: ${email}`);
+      if (!userProfile || !userProfile.password_hash) {
+        console.log('❌ Usuario sin contraseña configurada');
         return res.status(401).json({
           success: false,
-          message: 'Contraseña incorrecta'
+          message: 'Usuario no tiene contraseña configurada'
         });
       }
-    }
-
-    // Guardar datos del cliente en sesión
-    req.session.customer = {
-      id: customer?.id,
-      email: customer?.email || 'no-email@example.com',
-      firstName: customer.first_name,
-      lastName: customer.last_name,
-      discount: discount,
-      tags: customer.tags
-    };
-
-    // Crear o actualizar perfil en base de datos
-    if (database) {
-      const discountTag = customer.tags?.split(',').find(tag => tag.trim().toLowerCase().startsWith('b2b')) || null;
-      await database.createOrUpdateProfile({
-        email: customer?.email || 'no-email@example.com',
-        shopify_customer_id: customer?.id,
-        company_name: customer.default_address?.company || null,
-        contact_name: `${customer.first_name} ${customer.last_name}`,
-        mobile_phone: customer?.phone || customer.default_address?.phone || null,
-        discount_percentage: discount,
-        discount_tag: discountTag?.trim(),
-        is_active: true
+      
+      console.log('👤 Usuario encontrado, verificando contraseña...');
+      
+      // Verificar contraseña con bcrypt
+      const bcrypt = require('bcrypt');
+      const passwordMatch = await bcrypt.compare(password, userProfile.password_hash);
+      
+      if (!passwordMatch) {
+        console.log('❌ Contraseña incorrecta');
+        return res.status(401).json({
+          success: false,
+          message: 'Credenciales inválidas'
+        });
+      }
+      
+      console.log('✅ Contraseña correcta, cargando datos de Shopify...');
+      
+      // Buscar cliente en Shopify para obtener tags y descuentos
+      let shopifyCustomer = null;
+      try {
+        const shopifyResponse = await fetch(`https://braintoys-chile.myshopify.com/admin/api/2024-01/customers/search.json?query=email:${encodeURIComponent(cleanEmail)}`, {
+          headers: {
+            'X-Shopify-Access-Token': process.env.SHOPIFY_ADMIN_API_TOKEN,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (shopifyResponse.ok) {
+          const shopifyData = await shopifyResponse.json();
+          shopifyCustomer = shopifyData.customers && shopifyData.customers.length > 0 ? shopifyData.customers[0] : null;
+          console.log('🛍️ Cliente encontrado en Shopify:', !!shopifyCustomer);
+          if (shopifyCustomer) {
+            console.log('🏷️ Tags de Shopify:', shopifyCustomer.tags);
+          }
+        }
+      } catch (shopifyError) {
+        console.error('⚠️ Error cargando datos de Shopify:', shopifyError.message);
+      }
+      
+      // Establecer sesión real para el portal con datos de Shopify
+      req.session.customer = {
+        email: cleanEmail,
+        firstName: userProfile.first_name || shopifyCustomer?.first_name || 'Usuario',
+        lastName: userProfile.last_name || shopifyCustomer?.last_name || 'B2B',
+        company: userProfile.company_name || shopifyCustomer?.default_address?.company || 'Empresa',
+        tags: shopifyCustomer?.tags || '',
+        discount: 0, // Se calculará desde tags
+        isAuthenticated: true
+      };
+      
+      console.log('✅ Sesión establecida con datos de Shopify:', req.session.customer);
+      
+      // GUARDAR SESIÓN EN SUPABASE
+      await req.session.save();
+      console.log('💾 Sesión guardada exitosamente en Supabase');
+      
+      // Respuesta exitosa de login
+      console.log('✅ Login exitoso, retornando respuesta');
+      return res.status(200).json({
+        success: true,
+        message: 'Login exitoso',
+        nextStep: 'portal_access',
+        profileCompleted: true, // User has successfully logged in, assume profile is complete
+        customerData: {
+          email: cleanEmail,
+          firstName: userProfile.first_name || 'Usuario',
+          lastName: userProfile.last_name || 'B2B',
+          company: userProfile.company_name || 'Empresa'
+        },
+        redirect: '/portal',
+        shouldRedirect: true,
+        debug: {
+          loginTime: new Date().toISOString(),
+          mode: 'unified_express_authentication'
+        }
+      });
+      
+    } catch (dbError) {
+      console.error('❌ Error en base de datos durante login:', dbError);
+      return res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor: ' + dbError.message
       });
     }
-
-    console.log(`✅ Cliente B2B autenticado: ${email} - Descuento: ${discount}%`);
-
-    // Verificar si el perfil está completo
-    let profileCompleted = false;
-    if (database) {
-      profileCompleted = await database.checkProfileCompletion(email);
-    }
-
-    res.json({ 
-      success: true, 
-      message: 'Autenticación exitosa',
-      profileCompleted: profileCompleted,
-      customer: {
-        firstName: customer.first_name,
-        lastName: customer.last_name,
-        email: customer?.email || 'no-email@example.com',
-        discount: discount
-      }
-    });
-
+    
   } catch (error) {
-    console.error('Error en autenticación:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error interno del servidor' 
+    console.error('💥 ERROR EN LOGIN ENDPOINT:', error);
+    console.error('💥 Error stack:', error.stack);
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor: ' + error.message
     });
   }
 });
