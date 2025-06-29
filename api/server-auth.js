@@ -2971,7 +2971,7 @@ function getCartHTML(customer) {
                 // Debug FormData contents
                 console.log('🔍 DEBUG: FormData contents:');
                 for (let [key, value] of formData.entries()) {
-                    console.log(`  ${key}:`, value);
+                    console.log('  ' + key + ':', value);
                 }
                 
                 console.log('🔍 DEBUG: Sending checkout request with formData');
