@@ -1559,11 +1559,22 @@ app.get('/complete-profile', (req, res) => {
 // Ruta del carrito
 app.get('/carrito', (req, res) => {
   try {
+    console.log('🛒 ACCEDIENDO A RUTA /carrito');
+    console.log('👤 Sesión carrito:', req.session?.customer?.email || 'No autenticado');
+    
+    // DEBUGGING COMPLETO DE LA SESIÓN EN CARRITO
+    console.log('🔍 DEBUG CARRITO - Session completa:', JSON.stringify(req.session, null, 2));
+    console.log('🔍 DEBUG CARRITO - req.session.customer:', req.session.customer);
+    console.log('🔍 DEBUG CARRITO - req.session.sessionId:', req.session.sessionId);
+    
     // Verificar si el usuario está autenticado
     if (!req.session.customer) {
-      return res.redirect('/');
+      console.log('❌ Usuario no autenticado en carrito, redirigiendo a login');
+      // COMENTADO PARA DEBUG: return res.redirect('/');
+      console.log('🚨 CARRITO REDIRECT COMENTADO PARA DEBUG - continuando...');
     }
 
+    console.log('🎨 Generando HTML del carrito...');
     res.send(getCartHTML(req.session.customer));
     
   } catch (error) {
