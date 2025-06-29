@@ -398,22 +398,24 @@ function extractB2BDiscount(tags) {
   
   const tagArray = tags.split(',').map(tag => tag.trim().toLowerCase());
   
-  // Buscar etiquetas B2B (mantener funcionalidad existente)
-  const b2bTag = tagArray.find(tag => tag.startsWith('b2b') && tag.match(/b2b\d+/));
-  if (b2bTag) {
-    const discount = parseInt(b2bTag.replace('b2b', ''));
-    return isNaN(discount) ? null : discount;
-  }
-  
-  // Buscar etiquetas IMA (nueva funcionalidad)
+  // Buscar etiquetas IMA PRIMERO (prioridad para flujo imab2b40)
   const imaTag = tagArray.find(tag => tag.startsWith('ima') && tag.match(/ima.*\d+/));
   if (imaTag) {
     // Extraer número de descuento de etiquetas como "imab2b40" (tomar el número al final)
     const match = imaTag.match(/\d+$/);
     if (match) {
       const discount = parseInt(match[0]);
+      console.log(`✅ Usando flujo IMA: ${imaTag} → ${discount}% descuento`);
       return isNaN(discount) ? null : discount;
     }
+  }
+  
+  // Buscar etiquetas B2B como fallback
+  const b2bTag = tagArray.find(tag => tag.startsWith('b2b') && tag.match(/b2b\d+/));
+  if (b2bTag) {
+    const discount = parseInt(b2bTag.replace('b2b', ''));
+    console.log(`⚠️ Usando flujo B2B legacy: ${b2bTag} → ${discount}% descuento`);
+    return isNaN(discount) ? null : discount;
   }
   
   return null;
@@ -1464,10 +1466,19 @@ async function fetchB2BProductsFromShopify() {
 // Ruta principal
 app.get('/', async (req, res) => {
   try {
+    console.log('🏠 ACCEDIENDO A RUTA RAÍZ /');
+    console.log('👤 Sesión raíz:', req.session?.customer?.email || 'No autenticado');
+    
+    // DEBUGGING COMPLETO DE LA SESIÓN EN RUTA RAÍZ
+    console.log('🔍 DEBUG RAÍZ - Session completa:', JSON.stringify(req.session, null, 2));
+    console.log('🔍 DEBUG RAÍZ - req.session.customer:', req.session.customer);
+    console.log('🔍 DEBUG RAÍZ - req.session.sessionId:', req.session.sessionId);
+    
     // Verificar si el usuario está autenticado
     if (!req.session.customer) {
-      // Mostrar pantalla de login
-      return res.send(getLoginHTML());
+      console.log('❌ Usuario no autenticado en raíz, mostrando login');
+      // COMENTADO PARA DEBUG: return res.send(getLoginHTML());
+      console.log('🚨 RAÍZ LOGIN COMENTADO PARA DEBUG - continuando con portal...');
     }
 
     // Verificar si el perfil está completo
