@@ -152,26 +152,9 @@ app.use(async (req, res, next) => {
   }
 });
 
-// Aplicar JSON/URL parsing condicionalmente para evitar conflicto con multer
-app.use((req, res, next) => {
-  // Skip JSON parsing para rutas que usan multer (FormData)
-  if (req.path === '/api/checkout') {
-    console.log('🔍 Skipping JSON parsing for /api/checkout (FormData expected)');
-    next();
-  } else {
-    // Aplicar JSON parsing para otras rutas
-    express.json({ limit: '10mb' })(req, res, next);
-  }
-});
-
-app.use((req, res, next) => {
-  // Skip URL-encoded parsing para rutas que usan multer
-  if (req.path === '/api/checkout') {
-    next();
-  } else {
-    express.urlencoded({ extended: true, limit: '10mb' })(req, res, next);
-  }
-});
+// Global body parsing (multer will override for its routes)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Middleware de debugging global para capturar todas las requests a auth
 app.use('/api/auth/*', (req, res, next) => {
