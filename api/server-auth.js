@@ -1067,9 +1067,18 @@ function hasImaTag(customer) {
 app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
   try {
     console.log('🚀 DEBUG checkout - Starting checkout process');
-    console.log('🔍 DEBUG checkout - Request body keys:', Object.keys(req.body));
-    console.log('🔍 DEBUG checkout - PaymentMethod:', req.body.paymentMethod);
+    console.log('🔍 DEBUG checkout - req.body type:', typeof req.body);
+    console.log('🔍 DEBUG checkout - req.body is null:', req.body === null);
+    console.log('🔍 DEBUG checkout - req.body is undefined:', req.body === undefined);
+    console.log('🔍 DEBUG checkout - Request body keys:', req.body ? Object.keys(req.body) : 'req.body is null/undefined');
+    console.log('🔍 DEBUG checkout - PaymentMethod:', req.body?.paymentMethod);
     console.log('🔍 DEBUG checkout - Session customer exists:', !!req.session.customer);
+    
+    // Asegurar que req.body existe (multer debería configurarlo, pero por seguridad)
+    if (!req.body) {
+      console.log('⚠️ DEBUG checkout - req.body is null/undefined, initializing empty object');
+      req.body = {};
+    }
     
     // Verificar autenticación
     if (!req.session.customer) {
