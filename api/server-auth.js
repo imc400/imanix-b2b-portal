@@ -202,7 +202,7 @@ async function findCustomerByEmail(email) {
 
 // Función para generar template HTML del email
 function generateOrderEmailHTML(customer, cartItems, orderData) {
-  const customerName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'N/A';
+  const customerName = `${customer?.firstName || 'Usuario' || ''} ${customer?.lastName || ''}`.trim() || 'N/A';
   const companyName = customer.company || 'N/A';
   const discountPercentage = customer.discount || 0;
   
@@ -262,7 +262,7 @@ function generateOrderEmailHTML(customer, cartItems, orderData) {
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
             <div>
               <strong style="color: #555;">Nombre:</strong> ${customerName}<br>
-              <strong style="color: #555;">Email:</strong> ${customer.email}<br>
+              <strong style="color: #555;">Email:</strong> ${customer?.email || 'no-email@example.com'}<br>
               <strong style="color: #555;">Empresa:</strong> ${companyName}
             </div>
             <div>
@@ -351,7 +351,7 @@ async function sendOrderEmail(customer, cartItems, orderData) {
     }
     
     const emailHtml = generateOrderEmailHTML(customer, cartItems, orderData);
-    const customerName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email;
+    const customerName = `${customer?.firstName || 'Usuario' || ''} ${customer?.lastName || ''}`.trim() || customer?.email || 'no-email@example.com';
     
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -426,17 +426,17 @@ async function createOrUpdateUserProfile(customer) {
   try {
     // Datos del cliente desde Shopify
     const profileData = {
-      email: customer.email,
+      email: customer?.email || 'no-email@example.com',
       shopify_customer_id: customer.id || null,
       company_name: customer.company || customer.defaultAddress?.company || null,
-      contact_name: `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || null,
+      contact_name: `${customer?.firstName || 'Usuario' || ''} ${customer?.lastName || ''}`.trim() || null,
       mobile_phone: customer.phone || customer.defaultAddress?.phone || null,
       discount_percentage: customer.discount || 0,
       discount_tag: customer.tags.find(tag => tag.startsWith('b2b')) || null,
       is_active: true
     };
 
-    console.log('🔄 Creando/actualizando perfil para:', customer.email);
+    console.log('🔄 Creando/actualizando perfil para:', customer?.email || 'no-email@example.com');
     const profile = await database.createOrUpdateProfile(profileData);
     
     if (profile) {
@@ -449,8 +449,8 @@ async function createOrUpdateUserProfile(customer) {
           type: 'shipping',
           is_default: true,
           company: address.company || null,
-          first_name: address.firstName || customer.firstName,
-          last_name: address.lastName || customer.lastName,
+          first_name: address.firstName || customer?.firstName || 'Usuario',
+          last_name: address.lastName || customer?.lastName,
           address1: address.address1,
           address2: address.address2 || null,
           city: address.city,
@@ -461,7 +461,7 @@ async function createOrUpdateUserProfile(customer) {
         };
         
         console.log('🏠 Sincronizando dirección por defecto');
-        await database.addAddress(customer.email, addressData);
+        await database.addAddress(customer?.email || 'no-email@example.com', addressData);
       }
     }
     
@@ -524,7 +524,7 @@ app.post('/api/auth/login', async (req, res) => {
           requiresPasswordSetup: true,
           message: 'Primera vez en el portal. Necesitas configurar tu contraseña.',
           customerData: {
-            email: customer.email,
+            email: customer?.email || 'no-email@example.com',
             firstName: customer.first_name,
             lastName: customer.last_name,
             discount: discount,
@@ -547,7 +547,7 @@ app.post('/api/auth/login', async (req, res) => {
     // Guardar datos del cliente en sesión
     req.session.customer = {
       id: customer.id,
-      email: customer.email,
+      email: customer?.email || 'no-email@example.com',
       firstName: customer.first_name,
       lastName: customer.last_name,
       discount: discount,
@@ -558,7 +558,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (database) {
       const discountTag = customer.tags?.split(',').find(tag => tag.trim().toLowerCase().startsWith('b2b')) || null;
       await database.createOrUpdateProfile({
-        email: customer.email,
+        email: customer?.email || 'no-email@example.com',
         shopify_customer_id: customer.id,
         company_name: customer.default_address?.company || null,
         contact_name: `${customer.first_name} ${customer.last_name}`,
@@ -584,7 +584,7 @@ app.post('/api/auth/login', async (req, res) => {
       customer: {
         firstName: customer.first_name,
         lastName: customer.last_name,
-        email: customer.email,
+        email: customer?.email || 'no-email@example.com',
         discount: discount
       }
     });
@@ -646,7 +646,7 @@ app.post('/api/auth/setup-password', async (req, res) => {
     // Crear sesión
     req.session.customer = {
       id: customer.id,
-      email: customer.email,
+      email: customer?.email || 'no-email@example.com',
       firstName: customer.first_name,
       lastName: customer.last_name,
       discount: discount,
@@ -786,7 +786,7 @@ app.post('/api/auth/check-email', async (req, res) => {
     }
     
     const customerData = {
-      email: customer.email,
+      email: customer?.email || 'no-email@example.com',
       firstName: customer.first_name,
       lastName: customer.last_name,
       discount: discount,
@@ -842,16 +842,16 @@ app.get('/api/profile/current', requireAuth, async (req, res) => {
     let profile = null;
 
     if (database) {
-      profile = await database.getProfile(customer.email);
+      profile = await database.getProfile(customer?.email || 'no-email@example.com');
     }
 
     // Si no hay perfil, crear uno básico
     if (!profile) {
       profile = {
-        email: customer.email,
-        contact_name: `${customer.firstName} ${customer.lastName}`,
-        first_name: customer.firstName || '',
-        last_name: customer.lastName || '',
+        email: customer?.email || 'no-email@example.com',
+        contact_name: `${customer?.firstName || 'Usuario'} ${customer?.lastName}`,
+        first_name: customer?.firstName || 'Usuario' || '',
+        last_name: customer?.lastName || '',
         mobile_phone: '',
         company_name: '',
         company_rut: '',
@@ -888,7 +888,7 @@ app.post('/api/profile/update', async (req, res) => {
     }
 
     const profileData = req.body; // <-- FIX: Leer datos directamente de req.body
-    const email = req.session.customer.email;
+    const email = req.session.customer?.email || 'no-email@example.com';
 
     if (!profileData) {
       return res.status(400).json({ 
@@ -1026,7 +1026,7 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
     const draftOrder = await createDraftOrder(customer, cartItems, discountPercentage, paymentMethod, comprobante);
     
     // Log para seguimiento
-    console.log(`🎯 Draft Order #${draftOrder.id} creado para cliente B2B: ${customer.email}`);
+    console.log(`🎯 Draft Order #${draftOrder.id} creado para cliente B2B: ${customer?.email || 'no-email@example.com'}`);
     console.log(`💰 Total items: ${cartItems.length}, Descuento aplicado: ${discountPercentage}%`);
 
     // Verificar si el cliente tiene etiquetas "ima" para personalizar el mensaje
@@ -1090,7 +1090,7 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
         customerTags: customer.tags,
         isImaCustomer: isImaCustomer,
         noteSelected: note,
-        customerEmail: customer.email
+        customerEmail: customer?.email || 'no-email@example.com'
       }
     });
 
@@ -1138,7 +1138,7 @@ function applyB2BDiscount(price, discount) {
 async function saveDraftOrderToDatabase(draftOrder, customer) {
     try {
         console.log('🔄 Iniciando guardado de pedido en base de datos...');
-        console.log('📧 Email del cliente:', customer.email);
+        console.log('📧 Email del cliente:', customer?.email || 'no-email@example.com');
         console.log('🆔 Draft Order ID:', draftOrder.id);
         console.log('💵 Total Price:', draftOrder.total_price);
         console.log('💸 Total Discounts:', draftOrder.total_discounts);
@@ -1176,12 +1176,12 @@ async function saveDraftOrderToDatabase(draftOrder, customer) {
         });
 
         console.log('🚀 Llamando a database.addOrder...');
-        const result = await database.addOrder(customer.email, orderData);
+        const result = await database.addOrder(customer?.email || 'no-email@example.com', orderData);
         
         if (result) {
             console.log('✅ Draft Order guardado exitosamente en historial del usuario:', draftOrder.id);
             console.log('💰 Datos guardados:', {
-                email: customer.email,
+                email: customer?.email || 'no-email@example.com',
                 total_amount: orderData.total_amount,
                 discount_amount: orderData.discount_amount,
                 status: orderData.status,
@@ -1202,7 +1202,7 @@ async function createDraftOrder(customer, cartItems, discountPercentage, payment
     // Obtener datos del perfil empresarial desde la base de datos
     let profileData = null;
     if (database) {
-        profileData = await database.getProfile(customer.email);
+        profileData = await database.getProfile(customer?.email || 'no-email@example.com');
     }
 
     // Extraer el ID numérico de la variant (desde GraphQL ID)
@@ -1229,7 +1229,7 @@ async function createDraftOrder(customer, cartItems, discountPercentage, payment
     });
 
     // Construir nota con información empresarial completa
-    let orderNote = `Pedido B2B desde portal - Cliente: ${customer.email} - Descuento: ${discountPercentage}%
+    let orderNote = `Pedido B2B desde portal - Cliente: ${customer?.email || 'no-email@example.com'} - Descuento: ${discountPercentage}%
     
 MÉTODO DE PAGO: ${paymentMethod === 'transferencia' ? 'Transferencia Bancaria' : 'Contacto para Coordinación'}`;
     
@@ -1243,7 +1243,7 @@ MÉTODO DE PAGO: ${paymentMethod === 'transferencia' ? 'Transferencia Bancaria' 
                     {
                         resource_type: 'auto',
                         folder: 'imanix-comprobantes',
-                        public_id: `comprobante-${Date.now()}-${customer.email.replace('@', '-at-')}`
+                        public_id: `comprobante-${Date.now()}-${customer?.email || 'no-email@example.com'.replace('@', '-at-')}`
                     },
                     (error, result) => {
                         if (error) reject(error);
@@ -1288,9 +1288,9 @@ CONTACTO:
             line_items: lineItems,
             customer: {
                 id: customer.shopifyId || null,
-                email: customer.email,
-                first_name: profileData?.first_name || customer.firstName || customer.name?.split(' ')[0] || '',
-                last_name: profileData?.last_name || customer.lastName || customer.name?.split(' ').slice(1).join(' ') || ''
+                email: customer?.email || 'no-email@example.com',
+                first_name: profileData?.first_name || customer?.firstName || 'Usuario' || customer.name?.split(' ')[0] || '',
+                last_name: profileData?.last_name || customer?.lastName || customer.name?.split(' ').slice(1).join(' ') || ''
             },
             applied_discount: {
                 description: `Descuento B2B ${discountPercentage}%`,
@@ -1472,7 +1472,7 @@ app.get('/', async (req, res) => {
 
     // Verificar si el perfil está completo
     if (database) {
-      const profileCompleted = await database.checkProfileCompletion(req.session.customer.email);
+      const profileCompleted = await database.checkProfileCompletion(req.session.customer?.email || 'no-email@example.com');
       if (!profileCompleted) {
         // Redirigir a completar perfil
         return res.redirect('/complete-profile');
@@ -1514,7 +1514,7 @@ app.get('/portal', async (req, res) => {
 
     // Verificar si el perfil está completo
     if (database && req.session.customer?.email) {
-      const profileCompleted = await database.checkProfileCompletion(req.session.customer.email);
+      const profileCompleted = await database.checkProfileCompletion(req.session.customer?.email || 'no-email@example.com');
       console.log('🔍 Perfil completo:', profileCompleted);
       
       if (!profileCompleted) {
@@ -1582,19 +1582,19 @@ app.get('/perfil', requireAuth, async (req, res) => {
     let stats = null;
 
     if (database) {
-      profile = await database.getProfile(customer.email);
-      addresses = await database.getUserAddresses(customer.email);
-      orders = await database.getUserOrders(customer.email, 10);
-      stats = await database.getStats(customer.email);
+      profile = await database.getProfile(customer?.email || 'no-email@example.com');
+      addresses = await database.getUserAddresses(customer?.email || 'no-email@example.com');
+      orders = await database.getUserOrders(customer?.email || 'no-email@example.com', 10);
+      stats = await database.getStats(customer?.email || 'no-email@example.com');
     }
 
     // Si no hay perfil, crear uno básico
     if (!profile) {
       profile = {
-        email: customer.email,
-        contact_name: `${customer.firstName} ${customer.lastName}`,
-        first_name: customer.firstName || '',
-        last_name: customer.lastName || '',
+        email: customer?.email || 'no-email@example.com',
+        contact_name: `${customer?.firstName || 'Usuario'} ${customer?.lastName}`,
+        first_name: customer?.firstName || 'Usuario' || '',
+        last_name: customer?.lastName || '',
         mobile_phone: '',
         company_name: '',
         company_rut: '',
@@ -2514,13 +2514,13 @@ function getCartHTML(customer) {
                 <img src="/images/Logo%202160x1200%20(1).png" alt="IMANIX Portal B2B" style="height: 70px; width: auto;" />            <div class="navbar-actions">
                 <div class="user-account" onclick="toggleUserDropdown()">
                     <i class="fas fa-user-circle"></i>
-                    <span>${customer.firstName} ${customer.lastName || ''}</span>
+                    <span>${customer?.firstName || 'Usuario'} ${customer?.lastName || ''}</span>
                     <i class="fas fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.25rem;"></i>
                     
                     <div class="user-dropdown" id="userDropdown">
                         <div class="dropdown-header">
-                            <div class="user-name">${customer.firstName} ${customer.lastName || ''}</div>
-                            <div class="user-email">${customer.email}</div>
+                            <div class="user-name">${customer?.firstName || 'Usuario'} ${customer?.lastName || ''}</div>
+                            <div class="user-email">${customer?.email || 'no-email@example.com'}</div>
                         </div>
                         
                         <div class="dropdown-menu">
@@ -5287,7 +5287,7 @@ function getCompleteProfileHTML(customer) {
                 </svg>
             </div>
             <h1 class="profile-title">Completa tu Perfil Empresarial</h1>
-            <p class="profile-subtitle">¡Bienvenido ${customer.firstName || ''}! Para continuar al portal B2B, necesitamos algunos datos de tu empresa.</p>
+            <p class="profile-subtitle">¡Bienvenido ${customer?.firstName || 'Usuario' || ''}! Para continuar al portal B2B, necesitamos algunos datos de tu empresa.</p>
             
             <div class="profile-description">
                 <h3><i class="fas fa-info-circle"></i> ¿Por qué necesitamos esta información?</h3>
@@ -5308,12 +5308,12 @@ function getCompleteProfileHTML(customer) {
                     <div class="form-group">
                         <label class="form-label" for="first_name">Nombre <span class="required">*</span></label>
                         <input type="text" id="first_name" name="first_name" class="form-input" 
-                               placeholder="Tu nombre" required value="${customer.firstName || ''}">
+                               placeholder="Tu nombre" required value="${customer?.firstName || 'Usuario' || ''}">
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="last_name">Apellido <span class="required">*</span></label>
                         <input type="text" id="last_name" name="last_name" class="form-input" 
-                               placeholder="Tu apellido" required value="${customer.lastName || ''}">
+                               placeholder="Tu apellido" required value="${customer?.lastName || ''}">
                     </div>
                 </div>
                 <div class="form-row">
@@ -5329,7 +5329,7 @@ function getCompleteProfileHTML(customer) {
                 <div class="form-group full-width">
                     <label class="form-label" for="email">Email</label>
                     <input type="email" id="email" name="email" class="form-input" 
-                           value="${customer.email}" readonly style="background: #f3f4f6; cursor: not-allowed;">
+                           value="${customer?.email || 'no-email@example.com'}" readonly style="background: #f3f4f6; cursor: not-allowed;">
                 </div>
             </div>
 
@@ -7529,13 +7529,13 @@ function getPortalHTML(products, customer) {
             <div class="navbar-actions">
                 <div class="user-account" onclick="toggleUserDropdown()">
                     <i class="fas fa-user-circle"></i>
-                    <span>${customer.firstName} ${customer.lastName || ''}</span>
+                    <span>${customer?.firstName || 'Usuario'} ${customer?.lastName || ''}</span>
                     <i class="fas fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.25rem;"></i>
                     
                     <div class="user-dropdown" id="userDropdown">
                         <div class="dropdown-header">
-                            <div class="user-name">${customer.firstName} ${customer.lastName || ''}</div>
-                            <div class="user-email">${customer.email}</div>
+                            <div class="user-name">${customer?.firstName || 'Usuario'} ${customer?.lastName || ''}</div>
+                            <div class="user-email">${customer?.email || 'no-email@example.com'}</div>
                         </div>
                         
                         <div class="dropdown-menu">
@@ -9814,13 +9814,13 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             <div class="navbar-actions">
                 <div class="user-account" onclick="toggleUserDropdown()">
                     <i class="fas fa-user-circle"></i>
-                    <span>${customer.firstName} ${customer.lastName || ''}</span>
+                    <span>${customer?.firstName || 'Usuario'} ${customer?.lastName || ''}</span>
                     <i class="fas fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.25rem;"></i>
                     
                     <div class="user-dropdown" id="userDropdown">
                         <div class="dropdown-header">
-                            <div class="user-name">${customer.firstName} ${customer.lastName || ''}</div>
-                            <div class="user-email">${customer.email}</div>
+                            <div class="user-name">${customer?.firstName || 'Usuario'} ${customer?.lastName || ''}</div>
+                            <div class="user-email">${customer?.email || 'no-email@example.com'}</div>
                         </div>
                         
                         <div class="dropdown-menu">
@@ -9858,7 +9858,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                 <i class="fas fa-user-circle"></i>
                 Mi Perfil B2B
             </h1>
-            <p class="profile-subtitle">Bienvenido/a ${customer.firstName} • ${customer.email} • Descuento B2B: ${customerDiscount}%</p>
+            <p class="profile-subtitle">Bienvenido/a ${customer?.firstName || 'Usuario'} • ${customer?.email || 'no-email@example.com'} • Descuento B2B: ${customerDiscount}%</p>
         </div>
 
         ${stats ? `
@@ -9927,7 +9927,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Email</label>
-                                <input type="email" class="form-input" value="${customer.email}" disabled>
+                                <input type="email" class="form-input" value="${customer?.email || 'no-email@example.com'}" disabled>
                             </div>
                             
                             <div class="form-group">
@@ -10516,10 +10516,10 @@ function requireAuthAPI(req, res, next) {
 app.get('/perfil', requireAuth, async (req, res) => {
   try {
     const customer = req.session.customer;
-    const profile = await database.getProfile(customer.email);
-    const addresses = await database.getUserAddresses(customer.email);
-    const orders = await database.getUserOrders(customer.email, 10);
-    const stats = await database.getStats(customer.email);
+    const profile = await database.getProfile(customer?.email || 'no-email@example.com');
+    const addresses = await database.getUserAddresses(customer?.email || 'no-email@example.com');
+    const orders = await database.getUserOrders(customer?.email || 'no-email@example.com', 10);
+    const stats = await database.getStats(customer?.email || 'no-email@example.com');
     
     const html = getProfileHTML(customer, profile, addresses, orders, stats);
     res.send(html);
@@ -10533,8 +10533,8 @@ app.get('/perfil', requireAuth, async (req, res) => {
 app.get('/api/profile', requireAuthAPI, async (req, res) => {
   try {
     const customer = req.session.customer;
-    const profile = await database.getProfile(customer.email);
-    const stats = await database.getStats(customer.email);
+    const profile = await database.getProfile(customer?.email || 'no-email@example.com');
+    const stats = await database.getStats(customer?.email || 'no-email@example.com');
     
     res.json({
       success: true,
@@ -10566,7 +10566,7 @@ app.put('/api/profile', requireAuthAPI, async (req, res) => {
       }
     });
     
-    const profile = await database.updateProfile(customer.email, filteredUpdates);
+    const profile = await database.updateProfile(customer?.email || 'no-email@example.com', filteredUpdates);
     
     if (profile) {
       res.json({ success: true, data: profile });
@@ -10583,7 +10583,7 @@ app.put('/api/profile', requireAuthAPI, async (req, res) => {
 app.get('/api/addresses', requireAuthAPI, async (req, res) => {
   try {
     const customer = req.session.customer;
-    const addresses = await database.getUserAddresses(customer.email);
+    const addresses = await database.getUserAddresses(customer?.email || 'no-email@example.com');
     
     res.json({ success: true, data: addresses });
   } catch (error) {
@@ -10616,7 +10616,7 @@ app.post('/api/addresses', requireAuthAPI, async (req, res) => {
       });
     }
     
-    const address = await database.addAddress(customer.email, addressData);
+    const address = await database.addAddress(customer?.email || 'no-email@example.com', addressData);
     
     if (address) {
       res.json({ success: true, data: address });
@@ -10673,7 +10673,7 @@ app.get('/api/orders', requireAuthAPI, async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
     
-    const orders = await database.getUserOrders(customer.email, limit, offset);
+    const orders = await database.getUserOrders(customer?.email || 'no-email@example.com', limit, offset);
     
     res.json({ success: true, data: orders });
   } catch (error) {
@@ -10754,9 +10754,9 @@ app.get('/cuenta', requireAuth, async (req, res) => {
       ...req.session.customer,
       discountPercentage: req.session.customer.discount
     };
-    const profile = await database.getUserProfile(customer.email);
-    const addresses = await database.getUserAddresses(customer.email);
-    const stats = await database.getUserStats(customer.email);
+    const profile = await database.getUserProfile(customer?.email || 'no-email@example.com');
+    const addresses = await database.getUserAddresses(customer?.email || 'no-email@example.com');
+    const stats = await database.getUserStats(customer?.email || 'no-email@example.com');
     
     res.send(getAccountHTML(customer, profile, addresses, stats));
   } catch (error) {
@@ -10776,8 +10776,8 @@ app.get('/pedidos', requireAuth, async (req, res) => {
     const limit = 10;
     const offset = (page - 1) * limit;
     
-    const orders = await database.getUserOrders(customer.email, limit, offset);
-    const totalOrders = await database.getUserOrdersCount(customer.email);
+    const orders = await database.getUserOrders(customer?.email || 'no-email@example.com', limit, offset);
+    const totalOrders = await database.getUserOrdersCount(customer?.email || 'no-email@example.com');
     const totalPages = Math.ceil(totalOrders / limit);
     
     res.send(getOrdersHTML(customer, orders, page, totalPages));
@@ -10798,7 +10798,7 @@ app.get('/pedidos/:id', requireAuth, async (req, res) => {
     
     const order = await database.getOrderDetails(orderId);
     
-    if (!order || order.customer_email !== customer.email) {
+    if (!order || order.customer_email !== customer?.email || 'no-email@example.com') {
       return res.status(404).send('Pedido no encontrado');
     }
     
@@ -11068,7 +11068,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
                 <a href="/" class="logo">🧲 IMANIX B2B</a>
                 <div class="user-info">
                     <span class="discount-badge">${customer.discountPercentage}% Descuento B2B</span>
-                    <span>👤 ${customer.email}</span>
+                    <span>👤 ${customer?.email || 'no-email@example.com'}</span>
                     <a href="/api/auth/logout" class="logout-btn">Cerrar Sesión</a>
                 </div>
             </div>
@@ -11108,7 +11108,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
                         </div>
                         <div class="profile-item">
                             <span class="profile-label">Email:</span>
-                            <span class="profile-value">${customer.email}</span>
+                            <span class="profile-value">${customer?.email || 'no-email@example.com'}</span>
                         </div>
                         <div class="profile-item">
                             <span class="profile-label">Teléfono:</span>
@@ -11427,7 +11427,7 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
                 <a href="/" class="logo">🧲 IMANIX B2B</a>
                 <div class="user-info">
                     <span class="discount-badge">${customer.discountPercentage}% Descuento B2B</span>
-                    <span>👤 ${customer.email}</span>
+                    <span>👤 ${customer?.email || 'no-email@example.com'}</span>
                     <a href="/api/auth/logout" class="logout-btn">Cerrar Sesión</a>
                 </div>
             </div>
@@ -11884,7 +11884,7 @@ function getBasicPortalHTML(customer) {
             <div class="user-info">
                 <span class="user-name">
                     <i class="fas fa-user"></i> 
-                    ${customer.firstName || 'Usuario'} ${customer.lastName || ''}
+                    ${customer?.firstName || 'Usuario' || 'Usuario'} ${customer?.lastName || ''}
                 </span>
                 <button class="logout-btn" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
@@ -11908,7 +11908,7 @@ function getBasicPortalHTML(customer) {
                     <div class="detail-item">
                         <i class="fas fa-envelope detail-icon"></i>
                         <span class="detail-label">Email:</span>
-                        <span class="detail-value">${customer.email || 'No disponible'}</span>
+                        <span class="detail-value">${customer?.email || 'no-email@example.com' || 'No disponible'}</span>
                     </div>
                     <div class="detail-item">
                         <i class="fas fa-building detail-icon"></i>
