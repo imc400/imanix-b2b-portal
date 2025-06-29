@@ -11,7 +11,7 @@ try {
 // Importar dependencias
 const bcrypt = require('bcrypt');
 const { createClient } = require('@supabase/supabase-js');
-const session = require('express-session');
+const SupabaseSessionStore = require('../session-store');
 
 // Configurar Supabase directamente
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -22,15 +22,15 @@ console.log('🔍 SUPABASE_SERVICE_KEY configurado:', !!supabaseKey);
 
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
-// Configurar sesión para serverless
-const sessionMiddleware = session({
-  secret: 'b2b-portal-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 1000 * 60 * 60 * 24, // 24 horas
-    sameSite: 'lax'
+// Inicializar Session Store de Supabase
+const sessionStore = new SupabaseSessionStore();
+
+// Inicializar tabla de sesiones al arrancar
+sessionStore.ensureSessionsTable().then(success => {
+  if (success) {
+    console.log('✅ Sessions table ready in login module');
+  } else {
+    console.log('⚠️ Sessions table initialization failed in login module');
   }
 });
 
@@ -72,18 +72,76 @@ module.exports = async (req, res) => {
   console.log('🔐 Method:', req.method);
   console.log('🔐 Headers completos:', JSON.stringify(req.headers, null, 2));
   
-  // Apply session middleware
-  await new Promise((resolve, reject) => {
-    sessionMiddleware(req, res, (err) => {
-      if (err) {
-        console.error('❌ Error configurando sesión:', err);
-        reject(err);
-      } else {
-        console.log('✅ Sesión configurada correctamente');
-        resolve();
+  // Configurar sesión personalizada compatible con SupabaseSessionStore
+  try {
+    // Obtener sessionId de las cookies
+    const sessionId = req.headers.cookie?.split(';')
+      .find(c => c.trim().startsWith('imanix.b2b.session='))
+      ?.split('=')[1] || null;
+
+    console.log('🔍 Session middleware LOGIN - SessionId from cookie:', sessionId);
+
+    // Inicializar objeto session en req
+    req.session = {
+      sessionId: sessionId,
+      regenerate: async function() {
+        const newSessionId = sessionStore.generateSessionId();
+        this.sessionId = newSessionId;
+        res.cookie('imanix.b2b.session', newSessionId, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 24 * 60 * 60 * 1000, // 24 horas
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+        });
+        console.log('🔄 Session regenerated in login:', newSessionId);
+      },
+      save: async function() {
+        if (!this.sessionId) {
+          // Crear sessionId si no existe
+          const newSessionId = sessionStore.generateSessionId();
+          this.sessionId = newSessionId;
+          res.cookie('imanix.b2b.session', newSessionId, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60 * 1000, // 24 horas
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+          });
+          console.log('🆔 SessionId created in login:', newSessionId);
+        }
+        
+        const sessionData = { ...this };
+        delete sessionData.sessionId;
+        delete sessionData.regenerate;
+        delete sessionData.save;
+        await sessionStore.setSession(this.sessionId, sessionData);
+        console.log('💾 Session saved in login:', this.sessionId);
       }
-    });
-  });
+    };
+
+    // Cargar datos de sesión existente si hay sessionId
+    if (sessionId) {
+      const sessionData = await sessionStore.getSession(sessionId);
+      if (sessionData) {
+        // Fusionar datos de sesión existentes
+        Object.assign(req.session, sessionData);
+        req.session.sessionId = sessionId; // Asegurar que sessionId se mantenga
+        console.log('✅ Session loaded in login for:', sessionData.customer?.email || 'anonymous');
+      } else {
+        console.log('📭 No valid session found in login, creating new session');
+        // Crear nueva sesión si no existe o expiró
+        await req.session.regenerate();
+      }
+    } else {
+      console.log('🆕 No sessionId found in login, creating new session immediately');
+      // Crear sessionId inmediatamente
+      await req.session.regenerate();
+    }
+
+    console.log('✅ Sesión configurada correctamente');
+  } catch (sessionError) {
+    console.error('❌ Error configurando sesión:', sessionError);
+    // Continue with limited functionality
+  }
   
   try {
     // Only allow POST requests
@@ -213,19 +271,46 @@ module.exports = async (req, res) => {
         });
       }
       
-      console.log('✅ Contraseña correcta, estableciendo sesión...');
+      console.log('✅ Contraseña correcta, cargando datos de Shopify...');
       
-      // Establecer sesión real para el portal
+      // Buscar cliente en Shopify para obtener tags y descuentos
+      let shopifyCustomer = null;
+      try {
+        const shopifyResponse = await fetch(`https://braintoys-chile.myshopify.com/admin/api/2024-01/customers/search.json?query=email:${encodeURIComponent(cleanEmail)}`, {
+          headers: {
+            'X-Shopify-Access-Token': process.env.SHOPIFY_ADMIN_API_TOKEN,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (shopifyResponse.ok) {
+          const shopifyData = await shopifyResponse.json();
+          shopifyCustomer = shopifyData.customers && shopifyData.customers.length > 0 ? shopifyData.customers[0] : null;
+          console.log('🛍️ Cliente encontrado en Shopify:', !!shopifyCustomer);
+          if (shopifyCustomer) {
+            console.log('🏷️ Tags de Shopify:', shopifyCustomer.tags);
+          }
+        }
+      } catch (shopifyError) {
+        console.error('⚠️ Error cargando datos de Shopify:', shopifyError.message);
+      }
+      
+      // Establecer sesión real para el portal con datos de Shopify
       req.session.customer = {
         email: cleanEmail,
-        firstName: userProfile.first_name || 'Usuario',
-        lastName: userProfile.last_name || 'B2B',
-        company: userProfile.company_name || 'Empresa',
-        discount: 0,
+        firstName: userProfile.first_name || shopifyCustomer?.first_name || 'Usuario',
+        lastName: userProfile.last_name || shopifyCustomer?.last_name || 'B2B',
+        company: userProfile.company_name || shopifyCustomer?.default_address?.company || 'Empresa',
+        tags: shopifyCustomer?.tags || '',
+        discount: 0, // Se calculará desde tags
         isAuthenticated: true
       };
       
-      console.log('✅ Sesión establecida:', req.session.customer);
+      console.log('✅ Sesión establecida con datos de Shopify:', req.session.customer);
+      
+      // GUARDAR SESIÓN EN SUPABASE
+      await req.session.save();
+      console.log('💾 Sesión guardada exitosamente en Supabase');
       
       // Respuesta exitosa de login
       console.log('✅ Login exitoso, retornando respuesta');
