@@ -87,26 +87,38 @@ module.exports = async (req, res) => {
       regenerate: async function() {
         const newSessionId = sessionStore.generateSessionId();
         this.sessionId = newSessionId;
-        res.cookie('imanix.b2b.session', newSessionId, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          maxAge: 24 * 60 * 60 * 1000, // 24 horas
-          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-        });
+        // Usar setHeader en lugar de cookie() para Vercel serverless
+        const cookieOptions = [
+          `imanix.b2b.session=${newSessionId}`,
+          'HttpOnly',
+          'Path=/',
+          `Max-Age=${24 * 60 * 60}`, // 24 horas en segundos
+          process.env.NODE_ENV === 'production' ? 'Secure' : '',
+          process.env.NODE_ENV === 'production' ? 'SameSite=None' : 'SameSite=Lax'
+        ].filter(Boolean).join('; ');
+        
+        res.setHeader('Set-Cookie', cookieOptions);
         console.log('🔄 Session regenerated in login:', newSessionId);
+        console.log('🍪 Cookie set:', cookieOptions);
       },
       save: async function() {
         if (!this.sessionId) {
           // Crear sessionId si no existe
           const newSessionId = sessionStore.generateSessionId();
           this.sessionId = newSessionId;
-          res.cookie('imanix.b2b.session', newSessionId, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 24 * 60 * 60 * 1000, // 24 horas
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-          });
+          // Usar setHeader en lugar de cookie() para Vercel serverless
+          const cookieOptions = [
+            `imanix.b2b.session=${newSessionId}`,
+            'HttpOnly',
+            'Path=/',
+            `Max-Age=${24 * 60 * 60}`, // 24 horas en segundos
+            process.env.NODE_ENV === 'production' ? 'Secure' : '',
+            process.env.NODE_ENV === 'production' ? 'SameSite=None' : 'SameSite=Lax'
+          ].filter(Boolean).join('; ');
+          
+          res.setHeader('Set-Cookie', cookieOptions);
           console.log('🆔 SessionId created in login:', newSessionId);
+          console.log('🍪 Cookie set on save:', cookieOptions);
         }
         
         const sessionData = { ...this };
