@@ -203,8 +203,8 @@ async function findCustomerByEmail(email) {
 // Función para generar template HTML del email
 function generateOrderEmailHTML(customer, cartItems, orderData) {
   const customerName = `${customer?.firstName || 'Usuario' || ''} ${customer?.lastName || ''}`.trim() || 'N/A';
-  const companyName = customer.company || 'N/A';
-  const discountPercentage = customer.discount || 0;
+  const companyName = customer?.company || 'N/A';
+  const discountPercentage = customer?.discount || 0;
   
   // Calcular totales con desglose de IVA
   const subtotalConIva = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -427,12 +427,12 @@ async function createOrUpdateUserProfile(customer) {
     // Datos del cliente desde Shopify
     const profileData = {
       email: customer?.email || 'no-email@example.com',
-      shopify_customer_id: customer.id || null,
-      company_name: customer.company || customer.defaultAddress?.company || null,
+      shopify_customer_id: customer?.id || null,
+      company_name: customer?.company || customer?.defaultAddress?.company || null,
       contact_name: `${customer?.firstName || 'Usuario' || ''} ${customer?.lastName || ''}`.trim() || null,
-      mobile_phone: customer.phone || customer.defaultAddress?.phone || null,
-      discount_percentage: customer.discount || 0,
-      discount_tag: customer.tags.find(tag => tag.startsWith('b2b')) || null,
+      mobile_phone: customer?.phone || customer?.defaultAddress?.phone || null,
+      discount_percentage: customer?.discount || 0,
+      discount_tag: customer?.tags?.find(tag => tag.startsWith('b2b')) || null,
       is_active: true
     };
 
@@ -443,8 +443,8 @@ async function createOrUpdateUserProfile(customer) {
       console.log('✅ Perfil creado/actualizado exitosamente');
       
       // Si el cliente tiene dirección por defecto, crear/actualizar en Supabase
-      if (customer.defaultAddress) {
-        const address = customer.defaultAddress;
+      if (customer?.defaultAddress) {
+        const address = customer?.defaultAddress;
         const addressData = {
           type: 'shipping',
           is_default: true,
@@ -457,7 +457,7 @@ async function createOrUpdateUserProfile(customer) {
           state: address.province || null,
           postal_code: address.zip,
           country: address.country || 'Chile',
-          phone: address.phone || customer.phone || null
+          phone: address.phone || customer?.phone || null
         };
         
         console.log('🏠 Sincronizando dirección por defecto');
@@ -546,7 +546,7 @@ app.post('/api/auth/login', async (req, res) => {
 
     // Guardar datos del cliente en sesión
     req.session.customer = {
-      id: customer.id,
+      id: customer?.id,
       email: customer?.email || 'no-email@example.com',
       firstName: customer.first_name,
       lastName: customer.last_name,
@@ -559,10 +559,10 @@ app.post('/api/auth/login', async (req, res) => {
       const discountTag = customer.tags?.split(',').find(tag => tag.trim().toLowerCase().startsWith('b2b')) || null;
       await database.createOrUpdateProfile({
         email: customer?.email || 'no-email@example.com',
-        shopify_customer_id: customer.id,
+        shopify_customer_id: customer?.id,
         company_name: customer.default_address?.company || null,
         contact_name: `${customer.first_name} ${customer.last_name}`,
-        mobile_phone: customer.phone || customer.default_address?.phone || null,
+        mobile_phone: customer?.phone || customer.default_address?.phone || null,
         discount_percentage: discount,
         discount_tag: discountTag?.trim(),
         is_active: true
@@ -645,7 +645,7 @@ app.post('/api/auth/setup-password', async (req, res) => {
     
     // Crear sesión
     req.session.customer = {
-      id: customer.id,
+      id: customer?.id,
       email: customer?.email || 'no-email@example.com',
       firstName: customer.first_name,
       lastName: customer.last_name,
@@ -1012,7 +1012,7 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
     }
 
     const customer = req.session.customer;
-    const discountPercentage = customer.discount || 0;
+    const discountPercentage = customer?.discount || 0;
 
     // Validar que si es transferencia, se haya subido comprobante
     if (paymentMethod === 'transferencia' && !comprobante) {
@@ -2581,7 +2581,7 @@ function getCartHTML(customer) {
         // Variables globales
         let cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
         const customerDiscount = ${customerDiscount};
-        const customerTags = '${customer.tags || ''}';
+        const customerTags = '${customer?.tags || ''}';
         
         // Función para verificar si el usuario tiene etiquetas "ima"
         function hasImaTagFrontend() {
@@ -8748,7 +8748,7 @@ function getPortalHTML(products, customer) {
 
 // Función para generar HTML del perfil de usuario con formulario editable
 function getProfileHTML(customer, profile, addresses, orders, stats) {
-  const customerDiscount = customer.discount || 0;
+  const customerDiscount = customer?.discount || 0;
   
   // Datos de regiones y comunas de Chile
   const regionesComunas = {
@@ -10763,7 +10763,7 @@ app.get('/cuenta', requireAuth, async (req, res) => {
   try {
     const customer = {
       ...req.session.customer,
-      discountPercentage: req.session.customer.discount
+      discountPercentage: req.session.customer?.discount
     };
     const profile = await database.getUserProfile(customer?.email || 'no-email@example.com');
     const addresses = await database.getUserAddresses(customer?.email || 'no-email@example.com');
@@ -10781,7 +10781,7 @@ app.get('/pedidos', requireAuth, async (req, res) => {
   try {
     const customer = {
       ...req.session.customer,
-      discountPercentage: req.session.customer.discount
+      discountPercentage: req.session.customer?.discount
     };
     const page = parseInt(req.query.page) || 1;
     const limit = 10;
@@ -10804,7 +10804,7 @@ app.get('/pedidos/:id', requireAuth, async (req, res) => {
     const orderId = req.params.id;
     const customer = {
       ...req.session.customer,
-      discountPercentage: req.session.customer.discount
+      discountPercentage: req.session.customer?.discount
     };
     
     const order = await database.getOrderDetails(orderId);
@@ -11078,7 +11078,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
             <div class="header">
                 <a href="/" class="logo">🧲 IMANIX B2B</a>
                 <div class="user-info">
-                    <span class="discount-badge">${customer.discountPercentage}% Descuento B2B</span>
+                    <span class="discount-badge">${customer?.discountPercentage}% Descuento B2B</span>
                     <span>👤 ${customer?.email || 'no-email@example.com'}</span>
                     <a href="/api/auth/logout" class="logout-btn">Cerrar Sesión</a>
                 </div>
@@ -11173,7 +11173,7 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Descuento:</span>
-                    <span class="detail-value">${customer.discountPercentage}%</span>
+                    <span class="detail-value">${customer?.discountPercentage}%</span>
                 </div>
             </div>
             <div class="order-actions">
@@ -11437,7 +11437,7 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             <div class="header">
                 <a href="/" class="logo">🧲 IMANIX B2B</a>
                 <div class="user-info">
-                    <span class="discount-badge">${customer.discountPercentage}% Descuento B2B</span>
+                    <span class="discount-badge">${customer?.discountPercentage}% Descuento B2B</span>
                     <span>👤 ${customer?.email || 'no-email@example.com'}</span>
                     <a href="/api/auth/logout" class="logout-btn">Cerrar Sesión</a>
                 </div>
@@ -11693,7 +11693,7 @@ function getOrderDetailHTML(customer, order) {
                     </div>
                     <div class="info-item">
                         <span class="info-label">Descuento B2B:</span>
-                        <span class="info-value">${customer.discountPercentage}%</span>
+                        <span class="info-value">${customer?.discountPercentage}%</span>
                     </div>
                 </div>
             </div>
@@ -11924,12 +11924,12 @@ function getBasicPortalHTML(customer) {
                     <div class="detail-item">
                         <i class="fas fa-building detail-icon"></i>
                         <span class="detail-label">Empresa:</span>
-                        <span class="detail-value">${customer.company || 'No especificada'}</span>
+                        <span class="detail-value">${customer?.company || 'No especificada'}</span>
                     </div>
                     <div class="detail-item">
                         <i class="fas fa-percent detail-icon"></i>
                         <span class="detail-label">Descuento B2B:</span>
-                        <span class="detail-value">${customer.discount || 0}%</span>
+                        <span class="detail-value">${customer?.discount || 0}%</span>
                     </div>
                     <div class="detail-item">
                         <i class="fas fa-tags detail-icon"></i>
