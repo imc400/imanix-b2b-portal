@@ -380,6 +380,7 @@ app.post('/api/profile/update', async (req, res) => {
 // Endpoint para procesar checkout y crear draft order
 app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
   try {
+    console.log('🔴🔴🔴 ENDPOINT RAÍZ EJECUTÁNDOSE - /server-auth.js 🔴🔴🔴');
     console.log('🚀 DEBUG ROOT checkout - Starting checkout process');
     console.log('🔍 DEBUG ROOT checkout - req.body type:', typeof req.body);
     console.log('🔍 DEBUG ROOT checkout - req.body keys:', req.body ? Object.keys(req.body) : 'null/undefined');

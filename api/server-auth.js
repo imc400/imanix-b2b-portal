@@ -1055,6 +1055,7 @@ function hasImaTag(customer) {
 // Endpoint para procesar checkout y crear draft order
 app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
   try {
+    console.log('🎯🎯🎯 ENDPOINT CORRECTO EJECUTÁNDOSE - /api/server-auth.js 🎯🎯🎯');
     console.log('🚀 DEBUG checkout - Starting checkout process');
     console.log('🔍 DEBUG checkout - req.body type:', typeof req.body);
     console.log('🔍 DEBUG checkout - req.body is null:', req.body === null);
