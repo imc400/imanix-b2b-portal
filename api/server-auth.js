@@ -152,9 +152,15 @@ app.use(async (req, res, next) => {
   }
 });
 
-// Global body parsing (multer will override for its routes)
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// NO usar middleware global - aplicar JSON parsing solo a rutas específicas que no usan multer
+
+// JSON parsing solo para rutas específicas que NO usan multer
+app.use('/api/auth/*', express.json({ limit: '10mb' }));
+app.use('/api/auth/*', express.urlencoded({ extended: true, limit: '10mb' }));
+app.use('/api/profile/*', express.json({ limit: '10mb' }));
+app.use('/api/profile/*', express.urlencoded({ extended: true, limit: '10mb' }));
+app.use('/api/addresses/*', express.json({ limit: '10mb' }));
+app.use('/api/addresses/*', express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Middleware de debugging global para capturar todas las requests a auth
 app.use('/api/auth/*', (req, res, next) => {
@@ -2977,7 +2983,7 @@ function getCartHTML(customer) {
                     console.log('🔍 DEBUG: Successfully parsed JSON response:', data);
                 } catch (parseError) {
                     console.error('❌ DEBUG: Failed to parse response as JSON:', parseError);
-                    console.error('🔍 DEBUG: Response text:', responseText);
+                    console.error('🔍 DEBUG: Response text was:', responseText);
                     throw new Error('El servidor devolvió una respuesta inválida. Por favor, inténtalo nuevamente.');
                 }
                 
