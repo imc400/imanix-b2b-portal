@@ -1477,8 +1477,7 @@ app.get('/', async (req, res) => {
     // Verificar si el usuario está autenticado
     if (!req.session.customer) {
       console.log('❌ Usuario no autenticado en raíz, mostrando login');
-      // COMENTADO PARA DEBUG: return res.send(getLoginHTML());
-      console.log('🚨 RAÍZ LOGIN COMENTADO PARA DEBUG - continuando con portal...');
+      return res.send(getLoginHTML());
     }
 
     // Verificar si el perfil está completo
