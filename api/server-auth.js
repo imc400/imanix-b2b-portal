@@ -21,6 +21,10 @@ cloudinary.config({
 let transporter = null;
 
 try {
+  console.log('🔍 DEBUG Email config - EMAIL_USER disponible:', !!process.env.EMAIL_USER);
+  console.log('🔍 DEBUG Email config - EMAIL_PASS disponible:', !!process.env.EMAIL_PASS);
+  console.log('🔍 DEBUG Email config - EMAIL_TO disponible:', !!process.env.EMAIL_TO);
+  
   if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
     transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -30,8 +34,11 @@ try {
       }
     });
     console.log('✅ Configuración de email inicializada correctamente');
+    console.log('📧 Email configurado para:', process.env.EMAIL_USER);
   } else {
     console.log('⚠️ Variables de email no configuradas, emails deshabilitados');
+    console.log('🔍 EMAIL_USER value:', process.env.EMAIL_USER);
+    console.log('🔍 EMAIL_PASS length:', process.env.EMAIL_PASS?.length || 0);
   }
 } catch (error) {
   console.error('❌ Error configurando email:', error);
@@ -1041,8 +1048,14 @@ function hasImaTag(customer) {
 // Endpoint para procesar checkout y crear draft order
 app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
   try {
+    console.log('🚀 DEBUG checkout - Starting checkout process');
+    console.log('🔍 DEBUG checkout - Request body keys:', Object.keys(req.body));
+    console.log('🔍 DEBUG checkout - PaymentMethod:', req.body.paymentMethod);
+    console.log('🔍 DEBUG checkout - Session customer exists:', !!req.session.customer);
+    
     // Verificar autenticación
     if (!req.session.customer) {
+      console.log('❌ DEBUG checkout - No authenticated user');
       return res.status(401).json({ 
         success: false, 
         message: 'Usuario no autenticado' 
@@ -1052,20 +1065,27 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
     const { paymentMethod } = req.body;
     const comprobante = req.file;
     
+    console.log('🔍 DEBUG checkout - PaymentMethod extracted:', paymentMethod);
+    console.log('🔍 DEBUG checkout - Comprobante file:', !!comprobante);
+    
     // Parse cartItems si viene como string JSON (FormData)
     let cartItems;
     try {
       cartItems = typeof req.body.cartItems === 'string' 
         ? JSON.parse(req.body.cartItems) 
         : req.body.cartItems;
-    } catch (error) {
+      console.log('✅ DEBUG checkout - CartItems parsed successfully, length:', cartItems?.length);
+    } catch (parseError) {
+      console.log('❌ DEBUG checkout - Error parsing cartItems:', parseError.message);
+      console.log('🔍 DEBUG checkout - Raw cartItems:', req.body.cartItems);
       return res.status(400).json({ 
         success: false, 
-        message: 'Error parsing cart items' 
+        message: 'Error parsing cart items: ' + parseError.message 
       });
     }
     
     if (!cartItems || cartItems.length === 0) {
+      console.log('❌ DEBUG checkout - Cart is empty');
       return res.status(400).json({ 
         success: false, 
         message: 'El carrito está vacío' 
@@ -1074,14 +1094,20 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
 
     const customer = req.session.customer;
     const discountPercentage = customer?.discount || 0;
+    
+    console.log('🔍 DEBUG checkout - Customer discount:', discountPercentage);
+    console.log('🔍 DEBUG checkout - Customer tags:', customer?.tags);
 
     // Validar que si es transferencia, se haya subido comprobante
     if (paymentMethod === 'transferencia' && !comprobante) {
+      console.log('❌ DEBUG checkout - Missing comprobante for transferencia');
       return res.status(400).json({ 
         success: false, 
         message: 'Debe subir el comprobante de transferencia' 
       });
     }
+    
+    console.log('✅ DEBUG checkout - All validations passed, proceeding to createDraftOrder');
 
     // Crear draft order en Shopify
     const draftOrder = await createDraftOrder(customer, cartItems, discountPercentage, paymentMethod, comprobante);
@@ -2910,13 +2936,35 @@ function getCartHTML(customer) {
                 }))));
                 formData.append('paymentMethod', 'ima_agreement'); // Método especial para usuarios IMA
                 
+                console.log('🔍 DEBUG: Sending checkout request with formData');
                 const response = await fetch('/api/checkout', {
                     method: 'POST',
                     body: formData
                 });
 
-                const data = await response.json();
-                console.log('🔍 DEBUG: Direct checkout response:', data);
+                console.log('🔍 DEBUG: Received response, status:', response.status);
+                console.log('🔍 DEBUG: Response ok:', response.ok);
+                
+                // Verificar si la respuesta es JSON válido
+                let data;
+                try {
+                    const responseText = await response.text();
+                    console.log('🔍 DEBUG: Raw response text:', responseText.substring(0, 200));
+                    
+                    // Intentar parsear como JSON
+                    data = JSON.parse(responseText);
+                    console.log('🔍 DEBUG: Successfully parsed JSON response:', data);
+                } catch (parseError) {
+                    console.error('❌ DEBUG: Failed to parse response as JSON:', parseError);
+                    console.error('🔍 DEBUG: Response text:', responseText);
+                    throw new Error('El servidor devolvió una respuesta inválida. Por favor, inténtalo nuevamente.');
+                }
+                
+                // Verificar si la respuesta HTTP fue exitosa
+                if (!response.ok) {
+                    console.error('❌ DEBUG: HTTP error response:', response.status, data);
+                    throw new Error(data.message || `Error del servidor (${response.status})`);
+                }
 
                 if (data.success) {
                     // Éxito - limpiar carrito y mostrar mensaje personalizado
