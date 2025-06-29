@@ -1568,7 +1568,7 @@ app.get('/complete-profile', (req, res) => {
 });
 
 // Ruta del carrito
-app.get('/carrito', (req, res) => {
+app.get('/carrito', async (req, res) => {
   try {
     console.log('🛒 ACCEDIENDO A RUTA /carrito');
     console.log('👤 Sesión carrito:', req.session?.customer?.email || 'No autenticado');
@@ -1577,6 +1577,21 @@ app.get('/carrito', (req, res) => {
     console.log('🔍 DEBUG CARRITO - Session completa:', JSON.stringify(req.session, null, 2));
     console.log('🔍 DEBUG CARRITO - req.session.customer:', req.session.customer);
     console.log('🔍 DEBUG CARRITO - req.session.sessionId:', req.session.sessionId);
+    
+    // FORZAR RECARGA DE SESIÓN DESDE SUPABASE PARA DEPURACIÓN
+    if (req.session.sessionId) {
+      console.log('🔄 FORCE RELOAD - Recargando sesión desde Supabase...');
+      const freshSessionData = await sessionStore.getSession(req.session.sessionId);
+      if (freshSessionData) {
+        console.log('✅ FORCE RELOAD - Sesión recargada:', freshSessionData.customer?.email || 'no-email');
+        console.log('🏷️ FORCE RELOAD - Tags encontrados:', freshSessionData.customer?.tags || 'NO_TAGS');
+        // Fusionar datos frescos
+        Object.assign(req.session, freshSessionData);
+        req.session.sessionId = req.session.sessionId; // Mantener sessionId
+      } else {
+        console.log('❌ FORCE RELOAD - No se pudo recargar la sesión');
+      }
+    }
     
     // Verificar si el usuario está autenticado
     if (!req.session.customer) {
