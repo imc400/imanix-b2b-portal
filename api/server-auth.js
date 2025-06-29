@@ -2963,7 +2963,7 @@ function getCartHTML(customer) {
                 // Verificar si la respuesta HTTP fue exitosa
                 if (!response.ok) {
                     console.error('❌ DEBUG: HTTP error response:', response.status, data);
-                    throw new Error(data.message || `Error del servidor (${response.status})`);
+                    throw new Error(data.message || 'Error del servidor (' + response.status + ')');
                 }
 
                 if (data.success) {
