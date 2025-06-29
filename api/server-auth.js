@@ -1585,6 +1585,8 @@ app.get('/carrito', (req, res) => {
     }
 
     console.log('🎨 Generando HTML del carrito...');
+    console.log('🔍 DEBUG CARRITO - Customer being passed to getCartHTML:', JSON.stringify(req.session.customer, null, 2));
+    console.log('🔍 DEBUG CARRITO - Customer tags specifically:', req.session.customer?.tags || 'NO_TAGS_FOUND');
     res.send(getCartHTML(req.session.customer));
     
   } catch (error) {
@@ -2592,6 +2594,10 @@ function getCartHTML(customer) {
         let cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
         const customerDiscount = ${customerDiscount};
         const customerTags = '${customer?.tags || ''}';
+        
+        // DEBUG: Log customer tags para diagnóstico
+        console.log('🔍 DEBUG Cart - Customer object:', ${JSON.stringify(customer || {})});
+        console.log('🔍 DEBUG Cart - Customer tags:', '${customer?.tags || 'NO_TAGS'}');
         
         // Función para verificar si el usuario tiene etiquetas "ima"
         function hasImaTagFrontend() {
