@@ -2917,7 +2917,8 @@ function getCartHTML(customer) {
             if (change > 0) {
                 try {
                     console.log('🔍 Verificando stock antes de incrementar cantidad...');
-                    const response = await fetch('/api/product/' + productId + '/stock');
+                    const encodedProductId = encodeURIComponent(productId);
+                    const response = await fetch('/api/product/' + encodedProductId + '/stock');
                     const stockData = await response.json();
                     
                     if (stockData.success && stockData.stock) {
@@ -9416,8 +9417,14 @@ app.get('/api/orders/:id', requireAuthAPI, async (req, res) => {
 // API - Verificar stock de un producto
 app.get('/api/product/:productId/stock', requireAuthAPI, async (req, res) => {
   try {
-    const productId = req.params.productId;
-    console.log('🔍 Verificando stock para producto:', productId);
+    let productId = decodeURIComponent(req.params.productId);
+    console.log('🔍 Verificando stock para producto (original):', productId);
+    
+    // Extraer ID numérico si viene en formato GID
+    if (productId.includes('gid://shopify/Product/')) {
+      productId = productId.split('/').pop();
+      console.log('🔍 ID extraído del GID:', productId);
+    }
     
     // Obtener información del producto desde Shopify
     const response = await fetch(`https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2024-01/products/${productId}.json`, {
