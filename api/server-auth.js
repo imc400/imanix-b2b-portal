@@ -1184,13 +1184,17 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
 
     const orderNumber = draftOrder.name || `D${draftOrder.id}`;
     
+    // Calcular descuento localmente ya que Shopify no siempre devuelve total_discounts
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const calculatedDiscount = subtotal * (discountPercentage / 100);
+    
     res.json({ 
       success: true, 
       message: `¡Pedido enviado exitosamente! Tu solicitud #${orderNumber} está siendo procesada por nuestro equipo.`,
       draftOrderId: draftOrder.id,
       draftOrderNumber: orderNumber,
       total: draftOrder.total_price,
-      discount: draftOrder.total_discounts,
+      discount: calculatedDiscount,
       status: 'pendiente',
       note: note,
       nextSteps: nextSteps,
@@ -8339,8 +8343,8 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         }
 
         .tab-button:hover:not(.active) {
-            background: rgba(102, 126, 234, 0.1);
-            color: #667eea;
+            background: rgba(255, 206, 54, 0.1);
+            color: #FFCE36;
             transform: translateY(-1px);
         }
 
@@ -8557,10 +8561,10 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         .form-input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #FFCE36;
             box-shadow: 
-                0 0 0 4px rgba(102, 126, 234, 0.1),
-                0 4px 12px rgba(102, 126, 234, 0.15);
+                0 0 0 4px rgba(255, 206, 54, 0.1),
+                0 4px 12px rgba(255, 206, 54, 0.15);
             background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             transform: translateY(-1px);
         }
