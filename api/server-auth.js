@@ -5804,6 +5804,43 @@ function getCompleteProfileHTML(customer) {
 function getPortalHTML(products, customer) {
     const customerDiscount = customer?.discount || 0;
     
+    // Función helper para extraer valores únicos del metacampo filtrob2b
+    function extractUniqueFilters(products) {
+        const filterValues = new Set();
+        
+        if (!products || products.length === 0) return [];
+        
+        products.forEach(product => {
+            if (product.metafields?.edges) {
+                product.metafields.edges.forEach(edge => {
+                    const metafield = edge.node;
+                    const key = `${metafield.namespace}.${metafield.key}`;
+                    
+                    if (key === 'custom.filtrob2b' && metafield.value) {
+                        // Dividir por comas si hay múltiples valores y limpiar espacios
+                        const values = metafield.value.split(',').map(v => v.trim()).filter(v => v);
+                        values.forEach(value => filterValues.add(value));
+                    }
+                });
+            }
+        });
+        
+        return Array.from(filterValues).sort();
+    }
+    
+    // Función helper para renderizar filtros clickeables
+    function renderFilterChips(filterValues) {
+        if (!filterValues || filterValues.length === 0) {
+            return '<p class="no-filters">No hay filtros disponibles</p>';
+        }
+        
+        return filterValues.map(filter => `
+            <button class="filter-chip" onclick="toggleFilter('${filter.replace(/'/g, '&#39;')}')" data-filter="${filter}">
+                ${filter}
+            </button>
+        `).join('');
+    }
+    
     // Función helper para renderizar los productos
     function renderProducts(products, discount) {
         if (!products || products.length === 0) {
@@ -6790,6 +6827,73 @@ function getPortalHTML(products, customer) {
             backdrop-filter: blur(10px);
         }
 
+        .filters-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 2px solid rgba(148, 163, 184, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .filters-title {
+            color: #1A202C;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filters-title i {
+            color: #667eea;
+        }
+
+        .filter-chips-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-chip {
+            padding: 0.75rem 1.25rem;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+        }
+
+        .filter-chip:hover {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
+        }
+
+        .filter-chip.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .no-filters {
+            color: #94a3b8;
+            font-style: italic;
+            text-align: center;
+            padding: 1rem;
+        }
+
         .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -7176,6 +7280,20 @@ function getPortalHTML(products, customer) {
                 align-self: center;
             }
 
+            .filters-section {
+                margin-top: 1.5rem;
+                padding: 1rem;
+            }
+
+            .filter-chips-container {
+                gap: 0.5rem;
+            }
+
+            .filter-chip {
+                padding: 0.6rem 1rem;
+                font-size: 0.85rem;
+            }
+
             .catalog-header {
                 flex-direction: column;
                 gap: 1.5rem;
@@ -7432,16 +7550,22 @@ function getPortalHTML(products, customer) {
                     Catálogo B2B
                 </h2>
                 <div class="catalog-controls">
-                    <div class="filter-group">
+                    <div class="search-group">
                         <input type="text" class="search-box" placeholder="Buscar productos..." 
                                id="searchInput" onkeyup="filterProducts()">
                     </div>
-                    <div class="filter-group">
-                        <input type="text" class="filter-box" placeholder="Filtrar por categoría..." 
-                               id="filterInput" onkeyup="filterProducts()">
+                </div>
+                
+                <div class="filters-section">
+                    <h3 class="filters-title">
+                        <i class="fas fa-filter"></i>
+                        Filtrar por categoría
+                    </h3>
+                    <div class="filter-chips-container">
+                        ${renderFilterChips(extractUniqueFilters(products))}
                     </div>
                     <div class="filter-actions">
-                        <button class="clear-filters-btn" onclick="clearFilters()">
+                        <button class="clear-filters-btn" onclick="clearAllFilters()">
                             <i class="fas fa-times"></i>
                             Limpiar filtros
                         </button>
@@ -7493,16 +7617,18 @@ function getPortalHTML(products, customer) {
         // FUNCIONES DE CARRITO DUPLICADAS ELIMINADAS - USAR LAS DEL HEAD
 
         // Filtrar productos - búsqueda básica por texto
+        // Variables globales para filtros
+        var activeFilters = new Set();
+
         function filterProducts() {
             var searchTerm = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
-            var filterTerm = document.getElementById('filterInput') ? document.getElementById('filterInput').value.toLowerCase() : '';
             var productCards = document.querySelectorAll('.product-card');
             var visibleCount = 0;
             
             productCards.forEach(function(card) {
                 var shouldShow = true;
                 
-                // Filtro por título/nombre del producto
+                // Filtro por búsqueda de productos (título/SKU)
                 if (searchTerm) {
                     var titleEl = card.querySelector('.product-title');
                     var title = titleEl ? titleEl.textContent.toLowerCase() : '';
@@ -7515,10 +7641,21 @@ function getPortalHTML(products, customer) {
                     }
                 }
                 
-                // Filtro por metacampo custom.filtrob2b
-                if (filterTerm && shouldShow) {
+                // Filtro por chips activos (metacampo custom.filtrob2b)
+                if (activeFilters.size > 0 && shouldShow) {
                     var filterB2B = card.getAttribute('data-filter-b2b') || '';
-                    if (!filterB2B.toLowerCase().includes(filterTerm)) {
+                    var cardFilters = filterB2B.split(',').map(f => f.trim()).filter(f => f);
+                    
+                    // El producto debe tener al menos uno de los filtros activos
+                    var hasActiveFilter = false;
+                    for (var activeFilter of activeFilters) {
+                        if (cardFilters.some(cardFilter => cardFilter.toLowerCase().includes(activeFilter.toLowerCase()))) {
+                            hasActiveFilter = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!hasActiveFilter) {
                         shouldShow = false;
                     }
                 }
@@ -7531,6 +7668,23 @@ function getPortalHTML(products, customer) {
             
             // Mostrar contador de resultados
             updateFilterResults(visibleCount, productCards.length);
+        }
+
+        function toggleFilter(filterValue) {
+            var filterChip = document.querySelector('[data-filter="' + filterValue + '"]');
+            
+            if (activeFilters.has(filterValue)) {
+                // Desactivar filtro
+                activeFilters.delete(filterValue);
+                filterChip.classList.remove('active');
+            } else {
+                // Activar filtro
+                activeFilters.add(filterValue);
+                filterChip.classList.add('active');
+            }
+            
+            // Aplicar filtros
+            filterProducts();
         }
 
         function updateFilterResults(visible, total) {
@@ -7556,13 +7710,22 @@ function getPortalHTML(products, customer) {
             resultsEl.textContent = resultsText;
         }
 
-        function clearFilters() {
+        function clearAllFilters() {
             var searchInput = document.getElementById('searchInput');
-            var filterInput = document.getElementById('filterInput');
             
+            // Limpiar búsqueda
             if (searchInput) searchInput.value = '';
-            if (filterInput) filterInput.value = '';
             
+            // Limpiar filtros activos
+            activeFilters.clear();
+            
+            // Remover clase active de todos los chips
+            var allChips = document.querySelectorAll('.filter-chip');
+            allChips.forEach(function(chip) {
+                chip.classList.remove('active');
+            });
+            
+            // Aplicar filtros (mostrar todos los productos)
             filterProducts();
         }
 
