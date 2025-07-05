@@ -2556,7 +2556,7 @@ function getCartHTML(customer) {
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
             background: #ffffff !important;
-            border: 1px solid var(--gray-200) !important;
+            border: none !important;
         }
         
         /* NOTIFICACIONES PROFESIONALES */
@@ -4068,7 +4068,7 @@ function getLoginHTML() {
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
             background: #ffffff !important;
-            border: 1px solid var(--gray-200) !important;
+            border: none !important;
         }
         
         /* NOTIFICACIONES PROFESIONALES */
@@ -5383,7 +5383,7 @@ function getCompleteProfileHTML(customer) {
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
             background: #ffffff !important;
-            border: 1px solid var(--gray-200) !important;
+            border: none !important;
         }
         
         /* NOTIFICACIONES PROFESIONALES */
@@ -7387,7 +7387,7 @@ function getPortalHTML(products, customer) {
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
             background: #ffffff !important;
-            border: 1px solid var(--gray-200) !important;
+            border: none !important;
         }
         
         /* NOTIFICACIONES PROFESIONALES */
@@ -8982,7 +8982,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
             background: #ffffff !important;
-            border: 1px solid var(--gray-200) !important;
+            border: none !important;
         }
         
         /* NOTIFICACIONES PROFESIONALES */
@@ -10149,7 +10149,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
             background: #ffffff !important;
-            border: 1px solid var(--gray-200) !important;
+            border: none !important;
         }
         
         /* NOTIFICACIONES PROFESIONALES */
@@ -10508,7 +10508,7 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
             background: #ffffff !important;
-            border: 1px solid var(--gray-200) !important;
+            border: none !important;
         }
         
         /* NOTIFICACIONES PROFESIONALES */
@@ -10741,7 +10741,7 @@ function getOrderDetailHTML(customer, order) {
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
             background: #ffffff !important;
-            border: 1px solid var(--gray-200) !important;
+            border: none !important;
         }
         
         /* NOTIFICACIONES PROFESIONALES */
