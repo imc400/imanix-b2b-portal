@@ -2302,12 +2302,12 @@ function getCartHTML(customer) {
             align-items: center;
             justify-content: center;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .quantity-btn:hover {
             transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
         .quantity-display {
@@ -2426,7 +2426,7 @@ function getCartHTML(customer) {
             position: relative;
             overflow: hidden;
             letter-spacing: 0.01em;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 25px rgba(255, 206, 54, 0.4);
         }
 
         .checkout-btn::before {
@@ -2447,7 +2447,7 @@ function getCartHTML(customer) {
 
         .checkout-btn:hover {
             transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 16px 40px rgba(102, 126, 234, 0.6);
+            box-shadow: 0 16px 40px rgba(255, 206, 54, 0.6);
         }
 
         .empty-cart {
@@ -3297,7 +3297,7 @@ function getCartHTML(customer) {
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                             <span><strong>Descuento:</strong></span>
-                            <span style="color: #dc2626; font-weight: bold;">\${formatPrice(data.discount)}</span>
+                            <span style="color: #dc2626; font-weight: bold;">\${data.discount && !isNaN(data.discount) ? formatPrice(data.discount) : '$0'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span><strong>Estado:</strong></span>
@@ -6646,7 +6646,7 @@ function getPortalHTML(products, customer) {
         .stat-icon.products {
             background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             color: #1A202C;
-            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 32px rgba(255, 206, 54, 0.4);
         }
 
         .stat-icon.discount {
@@ -8335,7 +8335,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             color: #1A202C;
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 25px rgba(255, 206, 54, 0.4);
         }
 
         .tab-button:hover:not(.active) {
@@ -8451,7 +8451,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
 
         .stat-icon.orders { 
             background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
-            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 32px rgba(255, 206, 54, 0.4);
         }
         .stat-icon.spent { 
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -8602,12 +8602,12 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         .btn-primary {
             background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             color: #1A202C;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 25px rgba(255, 206, 54, 0.4);
         }
 
         .btn-primary:hover {
             transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.5);
+            box-shadow: 0 12px 40px rgba(255, 206, 54, 0.5);
         }
 
         .btn-secondary {
@@ -10099,7 +10099,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
             }
             .btn:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                box-shadow: 0 4px 15px rgba(255, 206, 54, 0.4);
             }
         /* ANIMACIONES DE ENTRADA SUTILES */
         .stat-card, .product-card, .cart-item {
@@ -10456,7 +10456,7 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             }
             .btn:hover {
                 transform: translateY(-1px);
-                box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
+                box-shadow: 0 3px 10px rgba(255, 206, 54, 0.4);
             }
             .empty-state { text-align: center; padding: 3rem; color: #666; }
             .empty-state h3 { margin-bottom: 1rem; color: #2c3e50; }
