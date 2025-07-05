@@ -2672,14 +2672,6 @@ function getCartHTML(customer) {
                                 <i class="fas fa-user-edit"></i>
                                 Mi Perfil
                             </a>
-                            <a href="/carrito" class="dropdown-item">
-                                <i class="fas fa-shopping-cart"></i>
-                                Mi Carrito
-                            </a>
-                            <a href="/perfil" class="dropdown-item">
-                                <i class="fas fa-history"></i>
-                                Historial de Pedidos
-                            </a>
                             <div class="dropdown-divider"></div>
                             <button onclick="logout()" class="dropdown-item">
                                 <i class="fas fa-sign-out-alt"></i>
@@ -7003,14 +6995,6 @@ function getPortalHTML(products, customer) {
                                 <i class="fas fa-user-edit"></i>
                                 Mi Perfil
                             </a>
-                            <a href="/carrito" class="dropdown-item">
-                                <i class="fas fa-shopping-cart"></i>
-                                Mi Carrito
-                            </a>
-                            <a href="/perfil" class="dropdown-item">
-                                <i class="fas fa-history"></i>
-                                Historial de Pedidos
-                            </a>
                             <div class="dropdown-divider"></div>
                             <button onclick="logout()" class="dropdown-item">
                                 <i class="fas fa-sign-out-alt"></i>
@@ -8425,14 +8409,6 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                                 <i class="fas fa-user-edit"></i>
                                 Mi Perfil
                             </a>
-                            <a href="/carrito" class="dropdown-item">
-                                <i class="fas fa-shopping-cart"></i>
-                                Mi Carrito
-                            </a>
-                            <a href="/perfil" class="dropdown-item">
-                                <i class="fas fa-history"></i>
-                                Historial de Pedidos
-                            </a>
                             <div class="dropdown-divider"></div>
                             <button onclick="logout()" class="dropdown-item">
                                 <i class="fas fa-sign-out-alt"></i>
@@ -8495,10 +8471,6 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             <button class="tab-button active" onclick="switchTab('profile', this)">
                 <i class="fas fa-user"></i>
                 Perfil
-            </button>
-            <button class="tab-button" onclick="switchTab('addresses', this)">
-                <i class="fas fa-map-marker-alt"></i>
-                Direcciones
             </button>
             <button class="tab-button" onclick="switchTab('orders', this)">
                 <i class="fas fa-history"></i>
@@ -8618,57 +8590,6 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             </div>
         </div>
 
-        <!-- Tab Direcciones -->
-        <div id="addresses-tab" class="tab-content">
-            <div class="content-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <h2 class="section-title" style="margin-bottom: 0;">
-                        <i class="fas fa-map-marker-alt"></i>
-                        Mis Direcciones
-                    </h2>
-                    <button class="btn btn-primary" onclick="showAddAddressModal()">
-                        <i class="fas fa-plus"></i>
-                        Agregar Dirección
-                    </button>
-                </div>
-                
-                <div id="addressesList">
-                    ${addresses && addresses.length > 0 ? 
-                        addresses.map(addr => `
-                            <div class="address-card ${addr.is_default ? 'default' : ''}">
-                                <div class="address-type ${addr.type}">
-                                    ${addr.type === 'shipping' ? 'Envío' : 'Facturación'}
-                                    ${addr.is_default ? ' (Por Defecto)' : ''}
-                                </div>
-                                <p><strong>${addr.first_name} ${addr.last_name}</strong></p>
-                                ${addr.company ? `<p>${addr.company}</p>` : ''}
-                                <p>${addr.address1}</p>
-                                ${addr.address2 ? `<p>${addr.address2}</p>` : ''}
-                                <p>${addr.city}, ${addr.state || ''} ${addr.postal_code}</p>
-                                <p>${addr.country}</p>
-                                ${addr.phone ? `<p><i class="fas fa-phone"></i> ${addr.phone}</p>` : ''}
-                                
-                                <div style="margin-top: 1rem;">
-                                    <button class="btn btn-secondary" onclick="editAddress('${addr.id}')">
-                                        <i class="fas fa-edit"></i>
-                                        Editar
-                                    </button>
-                                    <button class="btn btn-danger" onclick="deleteAddress('${addr.id}')">
-                                        <i class="fas fa-trash"></i>
-                                        Eliminar
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('') :
-                        `<div class="empty-state">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <h3>No tienes direcciones guardadas</h3>
-                            <p>Agrega tu primera dirección para facilitar tus pedidos</p>
-                        </div>`
-                    }
-                </div>
-            </div>
-        </div>
 
         <!-- Tab Historial -->
         <div id="orders-tab" class="tab-content">
@@ -8897,11 +8818,9 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             
             // Verificar tabs
             const profileTab = document.getElementById('profile-tab');
-            const addressesTab = document.getElementById('addresses-tab'); 
             const ordersTab = document.getElementById('orders-tab');
             console.log('Tabs encontradas:');
             console.log('profile-tab:', profileTab ? 'SÍ' : 'NO');
-            console.log('addresses-tab:', addressesTab ? 'SÍ' : 'NO'); 
             console.log('orders-tab:', ordersTab ? 'SÍ' : 'NO');
             
             // Verificar que switchTab esté disponible
@@ -8920,87 +8839,6 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             }
         });
 
-        function showAddAddressModal() {
-            // Implementar modal para agregar dirección
-            const type = prompt('Tipo de dirección (shipping/billing):');
-            if (!type || !['shipping', 'billing'].includes(type)) return;
-            
-            const firstName = prompt('Nombre:');
-            if (!firstName) return;
-            
-            const lastName = prompt('Apellido:');
-            if (!lastName) return;
-            
-            const address1 = prompt('Dirección:');
-            if (!address1) return;
-            
-            const city = prompt('Ciudad:');
-            if (!city) return;
-            
-            const postalCode = prompt('Código Postal:');
-            if (!postalCode) return;
-            
-            addAddress({
-                type,
-                first_name: firstName,
-                last_name: lastName,
-                address1,
-                city,
-                postal_code: postalCode,
-                country: 'Chile'
-            });
-        }
-
-        async function addAddress(addressData) {
-            try {
-                const response = await fetch('/api/addresses', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(addressData)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification('Dirección agregada exitosamente', 'success');
-                    setTimeout(() => window.location.reload(), 1000);
-                } else {
-                    showNotification(result.message || 'Error agregando dirección', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification('Error de conexión', 'error');
-            }
-        }
-
-        async function deleteAddress(addressId) {
-            if (!confirm('¿Estás seguro de que quieres eliminar esta dirección?')) return;
-            
-            try {
-                const response = await fetch('/api/addresses/' + addressId, {
-                    method: 'DELETE'
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification('Dirección eliminada exitosamente', 'success');
-                    setTimeout(() => window.location.reload(), 1000);
-                } else {
-                    showNotification(result.message || 'Error eliminando dirección', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification('Error de conexión', 'error');
-            }
-        }
-
-        function editAddress(addressId) {
-            // Implementar edición de dirección
-            showNotification('Función de edición en desarrollo', 'info');
-        }
 
         function showNotification(message, type) {
             const notification = document.createElement('div');
