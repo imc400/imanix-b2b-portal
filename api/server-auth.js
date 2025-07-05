@@ -2288,7 +2288,7 @@ function getCartHTML(customer) {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            background: #f8fafc;
+            background: #ffffff;
             padding: 0.5rem;
             border-radius: 12px;
         }
@@ -2555,7 +2555,7 @@ function getCartHTML(customer) {
         
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
-            background: var(--gray-50) !important;
+            background: #ffffff !important;
             border: 1px solid var(--gray-200) !important;
         }
         
@@ -4067,7 +4067,7 @@ function getLoginHTML() {
         
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
-            background: var(--gray-50) !important;
+            background: #ffffff !important;
             border: 1px solid var(--gray-200) !important;
         }
         
@@ -5382,7 +5382,7 @@ function getCompleteProfileHTML(customer) {
         
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
-            background: var(--gray-50) !important;
+            background: #ffffff !important;
             border: 1px solid var(--gray-200) !important;
         }
         
@@ -7386,7 +7386,7 @@ function getPortalHTML(products, customer) {
         
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
-            background: var(--gray-50) !important;
+            background: #ffffff !important;
             border: 1px solid var(--gray-200) !important;
         }
         
@@ -8981,7 +8981,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
         
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
-            background: var(--gray-50) !important;
+            background: #ffffff !important;
             border: 1px solid var(--gray-200) !important;
         }
         
@@ -10148,7 +10148,7 @@ function getAccountHTML(customer, profile, addresses, stats) {
         
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
-            background: var(--gray-50) !important;
+            background: #ffffff !important;
             border: 1px solid var(--gray-200) !important;
         }
         
@@ -10507,7 +10507,7 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
         
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
-            background: var(--gray-50) !important;
+            background: #ffffff !important;
             border: 1px solid var(--gray-200) !important;
         }
         
@@ -10740,7 +10740,7 @@ function getOrderDetailHTML(customer, order) {
         
         /* QUANTITY CONTROLS REFINADOS */
         .quantity-controls {
-            background: var(--gray-50) !important;
+            background: #ffffff !important;
             border: 1px solid var(--gray-200) !important;
         }
         
