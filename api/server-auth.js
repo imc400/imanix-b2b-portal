@@ -3545,6 +3545,10 @@ function getCartHTML(customer) {
                             <span><strong>Descuento:</strong></span>
                             <span style="color: #dc2626; font-weight: bold;">\${data.discount && !isNaN(data.discount) ? formatPrice(data.discount) : '$0'}</span>
                         </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #d1d5db;">
+                            <span><strong>Total a Pagar:</strong></span>
+                            <span style="color: #065f46; font-weight: bold; font-size: 1.1rem;">\${formatPrice((data.total || 0) - (data.discount && !isNaN(data.discount) ? data.discount : 0))}</span>
+                        </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span><strong>Estado:</strong></span>
                             <span style="color: #f59e0b; font-weight: bold; text-transform: capitalize;">\${data.status}</span>
