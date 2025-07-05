@@ -5837,8 +5837,31 @@ function getPortalHTML(products, customer) {
                             <span class="sku">SKU: ${variant?.sku || 'N/A'}</span>
                             <span class="stock-count">${stock} unidades</span>
                         </div>
+                        
+                        ${stock > 0 ? `
+                        <div class="quantity-selector">
+                            <label class="quantity-label">Cantidad:</label>
+                            <div class="quantity-controls">
+                                <button class="qty-btn" type="button" onclick="changeQuantity('${product.id}', -1)">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number" class="qty-input" 
+                                       id="qty-${product.id}" 
+                                       value="1" 
+                                       min="1" 
+                                       max="${stock}" 
+                                       onchange="validateQuantity(this, ${stock})"
+                                       onkeyup="validateQuantity(this, ${stock})">
+                                <button class="qty-btn" type="button" onclick="changeQuantity('${product.id}', 1)">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <small class="stock-info">Máximo ${stock} disponibles</small>
+                        </div>
+                        ` : ''}
+                        
                         <button class="add-to-cart-btn" ${stock === 0 ? 'disabled' : ''} 
-                                onclick="addToCart('${product.id}', '${variant?.id}', '${product.title.replace(/'/g, '&#39;').replace(/"/g, '&quot;')}', ${discountedPrice}, '${image}')">
+                                onclick="addToCartWithQuantity('${product.id}', '${variant?.id}', '${product.title.replace(/'/g, '&#39;').replace(/"/g, '&quot;')}', ${discountedPrice}, '${image}')">
                             <i class="fas fa-cart-plus"></i>
                             ${stock > 0 ? 'Agregar al Carrito' : 'Sin Stock'}
                         </button>
@@ -5972,10 +5995,123 @@ function getPortalHTML(products, customer) {
             }
         };
         
-        
-        
-        
-        
+        // FUNCIONES DEL SELECTOR DE CANTIDAD
+        window.changeQuantity = function(productId, delta) {
+            console.log('🔢 Cambiando cantidad para producto:', productId, 'delta:', delta);
+            const input = document.getElementById('qty-' + productId);
+            if (!input) {
+                console.error('❌ No se encontró input para producto:', productId);
+                return;
+            }
+            
+            const currentValue = parseInt(input.value) || 1;
+            const newValue = currentValue + delta;
+            const maxStock = parseInt(input.getAttribute('max')) || 0;
+            const minValue = parseInt(input.getAttribute('min')) || 1;
+            
+            console.log('📊 Valores - Actual:', currentValue, 'Nuevo:', newValue, 'Máximo:', maxStock, 'Mínimo:', minValue);
+            
+            if (newValue >= minValue && newValue <= maxStock) {
+                input.value = newValue;
+                validateQuantity(input, maxStock);
+            } else if (newValue > maxStock) {
+                window.showNotification(`Solo hay ${maxStock} unidades disponibles`, 'warning');
+            } else if (newValue < minValue) {
+                window.showNotification('La cantidad mínima es 1', 'warning');
+            }
+        };
+
+        window.validateQuantity = function(input, maxStock) {
+            console.log('✅ Validando cantidad:', input.value, 'Stock máximo:', maxStock);
+            const value = parseInt(input.value) || 1;
+            const productCard = input.closest('.product-card');
+            const button = productCard ? productCard.querySelector('.add-to-cart-btn') : null;
+            
+            if (!button) {
+                console.error('❌ No se encontró botón para validar cantidad');
+                return;
+            }
+            
+            // Validar rango
+            if (value > maxStock) {
+                input.value = maxStock;
+                window.showNotification(`Solo hay ${maxStock} unidades disponibles`, 'warning');
+            } else if (value <= 0) {
+                input.value = 1;
+                window.showNotification('La cantidad mínima es 1', 'warning');
+            }
+            
+            // Actualizar estado del botón
+            const finalValue = parseInt(input.value);
+            if (finalValue > maxStock || maxStock === 0) {
+                button.disabled = true;
+                button.style.opacity = '0.5';
+            } else {
+                button.disabled = false;
+                button.style.opacity = '1';
+            }
+        };
+
+        window.addToCartWithQuantity = function(productId, variantId, title, price, image) {
+            console.log('🛒 Agregando al carrito con cantidad personalizada:', title);
+            try {
+                const qtyInput = document.getElementById('qty-' + productId);
+                const quantity = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
+                const maxStock = qtyInput ? parseInt(qtyInput.getAttribute('max')) || 0 : 0;
+                
+                console.log('📦 Cantidad solicitada:', quantity, 'Stock disponible:', maxStock);
+                
+                // Validar stock disponible
+                if (quantity > maxStock) {
+                    window.showNotification(`Solo hay ${maxStock} unidades disponibles`, 'error');
+                    return;
+                }
+                
+                // Verificar si el producto ya está en el carrito
+                var existingItem = cart.find(function(item) { 
+                    return item.productId === productId || item.title === title; 
+                });
+                
+                if (existingItem) {
+                    const newTotalQuantity = existingItem.quantity + quantity;
+                    if (newTotalQuantity > maxStock) {
+                        window.showNotification(`Ya tienes ${existingItem.quantity} unidades. Solo puedes agregar ${maxStock - existingItem.quantity} más`, 'warning');
+                        return;
+                    }
+                    existingItem.quantity = newTotalQuantity;
+                    console.log('📝 Producto actualizado en carrito:', existingItem);
+                } else {
+                    cart.push({
+                        productId: productId || 'product_' + Date.now(),
+                        variantId: variantId || 'variant_' + Date.now(),
+                        title: title,
+                        price: price,
+                        image: image,
+                        quantity: quantity
+                    });
+                    console.log('✨ Producto agregado al carrito con cantidad:', quantity);
+                }
+                
+                // Guardar en localStorage
+                localStorage.setItem('b2bCart', JSON.stringify(cart));
+                
+                // Actualizar badge y mostrar notificación
+                window.updateCartBadge();
+                const message = quantity === 1 ? 
+                    `${title} agregado al carrito` : 
+                    `${quantity} unidades de ${title} agregadas al carrito`;
+                window.showNotification(message, 'success');
+                
+                // Resetear cantidad a 1 después de agregar
+                if (qtyInput) {
+                    qtyInput.value = 1;
+                }
+                
+            } catch (error) {
+                console.error('❌ Error agregando al carrito con cantidad:', error);
+                window.showNotification('Error agregando producto al carrito', 'error');
+            }
+        };
         
         // Inicializar cuando se carga la página
         document.addEventListener('DOMContentLoaded', function() {
@@ -6727,6 +6863,119 @@ function getPortalHTML(products, customer) {
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+        }
+
+        /* SELECTOR DE CANTIDAD */
+        .quantity-selector {
+            margin: 1.5rem 0;
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .quantity-label {
+            display: block;
+            font-weight: 600;
+            color: #1A202C;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .qty-btn {
+            width: 42px;
+            height: 42px;
+            border: 2px solid #1A202C;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            color: #1A202C;
+            font-weight: 700;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .qty-btn:hover {
+            background: #1A202C;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(26, 32, 44, 0.3);
+        }
+
+        .qty-btn:active {
+            transform: translateY(0);
+        }
+
+        .qty-input {
+            width: 70px;
+            height: 42px;
+            text-align: center;
+            border: 2px solid #1A202C;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #1A202C;
+            font-weight: 700;
+            font-size: 1rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .qty-input:focus {
+            outline: none;
+            border-color: #FFCE36;
+            box-shadow: 0 0 0 3px rgba(255, 206, 54, 0.2);
+            background: white;
+        }
+
+        .qty-input::-webkit-outer-spin-button,
+        .qty-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .qty-input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        .stock-info {
+            color: rgba(26, 32, 44, 0.7);
+            font-size: 0.75rem;
+            font-weight: 500;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .quantity-controls {
+                gap: 0.5rem;
+            }
+            
+            .qty-btn {
+                width: 38px;
+                height: 38px;
+                font-size: 0.75rem;
+            }
+            
+            .qty-input {
+                width: 60px;
+                height: 38px;
+                font-size: 0.875rem;
+            }
         }
 
         .no-products {
