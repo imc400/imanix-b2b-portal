@@ -6,6 +6,7 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const cloudinary = require('cloudinary').v2;
 const nodemailer = require('nodemailer');
+const ExcelJS = require('exceljs');
 const database = require('./database');
 const SupabaseSessionStore = require('./session-store');
 require('dotenv').config();
@@ -356,8 +357,226 @@ function generateOrderEmailHTML(customer, cartItems, orderData) {
   `;
 }
 
+// Función para generar Excel del pedido
+async function generateOrderExcel(customer, cartItems, orderData, profileData) {
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Resumen de Pedido');
+    
+    // Configuración de encabezados de la hoja
+    worksheet.properties.defaultRowHeight = 18;
+    worksheet.properties.defaultColWidth = 15;
+    
+    // Colores IMANIX
+    const imanixYellow = 'FFCE36';
+    const darkGray = '1A202C';
+    const lightGray = 'F8F9FA';
+    
+    // Título principal
+    worksheet.mergeCells('A1:F1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'RESUMEN DE PEDIDO B2B - IMANIX CHILE';
+    titleCell.font = { name: 'Arial', size: 16, bold: true, color: { argb: darkGray } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: imanixYellow } };
+    worksheet.getRow(1).height = 30;
+    
+    // Información del pedido
+    let row = 3;
+    const customerName = `${customer?.firstName || 'Usuario'} ${customer?.lastName || ''}`.trim() || 'N/A';
+    const discountPercentage = customer?.discount || 0;
+    
+    // Sección: Información del Pedido
+    worksheet.mergeCells(`A${row}:B${row}`);
+    const orderInfoTitle = worksheet.getCell(`A${row}`);
+    orderInfoTitle.value = 'INFORMACIÓN DEL PEDIDO';
+    orderInfoTitle.font = { bold: true, color: { argb: darkGray } };
+    orderInfoTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: lightGray } };
+    row++;
+    
+    const orderInfo = [
+      ['Número de Pedido:', orderData.draftOrderNumber || 'N/A'],
+      ['Fecha:', new Date().toLocaleDateString('es-CL')],
+      ['Hora:', new Date().toLocaleTimeString('es-CL')],
+      ['Estado:', 'Pendiente'],
+      ['Método de Pago:', orderData.paymentMethod || 'Contacto para coordinación']
+    ];
+    
+    orderInfo.forEach(([label, value]) => {
+      worksheet.getCell(`A${row}`).value = label;
+      worksheet.getCell(`A${row}`).font = { bold: true };
+      worksheet.getCell(`B${row}`).value = value;
+      row++;
+    });
+    
+    row++; // Espacio
+    
+    // Sección: Información del Cliente
+    worksheet.mergeCells(`A${row}:B${row}`);
+    const customerInfoTitle = worksheet.getCell(`A${row}`);
+    customerInfoTitle.value = 'INFORMACIÓN DEL CLIENTE';
+    customerInfoTitle.font = { bold: true, color: { argb: darkGray } };
+    customerInfoTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: lightGray } };
+    row++;
+    
+    const customerInfo = [
+      ['Nombre:', customerName],
+      ['Email:', customer?.email || 'N/A'],
+      ['Empresa:', customer?.company || profileData?.company_name || 'N/A'],
+      ['Teléfono:', profileData?.phone || profileData?.mobile_phone || 'N/A'],
+      ['Dirección:', profileData?.company_address || 'N/A'],
+      ['Comuna:', profileData?.comuna || 'N/A'],
+      ['RUT Empresa:', profileData?.rut || 'N/A'],
+      ['Descuento B2B:', `${discountPercentage}%`]
+    ];
+    
+    customerInfo.forEach(([label, value]) => {
+      worksheet.getCell(`A${row}`).value = label;
+      worksheet.getCell(`A${row}`).font = { bold: true };
+      worksheet.getCell(`B${row}`).value = value;
+      row++;
+    });
+    
+    row += 2; // Espacio
+    
+    // Sección: Detalle de Productos
+    worksheet.mergeCells(`A${row}:F${row}`);
+    const productsTitle = worksheet.getCell(`A${row}`);
+    productsTitle.value = 'DETALLE DE PRODUCTOS';
+    productsTitle.font = { bold: true, color: { argb: darkGray } };
+    productsTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: lightGray } };
+    productsTitle.alignment = { horizontal: 'center' };
+    row++;
+    
+    // Encabezados de productos
+    const headers = ['Producto', 'Cantidad', 'P. Neto', 'IVA', 'P. Bruto', 'Total Línea'];
+    headers.forEach((header, index) => {
+      const cell = worksheet.getCell(row, index + 1);
+      cell.value = header;
+      cell.font = { bold: true, color: { argb: darkGray } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: imanixYellow } };
+      cell.alignment = { horizontal: 'center' };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    });
+    row++;
+    
+    // Cálculos matemáticos corregidos
+    let subtotalConIva = 0;
+    
+    // Productos
+    cartItems.forEach(item => {
+      const precioConIva = item.price;
+      const precioNeto = Math.round(precioConIva / 1.19);
+      const iva = precioConIva - precioNeto;
+      const totalLinea = precioConIva * item.quantity;
+      
+      subtotalConIva += totalLinea;
+      
+      const productRow = [
+        item.title,
+        item.quantity,
+        `$${precioNeto.toLocaleString('es-CL')}`,
+        `$${iva.toLocaleString('es-CL')}`,
+        `$${precioConIva.toLocaleString('es-CL')}`,
+        `$${totalLinea.toLocaleString('es-CL')}`
+      ];
+      
+      productRow.forEach((value, index) => {
+        const cell = worksheet.getCell(row, index + 1);
+        cell.value = value;
+        if (index > 1) cell.alignment = { horizontal: 'right' };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+      row++;
+    });
+    
+    row++; // Espacio
+    
+    // Cálculos de totales
+    const subtotalNeto = Math.round(subtotalConIva / 1.19);
+    const ivaTotal = subtotalConIva - subtotalNeto;
+    const discountAmount = Math.round(subtotalConIva * (discountPercentage / 100));
+    const totalFinal = subtotalConIva - discountAmount;
+    
+    // Sección: Resumen Financiero
+    worksheet.mergeCells(`D${row}:F${row}`);
+    const financialTitle = worksheet.getCell(`D${row}`);
+    financialTitle.value = 'RESUMEN FINANCIERO';
+    financialTitle.font = { bold: true, color: { argb: darkGray } };
+    financialTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: lightGray } };
+    financialTitle.alignment = { horizontal: 'center' };
+    row++;
+    
+    const totals = [
+      ['Subtotal (Neto):', `$${subtotalNeto.toLocaleString('es-CL')}`],
+      ['IVA (19%):', `$${ivaTotal.toLocaleString('es-CL')}`],
+      ['Subtotal (Bruto):', `$${subtotalConIva.toLocaleString('es-CL')}`],
+      [`Descuento B2B (${discountPercentage}%):`, `-$${discountAmount.toLocaleString('es-CL')}`],
+      ['TOTAL FINAL:', `$${totalFinal.toLocaleString('es-CL')}`]
+    ];
+    
+    totals.forEach(([label, value], index) => {
+      worksheet.getCell(`D${row}`).value = label;
+      worksheet.getCell(`D${row}`).font = { bold: true };
+      worksheet.getCell(`F${row}`).value = value;
+      worksheet.getCell(`F${row}`).font = { bold: index === totals.length - 1 };
+      worksheet.getCell(`F${row}`).alignment = { horizontal: 'right' };
+      
+      if (index === totals.length - 1) {
+        // Resaltar total final
+        ['D', 'E', 'F'].forEach(col => {
+          const cell = worksheet.getCell(`${col}${row}`);
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: imanixYellow } };
+          cell.font = { bold: true, size: 12 };
+        });
+      }
+      
+      if (index === 3) {
+        // Resaltar descuento en verde
+        worksheet.getCell(`F${row}`).font = { bold: true, color: { argb: '22C55E' } };
+      }
+      
+      row++;
+    });
+    
+    // Ajustar anchos de columnas
+    worksheet.columns = [
+      { width: 25 }, // A - Producto/Labels
+      { width: 15 }, // B - Cantidad/Values
+      { width: 15 }, // C - P. Neto
+      { width: 15 }, // D - IVA/Labels
+      { width: 15 }, // E - P. Bruto
+      { width: 20 }  // F - Total/Values
+    ];
+    
+    // Nota final
+    row += 2;
+    worksheet.mergeCells(`A${row}:F${row}`);
+    const noteCell = worksheet.getCell(`A${row}`);
+    noteCell.value = 'Documento generado automáticamente por el Portal B2B IMANIX Chile';
+    noteCell.font = { italic: true, size: 10, color: { argb: '6B7280' } };
+    noteCell.alignment = { horizontal: 'center' };
+    
+    return workbook;
+    
+  } catch (error) {
+    console.error('❌ Error generando Excel:', error);
+    throw error;
+  }
+}
+
 // Función para enviar email de notificación del pedido
-async function sendOrderEmail(customer, cartItems, orderData) {
+async function sendOrderEmail(customer, cartItems, orderData, profileData = null) {
   try {
     // Verificar si el transporter está configurado
     if (!transporter) {
@@ -368,20 +587,39 @@ async function sendOrderEmail(customer, cartItems, orderData) {
     const emailHtml = generateOrderEmailHTML(customer, cartItems, orderData);
     const customerName = `${customer?.firstName || 'Usuario' || ''} ${customer?.lastName || ''}`.trim() || customer?.email || 'no-email@example.com';
     
+    // Generar Excel del pedido
+    console.log('📊 Generando Excel del pedido...');
+    const excelWorkbook = await generateOrderExcel(customer, cartItems, {
+      ...orderData,
+      paymentMethod: orderData.paymentMethod
+    }, profileData);
+    
+    // Convertir Excel a buffer
+    const excelBuffer = await excelWorkbook.xlsx.writeBuffer();
+    const orderNumber = orderData.draftOrderNumber || 'N/A';
+    const fileName = `Pedido_B2B_${orderNumber}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_TO || 'administracion@imanix.com',
-      subject: `🎯 Nuevo Pedido B2B IMA - ${customerName} - #${orderData.draftOrderNumber}`,
-      html: emailHtml
+      subject: `🎯 Nuevo Pedido B2B IMA - ${customerName} - #${orderNumber}`,
+      html: emailHtml,
+      attachments: [
+        {
+          filename: fileName,
+          content: excelBuffer,
+          contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        }
+      ]
     };
     
-    console.log('📧 Enviando email de notificación del pedido...');
+    console.log('📧 Enviando email con Excel adjunto...');
     const result = await transporter.sendMail(mailOptions);
-    console.log('✅ Email enviado exitosamente:', result.messageId);
+    console.log('✅ Email enviado exitosamente con Excel:', result.messageId);
     
-    return { success: true, messageId: result.messageId };
+    return { success: true, messageId: result.messageId, excelGenerated: true };
   } catch (error) {
-    console.error('❌ Error enviando email:', error);
+    console.error('❌ Error enviando email con Excel:', error);
     return { success: false, error: error.message };
   }
 }
@@ -1131,7 +1369,7 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
     console.log('✅ DEBUG checkout - All validations passed, proceeding to createDraftOrder');
 
     // Crear draft order en Shopify
-    const draftOrder = await createDraftOrder(customer, cartItems, discountPercentage, paymentMethod, comprobante);
+    const { draftOrder, profileData } = await createDraftOrder(customer, cartItems, discountPercentage, paymentMethod, comprobante);
     
     // Log para seguimiento
     console.log(`🎯 Draft Order #${draftOrder.id} creado para cliente B2B: ${customer?.email || 'no-email@example.com'}`);
@@ -1169,8 +1407,9 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
           draftOrderId: draftOrder.id,
           draftOrderNumber: draftOrder.name || `D${draftOrder.id}`,
           total: draftOrder.total_price,
-          discount: draftOrder.total_discounts
-        });
+          discount: draftOrder.total_discounts,
+          paymentMethod: paymentMethod
+        }, profileData);
         
         if (emailResult.success) {
           console.log('✅ Email de notificación enviado exitosamente');
@@ -1453,7 +1692,10 @@ CONTACTO:
         // Guardar el pedido en Supabase para el historial del usuario
         await saveDraftOrderToDatabase(result.draft_order, customer);
         
-        return result.draft_order;
+        return { 
+          draftOrder: result.draft_order, 
+          profileData: profileData 
+        };
     } catch (error) {
         console.error('Error creando draft order:', error);
         throw error;
