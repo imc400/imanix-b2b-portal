@@ -2901,19 +2901,49 @@ function getCartHTML(customer) {
             \`;
         }
 
-        // Función para actualizar cantidad
-        function updateQuantity(productId, variantId, change) {
+        // Función para actualizar cantidad con validación de stock
+        async function updateQuantity(productId, variantId, change) {
             const item = cart.find(item => item.productId === productId && item.variantId === variantId);
-            if (item) {
-                item.quantity += change;
-                if (item.quantity <= 0) {
-                    removeFromCart(productId, variantId);
-                } else {
-                    localStorage.setItem('b2bCart', JSON.stringify(cart));
-                    renderCart();
-                    showNotification('Cantidad actualizada', 'success');
+            if (!item) return;
+
+            const newQuantity = item.quantity + change;
+            
+            if (newQuantity <= 0) {
+                removeFromCart(productId, variantId);
+                return;
+            }
+
+            // Si estamos incrementando, verificar stock disponible
+            if (change > 0) {
+                try {
+                    console.log('🔍 Verificando stock antes de incrementar cantidad...');
+                    const response = await fetch('/api/product/' + productId + '/stock');
+                    const stockData = await response.json();
+                    
+                    if (stockData.success && stockData.stock) {
+                        const availableStock = stockData.stock;
+                        
+                        if (newQuantity > availableStock) {
+                            showNotification('Solo hay ' + availableStock + ' unidades disponibles', 'warning');
+                            return;
+                        }
+                    } else {
+                        console.error('❌ No se pudo verificar el stock');
+                        showNotification('No se pudo verificar el stock disponible', 'error');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('❌ Error verificando stock:', error);
+                    showNotification('Error verificando stock disponible', 'error');
+                    return;
                 }
             }
+
+            // Actualizar cantidad si pasa todas las validaciones
+            item.quantity = newQuantity;
+            localStorage.setItem('b2bCart', JSON.stringify(cart));
+            renderCart();
+            showNotification('Cantidad actualizada', 'success');
         }
 
         // Función para eliminar del carrito
@@ -9380,6 +9410,56 @@ app.get('/api/orders/:id', requireAuthAPI, async (req, res) => {
   } catch (error) {
     console.error('Error obteniendo detalles del pedido:', error);
     res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+});
+
+// API - Verificar stock de un producto
+app.get('/api/product/:productId/stock', requireAuthAPI, async (req, res) => {
+  try {
+    const productId = req.params.productId;
+    console.log('🔍 Verificando stock para producto:', productId);
+    
+    // Obtener información del producto desde Shopify
+    const response = await fetch(`https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2024-01/products/${productId}.json`, {
+      headers: {
+        'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      console.error('❌ Error obteniendo producto de Shopify:', response.status);
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Producto no encontrado',
+        stock: 0
+      });
+    }
+
+    const data = await response.json();
+    const product = data.product;
+    
+    // Obtener stock del primer variant (asumiendo que hay solo uno por producto)
+    const stock = product.variants && product.variants.length > 0 
+      ? product.variants[0].inventory_quantity || 0 
+      : 0;
+    
+    console.log('📦 Stock disponible para producto ' + productId + ':', stock);
+    
+    res.json({ 
+      success: true, 
+      productId: productId,
+      stock: stock,
+      title: product.title
+    });
+    
+  } catch (error) {
+    console.error('❌ Error verificando stock:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error verificando stock disponible',
+      stock: 0
+    });
   }
 });
 
