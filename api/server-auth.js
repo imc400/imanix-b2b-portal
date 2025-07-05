@@ -5841,6 +5841,20 @@ function getPortalHTML(products, customer) {
         `).join('');
     }
     
+    // Función helper para renderizar filtros de stock
+    function renderStockFilterChips() {
+        return `
+            <button class="filter-chip stock-filter" onclick="toggleStockFilter('disponible')" data-stock-filter="disponible">
+                <i class="fas fa-check-circle"></i>
+                Disponible
+            </button>
+            <button class="filter-chip stock-filter" onclick="toggleStockFilter('sin-stock')" data-stock-filter="sin-stock">
+                <i class="fas fa-times-circle"></i>
+                Sin Stock
+            </button>
+        `;
+    }
+    
     // Función helper para renderizar los productos
     function renderProducts(products, discount) {
         if (!products || products.length === 0) {
@@ -7568,6 +7582,18 @@ function getPortalHTML(products, customer) {
                             ${renderFilterChips(extractUniqueFilters(products))}
                         </div>
                     </div>
+                    
+                    <div class="filters-section">
+                        <div class="filters-header">
+                            <h3 class="filters-title">
+                                <i class="fas fa-boxes"></i>
+                                Filtrar por disponibilidad
+                            </h3>
+                        </div>
+                        <div class="filter-chips-container">
+                            ${renderStockFilterChips()}
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -7658,6 +7684,35 @@ function getPortalHTML(products, customer) {
                     }
                 }
                 
+                // Filtro por stock
+                if (activeStockFilter && shouldShow) {
+                    var stockBadge = card.querySelector('.stock-badge');
+                    var addToCartBtn = card.querySelector('.add-to-cart-btn');
+                    var stockInfo = card.querySelector('.stock-info');
+                    
+                    var hasStock = true;
+                    
+                    // Verificar por badge de stock
+                    if (stockBadge) {
+                        if (stockBadge.classList.contains('out-of-stock') || 
+                            stockBadge.textContent.toLowerCase().includes('sin stock')) {
+                            hasStock = false;
+                        }
+                    }
+                    
+                    // Verificar por botón
+                    if (addToCartBtn && addToCartBtn.textContent.toLowerCase().includes('sin stock')) {
+                        hasStock = false;
+                    }
+                    
+                    // Aplicar filtro
+                    if (activeStockFilter === 'disponible' && !hasStock) {
+                        shouldShow = false;
+                    } else if (activeStockFilter === 'sin-stock' && hasStock) {
+                        shouldShow = false;
+                    }
+                }
+                
                 card.style.display = shouldShow ? 'block' : 'none';
                 if (shouldShow) {
                     visibleCount++;
@@ -7678,6 +7733,32 @@ function getPortalHTML(products, customer) {
             } else {
                 // Activar filtro
                 activeFilters.add(filterValue);
+                filterChip.classList.add('active');
+            }
+            
+            // Aplicar filtros
+            filterProducts();
+        }
+
+        // Variables para filtros de stock
+        var activeStockFilter = null; // 'disponible', 'sin-stock', o null
+
+        function toggleStockFilter(stockType) {
+            var filterChip = document.querySelector('[data-stock-filter="' + stockType + '"]');
+            var allStockFilters = document.querySelectorAll('.stock-filter');
+            
+            if (activeStockFilter === stockType) {
+                // Desactivar filtro actual
+                activeStockFilter = null;
+                filterChip.classList.remove('active');
+            } else {
+                // Desactivar todos los filtros de stock
+                allStockFilters.forEach(function(chip) {
+                    chip.classList.remove('active');
+                });
+                
+                // Activar filtro seleccionado
+                activeStockFilter = stockType;
                 filterChip.classList.add('active');
             }
             
@@ -7716,6 +7797,9 @@ function getPortalHTML(products, customer) {
             
             // Limpiar filtros activos
             activeFilters.clear();
+            
+            // Limpiar filtro de stock
+            activeStockFilter = null;
             
             // Remover clase active de todos los chips
             var allChips = document.querySelectorAll('.filter-chip');
