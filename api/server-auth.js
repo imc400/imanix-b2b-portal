@@ -6719,47 +6719,42 @@ function getPortalHTML(products, customer) {
         }
 
         .catalog-controls {
+            margin-bottom: 2rem;
+        }
+
+        .controls-top {
+            margin-bottom: 1.5rem;
+        }
+
+        .filters-header {
             display: flex;
-            gap: 1rem;
+            justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .filter-actions {
-            margin-left: auto;
+            margin-bottom: 1rem;
         }
 
         .search-box {
-            padding: 1rem 1.5rem;
-            border: 2px solid rgba(148, 163, 184, 0.2);
-            border-radius: 16px;
-            font-size: 0.95rem;
-            width: 320px;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-weight: 500;
-            color: #1A202C;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            transition: all 0.2s ease;
+            font-weight: 400;
+            color: #374151;
         }
 
         .search-box::placeholder {
-            color: #94a3b8;
-            font-weight: 500;
+            color: #9ca3af;
+            font-weight: 400;
         }
 
         .search-box:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 
-                0 0 0 4px rgba(102, 126, 234, 0.1),
-                0 4px 12px rgba(102, 126, 234, 0.15);
-            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
-            transform: translateY(-1px);
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
         .filter-box {
@@ -6791,100 +6786,104 @@ function getPortalHTML(products, customer) {
         }
 
         .clear-filters-btn {
-            padding: 1rem 1.5rem;
-            border: 2px solid rgba(239, 68, 68, 0.2);
+            padding: 0.5rem 1rem;
+            border: 1px solid #e5e7eb;
             border-radius: 16px;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            color: #DC2626;
-            font-weight: 600;
-            font-size: 0.95rem;
+            background: white;
+            color: #6b7280;
+            font-weight: 500;
+            font-size: 0.875rem;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.375rem;
         }
 
         .clear-filters-btn:hover {
-            border-color: #DC2626;
-            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-            color: white;
+            border-color: #ef4444;
+            background: #fef2f2;
+            color: #ef4444;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
+        }
+
+        .clear-filters-btn i {
+            font-size: 0.75rem;
         }
 
         .filter-results {
-            margin-top: 1rem;
-            padding: 0.75rem 1.25rem;
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            border-radius: 12px;
-            color: #1e40af;
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-align: center;
-            backdrop-filter: blur(10px);
+            margin: 0.75rem 0;
+            padding: 0;
+            background: transparent;
+            border: none;
+            color: #6b7280;
+            font-weight: 500;
+            font-size: 0.875rem;
+            text-align: right;
         }
 
         .filters-section {
-            margin-top: 2rem;
-            padding: 1.5rem;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            border: 2px solid rgba(148, 163, 184, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin: 1.5rem 0;
+            padding: 0;
+            background: transparent;
         }
 
         .filters-title {
-            color: #1A202C;
-            font-size: 1.1rem;
-            font-weight: 700;
+            color: #374151;
+            font-size: 1rem;
+            font-weight: 600;
             margin-bottom: 1rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            opacity: 0.8;
         }
 
         .filters-title i {
-            color: #667eea;
+            color: #6366f1;
+            font-size: 0.9rem;
         }
 
         .filter-chips-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
         }
 
         .filter-chip {
-            padding: 0.75rem 1.25rem;
-            border: 2px solid rgba(102, 126, 234, 0.2);
-            border-radius: 25px;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            color: #667eea;
-            font-weight: 600;
-            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 20px;
+            background: white;
+            color: #6b7280;
+            font-weight: 500;
+            font-size: 0.875rem;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s ease;
             white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         .filter-chip:hover {
-            border-color: #667eea;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
+            border-color: #6366f1;
+            color: #6366f1;
+            background: #f8fafc;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(99, 102, 241, 0.15);
         }
 
         .filter-chip.active {
-            border-color: #667eea;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #6366f1;
+            background: #6366f1;
             color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+        }
+
+        .filter-chip.active:hover {
+            background: #5856eb;
+            border-color: #5856eb;
         }
 
         .no-filters {
@@ -7262,36 +7261,35 @@ function getPortalHTML(products, customer) {
             }
 
             .catalog-controls {
+                margin-bottom: 1.5rem;
+            }
+
+            .controls-top {
+                margin-bottom: 1rem;
+            }
+
+            .search-box {
+                max-width: 100%;
+            }
+
+            .filters-header {
                 flex-direction: column;
-                align-items: stretch;
-                gap: 1rem;
-            }
-
-            .filter-group {
-                width: 100%;
-            }
-
-            .search-box, .filter-box {
-                width: 100%;
-            }
-
-            .filter-actions {
-                margin-left: 0;
-                align-self: center;
-            }
-
-            .filters-section {
-                margin-top: 1.5rem;
-                padding: 1rem;
+                align-items: flex-start;
+                gap: 0.75rem;
             }
 
             .filter-chips-container {
-                gap: 0.5rem;
+                gap: 0.375rem;
             }
 
             .filter-chip {
-                padding: 0.6rem 1rem;
-                font-size: 0.85rem;
+                padding: 0.5rem 0.875rem;
+                font-size: 0.8rem;
+            }
+
+            .clear-filters-btn {
+                padding: 0.375rem 0.75rem;
+                font-size: 0.8rem;
             }
 
             .catalog-header {
@@ -7550,25 +7548,25 @@ function getPortalHTML(products, customer) {
                     Catálogo B2B
                 </h2>
                 <div class="catalog-controls">
-                    <div class="search-group">
+                    <div class="controls-top">
                         <input type="text" class="search-box" placeholder="Buscar productos..." 
                                id="searchInput" onkeyup="filterProducts()">
                     </div>
-                </div>
-                
-                <div class="filters-section">
-                    <h3 class="filters-title">
-                        <i class="fas fa-filter"></i>
-                        Filtrar por categoría
-                    </h3>
-                    <div class="filter-chips-container">
-                        ${renderFilterChips(extractUniqueFilters(products))}
-                    </div>
-                    <div class="filter-actions">
-                        <button class="clear-filters-btn" onclick="clearAllFilters()">
-                            <i class="fas fa-times"></i>
-                            Limpiar filtros
-                        </button>
+                    
+                    <div class="filters-section">
+                        <div class="filters-header">
+                            <h3 class="filters-title">
+                                <i class="fas fa-filter"></i>
+                                Filtrar por categoría
+                            </h3>
+                            <button class="clear-filters-btn" onclick="clearAllFilters()">
+                                <i class="fas fa-times"></i>
+                                Limpiar filtros
+                            </button>
+                        </div>
+                        <div class="filter-chips-container">
+                            ${renderFilterChips(extractUniqueFilters(products))}
+                        </div>
                     </div>
                 </div>
             </div>
