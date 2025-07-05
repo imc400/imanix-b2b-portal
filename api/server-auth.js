@@ -1486,13 +1486,14 @@ function applyB2BDiscount(price, discount) {
 }
 
 // Función para guardar draft order en Supabase
-async function saveDraftOrderToDatabase(draftOrder, customer) {
+async function saveDraftOrderToDatabase(draftOrder, customer, calculatedDiscount = 0) {
     try {
         console.log('🔄 Iniciando guardado de pedido en base de datos...');
         console.log('📧 Email del cliente:', customer?.email || 'no-email@example.com');
         console.log('🆔 Draft Order ID:', draftOrder.id);
         console.log('💵 Total Price:', draftOrder.total_price);
-        console.log('💸 Total Discounts:', draftOrder.total_discounts);
+        console.log('💸 Shopify Total Discounts:', draftOrder.total_discounts);
+        console.log('💰 Calculated Discount (que se guardará):', calculatedDiscount);
         
         // Verificar si database está disponible
         if (!database) {
@@ -1512,7 +1513,7 @@ async function saveDraftOrderToDatabase(draftOrder, customer) {
             order_number: `D${draftOrder.id}`, // Draft order con prefijo D
             status: 'pendiente', // Estado para draft orders
             total_amount: parseFloat(draftOrder.total_price || 0),
-            discount_amount: parseFloat(draftOrder.total_discounts || 0),
+            discount_amount: parseFloat(calculatedDiscount || 0), // Usar descuento calculado localmente
             currency: draftOrder.currency || 'CLP',
             order_date: new Date().toISOString()
             // Nota: Los items se guardan en Shopify, para estadísticas solo necesitamos los totales
@@ -1689,8 +1690,12 @@ CONTACTO:
         const result = await response.json();
         console.log('✅ Draft Order creado exitosamente:', result.draft_order.id);
         
+        // Calcular descuento localmente para guardarlo correctamente en BD
+        const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const calculatedDiscount = subtotal * (discountPercentage / 100);
+        
         // Guardar el pedido en Supabase para el historial del usuario
-        await saveDraftOrderToDatabase(result.draft_order, customer);
+        await saveDraftOrderToDatabase(result.draft_order, customer, calculatedDiscount);
         
         return { 
           draftOrder: result.draft_order, 
