@@ -6015,7 +6015,7 @@ function getPortalHTML(products, customer) {
                 input.value = newValue;
                 validateQuantity(input, maxStock);
             } else if (newValue > maxStock) {
-                window.showNotification(`Solo hay ${maxStock} unidades disponibles`, 'warning');
+                window.showNotification('Solo hay ' + maxStock + ' unidades disponibles', 'warning');
             } else if (newValue < minValue) {
                 window.showNotification('La cantidad mínima es 1', 'warning');
             }
@@ -6035,7 +6035,7 @@ function getPortalHTML(products, customer) {
             // Validar rango
             if (value > maxStock) {
                 input.value = maxStock;
-                window.showNotification(`Solo hay ${maxStock} unidades disponibles`, 'warning');
+                window.showNotification('Solo hay ' + maxStock + ' unidades disponibles', 'warning');
             } else if (value <= 0) {
                 input.value = 1;
                 window.showNotification('La cantidad mínima es 1', 'warning');
@@ -6063,7 +6063,7 @@ function getPortalHTML(products, customer) {
                 
                 // Validar stock disponible
                 if (quantity > maxStock) {
-                    window.showNotification(`Solo hay ${maxStock} unidades disponibles`, 'error');
+                    window.showNotification('Solo hay ' + maxStock + ' unidades disponibles', 'error');
                     return;
                 }
                 
@@ -6075,7 +6075,7 @@ function getPortalHTML(products, customer) {
                 if (existingItem) {
                     const newTotalQuantity = existingItem.quantity + quantity;
                     if (newTotalQuantity > maxStock) {
-                        window.showNotification(`Ya tienes ${existingItem.quantity} unidades. Solo puedes agregar ${maxStock - existingItem.quantity} más`, 'warning');
+                        window.showNotification('Ya tienes ' + existingItem.quantity + ' unidades. Solo puedes agregar ' + (maxStock - existingItem.quantity) + ' más', 'warning');
                         return;
                     }
                     existingItem.quantity = newTotalQuantity;
@@ -6098,8 +6098,8 @@ function getPortalHTML(products, customer) {
                 // Actualizar badge y mostrar notificación
                 window.updateCartBadge();
                 const message = quantity === 1 ? 
-                    `${title} agregado al carrito` : 
-                    `${quantity} unidades de ${title} agregadas al carrito`;
+                    title + ' agregado al carrito' : 
+                    quantity + ' unidades de ' + title + ' agregadas al carrito';
                 window.showNotification(message, 'success');
                 
                 // Resetear cantidad a 1 después de agregar
