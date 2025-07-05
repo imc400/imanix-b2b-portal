@@ -5983,55 +5983,6 @@ function getPortalHTML(products, customer) {
         
         
         
-        // Función para limpiar y extraer valor legible de IDs de Shopify
-        function cleanShopifyValue(value, key) {
-            if (!value) return null;
-            
-            console.log('🔍 cleanShopifyValue - Input:', value, 'Key:', key);
-            
-            // Si es un ID de Shopify, intentar extraer información útil
-            if (typeof value === 'string' && value.startsWith('gid://shopify/')) {
-                console.log('🔧 Procesando ID de Shopify:', value, 'para key:', key);
-                
-                // Para edades, podríamos mapear IDs conocidos a valores legibles
-                var ageMapping = {
-                    '122522435859': '3-5 años',
-                    '98466890003': '5-9 años',
-                    '35341876855059': '9+ años',
-                    '39573422145811': 'Experto'
-                };
-                
-                // Extraer el ID numérico del final
-                var idMatch = value.match(/\\\\/(\\\d+)$/);
-                if (idMatch && ageMapping[idMatch[1]]) {
-                    console.log('✅ ID mapeado:', idMatch[1], '->', ageMapping[idMatch[1]]);
-                    return ageMapping[idMatch[1]];
-                }
-                
-                // Si no tenemos mapeo, usar el ID como valor temporal
-                return 'ID-' + (idMatch ? idMatch[1] : 'unknown');
-            }
-            
-            // Si es un array (múltiples valores), convertir a string separado por saltos de línea
-            if (Array.isArray(value)) {
-                console.log('📋 Array detectado:', value);
-                return value.join('\n');
-            }
-            
-            // Si es un objeto, intentar extraer información útil
-            if (typeof value === 'object' && value !== null) {
-                console.log('🔧 Objeto detectado:', value);
-                // Buscar propiedades comunes como 'value', 'text', 'name'
-                if (value.value) return value.value;
-                if (value.text) return value.text;
-                if (value.name) return value.name;
-                // Si no, convertir a JSON string
-                return JSON.stringify(value);
-            }
-            
-            console.log('✅ Valor limpio:', value);
-            return value;
-        }
         
         
         // Inicializar cuando se carga la página
@@ -7212,7 +7163,6 @@ function getPortalHTML(products, customer) {
             }
         };
         
-        // toggleFilters eliminada - usando la definición anterior window.toggleFilters
         
         // showCart y addToCart ya están definidas globalmente arriba - eliminando duplicados
         
@@ -7235,7 +7185,6 @@ function getPortalHTML(products, customer) {
         };
         
         
-        // La función applyFilters ya está asignada globalmente arriba
         
 
         // Inicializar al cargar la página
@@ -7255,7 +7204,6 @@ function getPortalHTML(products, customer) {
             }
         }
         
-        // toggleFilters eliminada - usando definición global window.toggleFilters
         
         
         function addToCart(productId, variantId, title, price, image) {
@@ -7377,16 +7325,6 @@ function getPortalHTML(products, customer) {
             updateCartBadge();
         });
         
-        // Asegurar que toggleFilters esté disponible globalmente
-        if (typeof window.toggleFilters !== 'function') {
-            window.toggleFilters = function() {
-                console.log('✅ toggleFilters backup ejecutada');
-                var panel = document.getElementById('filtersPanel');
-                if (panel) {
-                    panel.classList.toggle('show');
-                }
-            };
-        }
         
         console.log('✅ Funciones globales cargadas correctamente');
     </script>

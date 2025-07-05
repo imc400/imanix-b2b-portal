@@ -3686,7 +3686,7 @@ function getPortalHTML(products, customer) {
                 </h2>
                 <div class="catalog-controls">
                     <input type="text" class="search-box" placeholder="Buscar productos..." 
-                           id="searchInput" onkeyup="filterProducts()">
+                           id="searchInput">
                 </div>
             </div>
             
@@ -3757,22 +3757,6 @@ function getPortalHTML(products, customer) {
             showNotification(\`\${title} agregado al carrito\`, 'success');
         }
 
-        // Filtrar productos
-        function filterProducts() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const productCards = document.querySelectorAll('.product-card');
-            
-            productCards.forEach(card => {
-                const title = card.querySelector('.product-title').textContent.toLowerCase();
-                const sku = card.querySelector('.sku').textContent.toLowerCase();
-                
-                if (title.includes(searchTerm) || sku.includes(searchTerm)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
 
         // Toggle del dropdown del usuario
         function toggleUserDropdown() {
