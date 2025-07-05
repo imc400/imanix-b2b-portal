@@ -5835,10 +5835,17 @@ function getPortalHTML(products, customer) {
 
             // Extraer metacampos
             const metafields = {};
+            let filterB2B = '';
             if (product.metafields?.edges) {
                 product.metafields.edges.forEach(edge => {
                     const metafield = edge.node;
-                    metafields[`${metafield.namespace}.${metafield.key}`] = metafield.value;
+                    const key = `${metafield.namespace}.${metafield.key}`;
+                    metafields[key] = metafield.value;
+                    
+                    // Extraer específicamente el metacampo de filtro B2B
+                    if (key === 'custom.filtrob2b') {
+                        filterB2B = metafield.value || '';
+                    }
                 });
             }
 
@@ -5847,6 +5854,8 @@ function getPortalHTML(products, customer) {
                      data-tags="${product.tags || ''}" 
                      data-price="${discountedPrice}" 
                      data-stock="${stock}"
+                     data-filter-b2b="${filterB2B}"
+                     data-title="${product.title.toLowerCase()}"
                      data-metafields='${JSON.stringify(metafields).replace(/'/g, "&#39;")}'>
                     <div class="product-image">
                         <img src="${image}" alt="${product.title}" loading="lazy">
@@ -6676,6 +6685,16 @@ function getPortalHTML(products, customer) {
             display: flex;
             gap: 1rem;
             align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-actions {
+            margin-left: auto;
         }
 
         .search-box {
@@ -6704,6 +6723,71 @@ function getPortalHTML(products, customer) {
                 0 4px 12px rgba(102, 126, 234, 0.15);
             background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
             transform: translateY(-1px);
+        }
+
+        .filter-box {
+            padding: 1rem 1.5rem;
+            border: 2px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
+            font-size: 0.95rem;
+            width: 280px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            color: #1A202C;
+        }
+
+        .filter-box::placeholder {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .filter-box:focus {
+            outline: none;
+            border-color: #059669;
+            box-shadow: 
+                0 0 0 4px rgba(5, 150, 105, 0.1),
+                0 4px 12px rgba(5, 150, 105, 0.15);
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            transform: translateY(-1px);
+        }
+
+        .clear-filters-btn {
+            padding: 1rem 1.5rem;
+            border: 2px solid rgba(239, 68, 68, 0.2);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            color: #DC2626;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .clear-filters-btn:hover {
+            border-color: #DC2626;
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+        }
+
+        .filter-results {
+            margin-top: 1rem;
+            padding: 0.75rem 1.25rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            color: #1e40af;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
         }
 
         .products-grid {
@@ -7073,6 +7157,25 @@ function getPortalHTML(products, customer) {
                 gap: 1.5rem;
             }
 
+            .catalog-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+
+            .search-box, .filter-box {
+                width: 100%;
+            }
+
+            .filter-actions {
+                margin-left: 0;
+                align-self: center;
+            }
+
             .catalog-header {
                 flex-direction: column;
                 gap: 1.5rem;
@@ -7329,8 +7432,20 @@ function getPortalHTML(products, customer) {
                     Catálogo B2B
                 </h2>
                 <div class="catalog-controls">
-                    <input type="text" class="search-box" placeholder="Buscar productos..." 
-                           id="searchInput" onkeyup="filterProducts()">
+                    <div class="filter-group">
+                        <input type="text" class="search-box" placeholder="Buscar productos..." 
+                               id="searchInput" onkeyup="filterProducts()">
+                    </div>
+                    <div class="filter-group">
+                        <input type="text" class="filter-box" placeholder="Filtrar por categoría..." 
+                               id="filterInput" onkeyup="filterProducts()">
+                    </div>
+                    <div class="filter-actions">
+                        <button class="clear-filters-btn" onclick="clearFilters()">
+                            <i class="fas fa-times"></i>
+                            Limpiar filtros
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -7380,24 +7495,75 @@ function getPortalHTML(products, customer) {
         // Filtrar productos - búsqueda básica por texto
         function filterProducts() {
             var searchTerm = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
+            var filterTerm = document.getElementById('filterInput') ? document.getElementById('filterInput').value.toLowerCase() : '';
             var productCards = document.querySelectorAll('.product-card');
+            var visibleCount = 0;
             
             productCards.forEach(function(card) {
                 var shouldShow = true;
                 
-                // Filtro básico por búsqueda
+                // Filtro por título/nombre del producto
                 if (searchTerm) {
                     var titleEl = card.querySelector('.product-title');
                     var title = titleEl ? titleEl.textContent.toLowerCase() : '';
+                    var dataTitle = card.getAttribute('data-title') || '';
                     var skuElement = card.querySelector('.sku');
                     var sku = skuElement ? skuElement.textContent.toLowerCase() : '';
-                    if (!title.includes(searchTerm) && !sku.includes(searchTerm)) {
+                    
+                    if (!title.includes(searchTerm) && !dataTitle.includes(searchTerm) && !sku.includes(searchTerm)) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Filtro por metacampo custom.filtrob2b
+                if (filterTerm && shouldShow) {
+                    var filterB2B = card.getAttribute('data-filter-b2b') || '';
+                    if (!filterB2B.toLowerCase().includes(filterTerm)) {
                         shouldShow = false;
                     }
                 }
                 
                 card.style.display = shouldShow ? 'block' : 'none';
+                if (shouldShow) {
+                    visibleCount++;
+                }
             });
+            
+            // Mostrar contador de resultados
+            updateFilterResults(visibleCount, productCards.length);
+        }
+
+        function updateFilterResults(visible, total) {
+            var resultsText = '';
+            if (visible === total) {
+                resultsText = total + ' productos';
+            } else {
+                resultsText = visible + ' de ' + total + ' productos';
+            }
+            
+            // Buscar o crear elemento de resultados
+            var resultsEl = document.getElementById('filterResults');
+            if (!resultsEl) {
+                resultsEl = document.createElement('div');
+                resultsEl.id = 'filterResults';
+                resultsEl.className = 'filter-results';
+                var catalogHeader = document.querySelector('.catalog-header');
+                if (catalogHeader) {
+                    catalogHeader.appendChild(resultsEl);
+                }
+            }
+            
+            resultsEl.textContent = resultsText;
+        }
+
+        function clearFilters() {
+            var searchInput = document.getElementById('searchInput');
+            var filterInput = document.getElementById('filterInput');
+            
+            if (searchInput) searchInput.value = '';
+            if (filterInput) filterInput.value = '';
+            
+            filterProducts();
         }
 
         // MÁS FUNCIONES DUPLICADAS ELIMINADAS - USAR SOLO LAS DEL HEAD
