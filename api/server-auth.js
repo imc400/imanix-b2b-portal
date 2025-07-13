@@ -373,7 +373,7 @@ async function generateOrderExcel(customer, cartItems, orderData, profileData) {
     const lightGray = 'F8F9FA';
     
     // Título principal
-    worksheet.mergeCells('A1:F1');
+    worksheet.mergeCells('A1:G1');
     const titleCell = worksheet.getCell('A1');
     titleCell.value = 'RESUMEN DE PEDIDO B2B - IMANIX CHILE';
     titleCell.font = { name: 'Arial', size: 16, bold: true, color: { argb: darkGray } };
@@ -440,7 +440,7 @@ async function generateOrderExcel(customer, cartItems, orderData, profileData) {
     row += 2; // Espacio
     
     // Sección: Detalle de Productos
-    worksheet.mergeCells(`A${row}:F${row}`);
+    worksheet.mergeCells(`A${row}:G${row}`);
     const productsTitle = worksheet.getCell(`A${row}`);
     productsTitle.value = 'DETALLE DE PRODUCTOS';
     productsTitle.font = { bold: true, color: { argb: darkGray } };
@@ -449,7 +449,7 @@ async function generateOrderExcel(customer, cartItems, orderData, profileData) {
     row++;
     
     // Encabezados de productos
-    const headers = ['Producto', 'Cantidad', 'P. Neto', 'IVA', 'P. Bruto', 'Total Línea'];
+    const headers = ['Producto', 'SKU', 'Cantidad', 'P. Neto', 'IVA', 'P. Bruto', 'Total Línea'];
     headers.forEach((header, index) => {
       const cell = worksheet.getCell(row, index + 1);
       cell.value = header;
@@ -479,6 +479,7 @@ async function generateOrderExcel(customer, cartItems, orderData, profileData) {
       
       const productRow = [
         item.title,
+        item.sku || 'N/A',
         item.quantity,
         `$${precioNeto.toLocaleString('es-CL')}`,
         `$${iva.toLocaleString('es-CL')}`,
@@ -489,7 +490,7 @@ async function generateOrderExcel(customer, cartItems, orderData, profileData) {
       productRow.forEach((value, index) => {
         const cell = worksheet.getCell(row, index + 1);
         cell.value = value;
-        if (index > 1) cell.alignment = { horizontal: 'right' };
+        if (index > 2) cell.alignment = { horizontal: 'right' };
         cell.border = {
           top: { style: 'thin' },
           left: { style: 'thin' },
@@ -6207,7 +6208,7 @@ function getPortalHTML(products, customer) {
                         ` : ''}
                         
                         <button class="add-to-cart-btn" ${stock === 0 ? 'disabled' : ''} 
-                                onclick="addToCartWithQuantity('${product.id}', '${variant?.id}', '${product.title.replace(/'/g, '&#39;').replace(/"/g, '&quot;')}', ${discountedPrice}, '${image}')">
+                                onclick="addToCartWithQuantity('${product.id}', '${variant?.id}', '${product.title.replace(/'/g, '&#39;').replace(/"/g, '&quot;')}', ${discountedPrice}, '${image}', '${variant?.sku || ''}')"
                             <i class="fas fa-cart-plus"></i>
                             ${stock > 0 ? 'Agregar al Carrito' : 'Sin Stock'}
                         </button>
@@ -6293,7 +6294,7 @@ function getPortalHTML(products, customer) {
             }, 3000);
         };
         
-        window.addToCart = function(productId, variantId, title, price, image) {
+        window.addToCart = function(productId, variantId, title, price, image, sku) {
             console.log('✅ addToCart ejecutada:', title);
             try {
                 var existingItem = cart.find(function(item) { 
@@ -6309,7 +6310,8 @@ function getPortalHTML(products, customer) {
                         title: title,
                         price: price,
                         image: image,
-                        quantity: 1
+                        quantity: 1,
+                        sku: sku || 'N/A'
                     });
                 }
                 
@@ -6398,7 +6400,7 @@ function getPortalHTML(products, customer) {
             }
         };
 
-        window.addToCartWithQuantity = function(productId, variantId, title, price, image) {
+        window.addToCartWithQuantity = function(productId, variantId, title, price, image, sku) {
             console.log('🛒 Agregando al carrito con cantidad personalizada:', title);
             try {
                 const qtyInput = document.getElementById('qty-' + productId);
@@ -6433,7 +6435,8 @@ function getPortalHTML(products, customer) {
                         title: title,
                         price: price,
                         image: image,
-                        quantity: quantity
+                        quantity: quantity,
+                        sku: sku || 'N/A'
                     });
                     console.log('✨ Producto agregado al carrito con cantidad:', quantity);
                 }
@@ -8136,7 +8139,7 @@ function getPortalHTML(products, customer) {
         
         
         
-        function addToCart(productId, variantId, title, price, image) {
+        function addToCart(productId, variantId, title, price, image, sku) {
             console.log('✅ addToCart ejecutada:', title);
             try {
                 var cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
@@ -8153,7 +8156,8 @@ function getPortalHTML(products, customer) {
                         title: title,
                         price: price,
                         image: image,
-                        quantity: 1
+                        quantity: 1,
+                        sku: sku || 'N/A'
                     });
                 }
                 
