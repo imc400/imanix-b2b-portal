@@ -583,7 +583,16 @@ async function generateOrderExcel(customer, cartItems, orderData, profileData, s
           'blue-express': 'Blue Express',
           'turbus-cargo': 'Turbus Cargo'
         };
-        courierInfo = `${courierNames[shippingInfo.courier] || shippingInfo.courier} (Por pagar al recibir)`;
+        
+        // Determinar el nombre del courier
+        let courierName = '';
+        if (shippingInfo.courier === 'otro' && shippingInfo.customCourier) {
+          courierName = shippingInfo.customCourier;
+        } else {
+          courierName = courierNames[shippingInfo.courier] || shippingInfo.courier;
+        }
+        
+        courierInfo = `${courierName} (Por pagar al recibir)`;
       } else {
         courierInfo = '⚠️ NO ESPECIFICADO';
       }
@@ -1808,8 +1817,17 @@ INFORMACIÓN DE ENVÍO:
                 'blue-express': 'Blue Express',
                 'turbus-cargo': 'Turbus Cargo'
             };
+            
+            // Determinar el nombre del courier
+            let courierName = '';
+            if (shippingInfo.courier === 'otro' && shippingInfo.customCourier) {
+                courierName = shippingInfo.customCourier;
+            } else {
+                courierName = courierNames[shippingInfo.courier] || shippingInfo.courier;
+            }
+            
             orderNote += `
-• Courier: ${courierNames[shippingInfo.courier] || shippingInfo.courier} (POR PAGAR AL RECIBIR)`;
+• Courier: ${courierName} (POR PAGAR AL RECIBIR)`;
         } else {
             orderNote += `
 • ⚠️ COURIER NO ESPECIFICADO PARA REGIÓN FUERA DE RM`;
@@ -3289,7 +3307,16 @@ function getCartHTML(customer) {
                         'blue-express': 'Blue Express',
                         'turbus-cargo': 'Turbus Cargo'
                     };
-                    courierInfo = \`<br><i class="fas fa-shipping-fast" style="margin-right: 0.25rem; color: #f59e0b;"></i>\${courierNames[shippingInfo.courier] || shippingInfo.courier} <span style="color: #d97706; font-size: 0.75rem;">(Por pagar)</span>\`;
+                    
+                    // Mostrar courier personalizado si es "otro"
+                    let courierName = '';
+                    if (shippingInfo.courier === 'otro' && shippingInfo.customCourier) {
+                        courierName = shippingInfo.customCourier;
+                    } else {
+                        courierName = courierNames[shippingInfo.courier] || shippingInfo.courier;
+                    }
+                    
+                    courierInfo = \`<br><i class="fas fa-shipping-fast" style="margin-right: 0.25rem; color: #f59e0b;"></i>\${courierName} <span style="color: #d97706; font-size: 0.75rem;">(Por pagar)</span>\`;
                 } else if (shippingInfo.region === "13") {
                     courierInfo = \`<br><i class="fas fa-truck" style="margin-right: 0.25rem; color: #10b981;"></i><span style="color: #10b981; font-size: 0.875rem;">Envío directo IMANIX</span>\`;
                 }
@@ -3423,7 +3450,17 @@ function getCartHTML(customer) {
                                         <option value="correos-chile" \${shippingInfo?.courier === 'correos-chile' ? 'selected' : ''}>Correos de Chile</option>
                                         <option value="blue-express" \${shippingInfo?.courier === 'blue-express' ? 'selected' : ''}>Blue Express</option>
                                         <option value="turbus-cargo" \${shippingInfo?.courier === 'turbus-cargo' ? 'selected' : ''}>Turbus Cargo</option>
+                                        <option value="otro" \${shippingInfo?.courier === 'otro' ? 'selected' : ''}>Otro (especificar)</option>
                                     </select>
+                                    
+                                    <!-- Campo personalizado para "Otro" courier -->
+                                    <div id="customCourierField" style="display: none; margin-top: 0.75rem;">
+                                        <label style="display: block; font-weight: 600; color: #374151; margin-bottom: 0.5rem; font-size: 0.875rem;">
+                                            <i class="fas fa-edit" style="margin-right: 0.5rem; color: #f59e0b;"></i>Especificar Courier *
+                                        </label>
+                                        <input type="text" id="customCourierInput" maxlength="50" placeholder="Ej: Courier Local, TransPortes XYZ..." value="\${shippingInfo?.customCourier || ''}" style="width: 100%; padding: 0.75rem; border: 1px solid #f59e0b; border-radius: 6px; font-size: 0.875rem; background: white;">
+                                    </div>
+                                    
                                     <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #d97706;">
                                         <i class="fas fa-info-circle" style="margin-right: 0.25rem;"></i>
                                         El costo del envío será pagado por el cliente al recibir el pedido
@@ -3457,6 +3494,8 @@ function getCartHTML(customer) {
             const communeSelect = document.getElementById('communeSelect');
             const courierSection = document.getElementById('courierSection');
             const courierSelect = document.getElementById('courierSelect');
+            const customCourierField = document.getElementById('customCourierField');
+            const customCourierInput = document.getElementById('customCourierInput');
             const form = document.getElementById('shippingForm');
             
             // Función para mostrar/ocultar sección de courier
@@ -3469,6 +3508,21 @@ function getCartHTML(customer) {
                     courierSection.style.display = 'none';
                     courierSelect.required = false;
                     courierSelect.value = ''; // Limpiar selección
+                    customCourierField.style.display = 'none'; // Ocultar campo personalizado
+                    customCourierInput.required = false;
+                    customCourierInput.value = '';
+                }
+            }
+            
+            // Función para mostrar/ocultar campo personalizado de courier
+            function toggleCustomCourierField(courierValue) {
+                if (courierValue === 'otro') {
+                    customCourierField.style.display = 'block';
+                    customCourierInput.required = true;
+                } else {
+                    customCourierField.style.display = 'none';
+                    customCourierInput.required = false;
+                    customCourierInput.value = '';
                 }
             }
             
@@ -3497,11 +3551,21 @@ function getCartHTML(customer) {
                 toggleCourierSection(regionId);
             });
             
+            // Manejar cambio de courier
+            courierSelect.addEventListener('change', function() {
+                const courierValue = this.value;
+                toggleCustomCourierField(courierValue);
+            });
+            
             // Si hay datos existentes, cargar comunas y mostrar courier si aplica
             if (shippingInfo?.region) {
                 regionSelect.dispatchEvent(new Event('change'));
                 // También inicializar el courier section
                 toggleCourierSection(shippingInfo.region);
+                // Inicializar campo personalizado si tiene courier "otro"
+                if (shippingInfo.courier) {
+                    toggleCustomCourierField(shippingInfo.courier);
+                }
             }
             
             // Manejar envío del formulario
@@ -3516,6 +3580,9 @@ function getCartHTML(customer) {
             const form = document.getElementById('shippingForm');
             const formData = new FormData(form);
             
+            const courierValue = document.getElementById('courierSelect').value;
+            const customCourierValue = document.getElementById('customCourierInput').value.trim();
+            
             const newShippingInfo = {
                 region: document.getElementById('regionSelect').value,
                 comuna: document.getElementById('communeSelect').value,
@@ -3523,7 +3590,8 @@ function getCartHTML(customer) {
                 direccion2: document.getElementById('direccion2').value.trim(),
                 codigoPostal: document.getElementById('codigoPostal').value.trim(),
                 celular: document.getElementById('celular').value.trim(),
-                courier: document.getElementById('courierSelect').value || null
+                courier: courierValue || null,
+                customCourier: (courierValue === 'otro') ? customCourierValue : null
             };
             
             // Validaciones básicas
@@ -3535,6 +3603,12 @@ function getCartHTML(customer) {
             // Validar courier si NO es Región Metropolitana
             if (newShippingInfo.region !== "13" && !newShippingInfo.courier) {
                 showNotification('Por favor selecciona un courier para el envío fuera de Santiago', 'error');
+                return;
+            }
+            
+            // Validar campo personalizado si seleccionó "Otro"
+            if (newShippingInfo.courier === 'otro' && !newShippingInfo.customCourier) {
+                showNotification('Por favor especifica el nombre del courier personalizado', 'error');
                 return;
             }
             
