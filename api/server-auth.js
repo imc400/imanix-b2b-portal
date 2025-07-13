@@ -571,13 +571,31 @@ async function generateOrderExcel(customer, cartItems, orderData, profileData, s
       shippingHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F3F4F6' } };
       row++;
 
+      // Determinar información del courier
+      let courierInfo = '';
+      if (shippingInfo.region === "13") {
+        courierInfo = 'DIRECTO IMANIX (Región Metropolitana)';
+      } else if (shippingInfo.courier) {
+        const courierNames = {
+          'chilexpress': 'Chilexpress',
+          'starken': 'Starken',
+          'correos-chile': 'Correos de Chile', 
+          'blue-express': 'Blue Express',
+          'turbus-cargo': 'Turbus Cargo'
+        };
+        courierInfo = `${courierNames[shippingInfo.courier] || shippingInfo.courier} (Por pagar al recibir)`;
+      } else {
+        courierInfo = '⚠️ NO ESPECIFICADO';
+      }
+
       const shippingData = [
         ['Región:', getRegionName(shippingInfo.region)],
         ['Comuna:', shippingInfo.comuna],
         ['Dirección:', shippingInfo.direccion1],
         ...(shippingInfo.direccion2 ? [['Dirección Complementaria:', shippingInfo.direccion2]] : []),
         ...(shippingInfo.codigoPostal ? [['Código Postal:', shippingInfo.codigoPostal]] : []),
-        ['Celular de Contacto:', shippingInfo.celular]
+        ['Celular de Contacto:', shippingInfo.celular],
+        ['Tipo de Envío:', courierInfo]
       ];
 
       shippingData.forEach(([label, value]) => {
@@ -1777,6 +1795,25 @@ INFORMACIÓN DE ENVÍO:
         
         orderNote += `
 • Celular de Contacto: ${shippingInfo.celular || 'N/A'}`;
+
+        // Agregar información del courier
+        if (shippingInfo.region === "13") {
+            orderNote += `
+• Tipo de Envío: DIRECTO IMANIX (Región Metropolitana)`;
+        } else if (shippingInfo.courier) {
+            const courierNames = {
+                'chilexpress': 'Chilexpress',
+                'starken': 'Starken', 
+                'correos-chile': 'Correos de Chile',
+                'blue-express': 'Blue Express',
+                'turbus-cargo': 'Turbus Cargo'
+            };
+            orderNote += `
+• Courier: ${courierNames[shippingInfo.courier] || shippingInfo.courier} (POR PAGAR AL RECIBIR)`;
+        } else {
+            orderNote += `
+• ⚠️ COURIER NO ESPECIFICADO PARA REGIÓN FUERA DE RM`;
+        }
     } else {
         orderNote += `
 
@@ -3241,10 +3278,26 @@ function getCartHTML(customer) {
                 statusElement.style.color = '#10b981';
                 
                 const regionName = chileRegions[shippingInfo.region]?.name || 'Región no encontrada';
+                
+                // Crear preview con información de courier si aplica
+                let courierInfo = '';
+                if (shippingInfo.region !== "13" && shippingInfo.courier) {
+                    const courierNames = {
+                        'chilexpress': 'Chilexpress',
+                        'starken': 'Starken',
+                        'correos-chile': 'Correos de Chile',
+                        'blue-express': 'Blue Express',
+                        'turbus-cargo': 'Turbus Cargo'
+                    };
+                    courierInfo = \`<br><i class="fas fa-shipping-fast" style="margin-right: 0.25rem; color: #f59e0b;"></i>\${courierNames[shippingInfo.courier] || shippingInfo.courier} <span style="color: #d97706; font-size: 0.75rem;">(Por pagar)</span>\`;
+                } else if (shippingInfo.region === "13") {
+                    courierInfo = \`<br><i class="fas fa-truck" style="margin-right: 0.25rem; color: #10b981;"></i><span style="color: #10b981; font-size: 0.875rem;">Envío directo IMANIX</span>\`;
+                }
+                
                 previewElement.innerHTML = \`
                     <strong>\${shippingInfo.direccion1}</strong><br>
                     \${shippingInfo.comuna}, \${regionName}<br>
-                    <i class="fas fa-phone" style="margin-right: 0.25rem;"></i>\${shippingInfo.celular}
+                    <i class="fas fa-phone" style="margin-right: 0.25rem;"></i>\${shippingInfo.celular}\${courierInfo}
                 \`;
                 
                 buttonElement.innerHTML = '<i class="fas fa-edit" style="margin-right: 0.5rem;"></i>Editar Información de Envío';
@@ -3356,6 +3409,26 @@ function getCartHTML(customer) {
                                         <input type="tel" id="celular" required maxlength="15" placeholder="Ej: +56912345678" value="\${shippingInfo?.celular || ''}" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem;">
                                     </div>
                                 </div>
+                                
+                                <!-- Campo de courier (solo para regiones fuera de RM) -->
+                                <div id="courierSection" style="display: none; margin-top: 1rem; padding: 1rem; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px;">
+                                    <label style="display: block; font-weight: 600; color: #374151; margin-bottom: 0.5rem; font-size: 0.875rem;">
+                                        <i class="fas fa-shipping-fast" style="margin-right: 0.5rem; color: #f59e0b;"></i>Courier de Envío *
+                                        <span style="font-size: 0.75rem; color: #d97706; font-weight: normal;">(Por pagar al recibir)</span>
+                                    </label>
+                                    <select id="courierSelect" style="width: 100%; padding: 0.75rem; border: 1px solid #f59e0b; border-radius: 6px; font-size: 0.875rem; background: white;">
+                                        <option value="">Seleccionar courier</option>
+                                        <option value="chilexpress" \${shippingInfo?.courier === 'chilexpress' ? 'selected' : ''}>Chilexpress</option>
+                                        <option value="starken" \${shippingInfo?.courier === 'starken' ? 'selected' : ''}>Starken</option>
+                                        <option value="correos-chile" \${shippingInfo?.courier === 'correos-chile' ? 'selected' : ''}>Correos de Chile</option>
+                                        <option value="blue-express" \${shippingInfo?.courier === 'blue-express' ? 'selected' : ''}>Blue Express</option>
+                                        <option value="turbus-cargo" \${shippingInfo?.courier === 'turbus-cargo' ? 'selected' : ''}>Turbus Cargo</option>
+                                    </select>
+                                    <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #d97706;">
+                                        <i class="fas fa-info-circle" style="margin-right: 0.25rem;"></i>
+                                        El costo del envío será pagado por el cliente al recibir el pedido
+                                    </div>
+                                </div>
                             </div>
                             
                             <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
@@ -3382,13 +3455,29 @@ function getCartHTML(customer) {
         function setupShippingModal() {
             const regionSelect = document.getElementById('regionSelect');
             const communeSelect = document.getElementById('communeSelect');
+            const courierSection = document.getElementById('courierSection');
+            const courierSelect = document.getElementById('courierSelect');
             const form = document.getElementById('shippingForm');
+            
+            // Función para mostrar/ocultar sección de courier
+            function toggleCourierSection(regionId) {
+                // Mostrar courier si NO es Región Metropolitana (ID "13")
+                if (regionId && regionId !== "13") {
+                    courierSection.style.display = 'block';
+                    courierSelect.required = true;
+                } else {
+                    courierSection.style.display = 'none';
+                    courierSelect.required = false;
+                    courierSelect.value = ''; // Limpiar selección
+                }
+            }
             
             // Manejar cambio de región
             regionSelect.addEventListener('change', function() {
                 const regionId = this.value;
                 communeSelect.innerHTML = '<option value="">Seleccionar comuna</option>';
                 
+                // Actualizar comunas
                 if (regionId && chileRegions[regionId]) {
                     communeSelect.disabled = false;
                     chileRegions[regionId].communes.forEach(commune => {
@@ -3403,11 +3492,16 @@ function getCartHTML(customer) {
                 } else {
                     communeSelect.disabled = true;
                 }
+                
+                // Mostrar/ocultar sección de courier
+                toggleCourierSection(regionId);
             });
             
-            // Si hay datos existentes, cargar comunas
+            // Si hay datos existentes, cargar comunas y mostrar courier si aplica
             if (shippingInfo?.region) {
                 regionSelect.dispatchEvent(new Event('change'));
+                // También inicializar el courier section
+                toggleCourierSection(shippingInfo.region);
             }
             
             // Manejar envío del formulario
@@ -3428,12 +3522,19 @@ function getCartHTML(customer) {
                 direccion1: document.getElementById('direccion1').value.trim(),
                 direccion2: document.getElementById('direccion2').value.trim(),
                 codigoPostal: document.getElementById('codigoPostal').value.trim(),
-                celular: document.getElementById('celular').value.trim()
+                celular: document.getElementById('celular').value.trim(),
+                courier: document.getElementById('courierSelect').value || null
             };
             
-            // Validaciones
+            // Validaciones básicas
             if (!newShippingInfo.region || !newShippingInfo.comuna || !newShippingInfo.direccion1 || !newShippingInfo.celular) {
                 showNotification('Por favor completa todos los campos obligatorios', 'error');
+                return;
+            }
+            
+            // Validar courier si NO es Región Metropolitana
+            if (newShippingInfo.region !== "13" && !newShippingInfo.courier) {
+                showNotification('Por favor selecciona un courier para el envío fuera de Santiago', 'error');
                 return;
             }
             
