@@ -6208,7 +6208,7 @@ function getPortalHTML(products, customer) {
                         ` : ''}
                         
                         <button class="add-to-cart-btn" ${stock === 0 ? 'disabled' : ''} 
-                                onclick="addToCartWithQuantity('${product.id}', '${variant?.id}', '${product.title.replace(/'/g, '&#39;').replace(/"/g, '&quot;')}', ${discountedPrice}, '${image}', '${variant?.sku || ''}')"
+                                onclick="addToCartWithQuantity('${product.id}', '${variant?.id}', '${product.title.replace(/'/g, '&#39;').replace(/"/g, '&quot;')}', ${discountedPrice}, '${image}', '${variant?.sku || 'N/A'}')"
                             <i class="fas fa-cart-plus"></i>
                             ${stock > 0 ? 'Agregar al Carrito' : 'Sin Stock'}
                         </button>
@@ -6311,7 +6311,7 @@ function getPortalHTML(products, customer) {
                         price: price,
                         image: image,
                         quantity: 1,
-                        sku: sku || 'N/A'
+                        sku: sku && sku.trim() !== '' ? sku : 'N/A'
                     });
                 }
                 
@@ -6437,7 +6437,7 @@ function getPortalHTML(products, customer) {
                         price: price,
                         image: image,
                         quantity: quantity,
-                        sku: sku || 'N/A'
+                        sku: sku && sku.trim() !== '' ? sku : 'N/A'
                     });
                     console.log('✨ Producto agregado al carrito con cantidad:', quantity);
                 }
@@ -8158,7 +8158,7 @@ function getPortalHTML(products, customer) {
                         price: price,
                         image: image,
                         quantity: 1,
-                        sku: sku || 'N/A'
+                        sku: sku && sku.trim() !== '' ? sku : 'N/A'
                     });
                 }
                 
