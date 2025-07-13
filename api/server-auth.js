@@ -1335,6 +1335,7 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
         ? JSON.parse(req.body.cartItems) 
         : req.body.cartItems;
       console.log('✅ DEBUG checkout - CartItems parsed successfully, length:', cartItems?.length);
+      console.log('🔍 DEBUG checkout - First item SKU:', cartItems?.[0]?.sku);
     } catch (parseError) {
       console.log('❌ DEBUG checkout - Error parsing cartItems:', parseError.message);
       console.log('🔍 DEBUG checkout - Raw cartItems:', req.body.cartItems);
@@ -1708,11 +1709,9 @@ CONTACTO:
     }
 }
 
-// Función para obtener productos B2B - TEMPORAL: FORZAR SHOPIFY API PARA VERIFICAR SKU
+// Función para obtener productos B2B - PRIORIZA ARCHIVO LOCAL
 async function fetchB2BProductsFromShopify() {
-  // TEMPORAL: Comentar archivo local para probar con API de Shopify
-  console.log('🔄 TEMPORAL: Forzando carga desde Shopify API para verificar SKUs...');
-  /*
+  // PRIMERO: Intentar cargar desde archivo local
   try {
     console.log('📦 Cargando productos B2B desde archivo local...');
     const data = await fs.readFile('b2b-products.json', 'utf8');
@@ -1722,7 +1721,6 @@ async function fetchB2BProductsFromShopify() {
   } catch (fileError) {
     console.log('⚠️ No se pudo cargar archivo local, intentando Shopify API...');
   }
-  */
 
   // FALLBACK: Shopify API si no hay archivo local
   if (!SHOPIFY_ACCESS_TOKEN) {
@@ -3231,7 +3229,8 @@ function getCartHTML(customer) {
                     variantId: item.variantId,
                     quantity: item.quantity,
                     price: item.price,
-                    title: item.title
+                    title: item.title,
+                    sku: item.sku
                 })));
                 
                 console.log('🔍 DEBUG: Cart data to send:', cart);
@@ -3460,7 +3459,8 @@ function getCartHTML(customer) {
                     variantId: item.variantId,
                     quantity: item.quantity,
                     price: item.price,
-                    title: item.title
+                    title: item.title,
+                    sku: item.sku
                 }))));
                 formData.append('paymentMethod', paymentMethod);
                 
