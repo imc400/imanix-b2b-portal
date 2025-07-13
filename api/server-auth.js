@@ -6402,6 +6402,7 @@ function getPortalHTML(products, customer) {
 
         window.addToCartWithQuantity = function(productId, variantId, title, price, image, sku) {
             console.log('🛒 Agregando al carrito con cantidad personalizada:', title);
+            console.log('📋 SKU recibido:', sku);
             try {
                 const qtyInput = document.getElementById('qty-' + productId);
                 const quantity = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
