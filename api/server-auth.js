@@ -1708,9 +1708,11 @@ CONTACTO:
     }
 }
 
-// Función para obtener productos B2B - PRIORIZA ARCHIVO LOCAL
+// Función para obtener productos B2B - TEMPORAL: FORZAR SHOPIFY API PARA VERIFICAR SKU
 async function fetchB2BProductsFromShopify() {
-  // PRIMERO: Intentar cargar desde archivo local
+  // TEMPORAL: Comentar archivo local para probar con API de Shopify
+  console.log('🔄 TEMPORAL: Forzando carga desde Shopify API para verificar SKUs...');
+  /*
   try {
     console.log('📦 Cargando productos B2B desde archivo local...');
     const data = await fs.readFile('b2b-products.json', 'utf8');
@@ -1720,6 +1722,7 @@ async function fetchB2BProductsFromShopify() {
   } catch (fileError) {
     console.log('⚠️ No se pudo cargar archivo local, intentando Shopify API...');
   }
+  */
 
   // FALLBACK: Shopify API si no hay archivo local
   if (!SHOPIFY_ACCESS_TOKEN) {
