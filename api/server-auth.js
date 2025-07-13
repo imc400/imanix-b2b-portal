@@ -577,7 +577,7 @@ async function generateOrderExcel(customer, cartItems, orderData, profileData) {
 }
 
 // Función para enviar email de notificación del pedido
-async function sendOrderEmail(customer, cartItems, orderData, profileData = null) {
+async function sendOrderEmail(customer, cartItems, orderData, profileData = null, ordenCompra = null) {
   try {
     // Verificar si el transporter está configurado
     if (!transporter) {
@@ -600,18 +600,35 @@ async function sendOrderEmail(customer, cartItems, orderData, profileData = null
     const orderNumber = orderData.draftOrderNumber || 'N/A';
     const fileName = `Pedido_B2B_${orderNumber}_${new Date().toISOString().split('T')[0]}.xlsx`;
     
+    // Preparar attachments
+    const attachments = [
+      {
+        filename: fileName,
+        content: excelBuffer,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      }
+    ];
+
+    // Agregar orden de compra si existe
+    if (ordenCompra) {
+      const extension = ordenCompra.originalname?.split('.').pop() || 'pdf';
+      const contentType = ordenCompra.mimetype || (extension === 'pdf' ? 'application/pdf' : 'image/jpeg');
+      
+      attachments.push({
+        filename: `Orden_Compra_${orderNumber}_${new Date().toISOString().split('T')[0]}.${extension}`,
+        content: ordenCompra.buffer,
+        contentType: contentType
+      });
+      
+      console.log('📎 Agregando orden de compra al email:', ordenCompra.originalname);
+    }
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_TO || 'administracion@imanix.com',
-      subject: `🎯 Nuevo Pedido B2B IMA - ${customerName} - #${orderNumber}`,
+      subject: `🎯 Nuevo Pedido B2B IMA - ${customerName} - #${orderNumber}${ordenCompra ? ' + O.C.' : ''}`,
       html: emailHtml,
-      attachments: [
-        {
-          filename: fileName,
-          content: excelBuffer,
-          contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        }
-      ]
+      attachments: attachments
     };
     
     console.log('📧 Enviando email con Excel adjunto...');
@@ -1292,7 +1309,10 @@ function hasImaTag(customer) {
 }
 
 // Endpoint para procesar checkout y crear draft order
-app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
+app.post('/api/checkout', upload.fields([
+  { name: 'comprobante', maxCount: 1 },
+  { name: 'ordenCompra', maxCount: 1 }
+]), async (req, res) => {
   try {
     console.log('🎯🎯🎯 ENDPOINT CORRECTO EJECUTÁNDOSE - /api/server-auth.js 🎯🎯🎯');
     console.log('🚀 DEBUG checkout - Starting checkout process');
@@ -1323,10 +1343,12 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
     }
 
     const { paymentMethod } = req.body;
-    const comprobante = req.file;
+    const comprobante = req.files?.comprobante?.[0];
+    const ordenCompra = req.files?.ordenCompra?.[0];
     
     console.log('🔍 DEBUG checkout - PaymentMethod extracted:', paymentMethod);
     console.log('🔍 DEBUG checkout - Comprobante file:', !!comprobante);
+    console.log('🔍 DEBUG checkout - Orden de compra file:', !!ordenCompra);
     
     // Parse cartItems si viene como string JSON (FormData)
     let cartItems;
@@ -1371,7 +1393,7 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
     console.log('✅ DEBUG checkout - All validations passed, proceeding to createDraftOrder');
 
     // Crear draft order en Shopify
-    const { draftOrder, profileData } = await createDraftOrder(customer, cartItems, discountPercentage, paymentMethod, comprobante);
+    const { draftOrder, profileData } = await createDraftOrder(customer, cartItems, discountPercentage, paymentMethod, comprobante, ordenCompra);
     
     // Log para seguimiento
     console.log(`🎯 Draft Order #${draftOrder.id} creado para cliente B2B: ${customer?.email || 'no-email@example.com'}`);
@@ -1411,7 +1433,7 @@ app.post('/api/checkout', upload.single('comprobante'), async (req, res) => {
           total: draftOrder.total_price,
           discount: draftOrder.total_discounts,
           paymentMethod: paymentMethod
-        }, profileData);
+        }, profileData, ordenCompra);
         
         if (emailResult.success) {
           console.log('✅ Email de notificación enviado exitosamente');
@@ -1552,7 +1574,7 @@ async function saveDraftOrderToDatabase(draftOrder, customer, calculatedDiscount
 }
 
 // Función para crear Draft Order en Shopify
-async function createDraftOrder(customer, cartItems, discountPercentage, paymentMethod = 'contacto', comprobante = null) {
+async function createDraftOrder(customer, cartItems, discountPercentage, paymentMethod = 'contacto', comprobante = null, ordenCompra = null) {
     // Obtener datos del perfil empresarial desde la base de datos
     let profileData = null;
     if (database) {
@@ -1617,6 +1639,36 @@ COMPROBANTE DE PAGO: ${comprobante.originalname} - ⚠️ Error al subir archivo
         }
     }
     
+    // Subir orden de compra a Cloudinary si existe
+    let ordenCompraUrl = null;
+    if (ordenCompra) {
+        try {
+            // Subir archivo a Cloudinary
+            const uploadResult = await new Promise((resolve, reject) => {
+                cloudinary.uploader.upload_stream(
+                    {
+                        resource_type: 'auto',
+                        folder: 'imanix-ordenes-compra',
+                        public_id: `orden-compra-${Date.now()}-${customer?.email || 'no-email@example.com'.replace('@', '-at-')}`
+                    },
+                    (error, result) => {
+                        if (error) reject(error);
+                        else resolve(result);
+                    }
+                ).end(ordenCompra.buffer);
+            });
+            
+            ordenCompraUrl = uploadResult.secure_url;
+            
+            orderNote += `
+ORDEN DE COMPRA: [Link para descargar](${ordenCompraUrl})`;
+        } catch (uploadError) {
+            console.error('Error subiendo orden de compra a Cloudinary:', uploadError);
+            orderNote += `
+ORDEN DE COMPRA: ${ordenCompra.originalname} - ⚠️ Error al subir archivo`;
+        }
+    }
+    
     if (profileData && profileData.profile_completed) {
         orderNote += `
 
@@ -1653,7 +1705,7 @@ CONTACTO:
                 amount: null
             },
             note: orderNote,
-            tags: `b2b-portal,descuento-${discountPercentage},pago-${paymentMethod}${profileData?.profile_completed ? ',perfil-completo' : ',perfil-incompleto'}${comprobante ? ',comprobante-subido' : ''}`,
+            tags: `b2b-portal,descuento-${discountPercentage},pago-${paymentMethod}${profileData?.profile_completed ? ',perfil-completo' : ',perfil-incompleto'}${comprobante ? ',comprobante-subido' : ''}${ordenCompra ? ',orden-compra-subida' : ''}`,
             invoice_sent_at: null,
             invoice_url: null,
             status: "open",
@@ -3309,9 +3361,9 @@ function getCartHTML(customer) {
             console.log('🔍 DEBUG: Is IMA user:', isImaUser, 'Tags:', customerTags);
             
             if (isImaUser) {
-                // Checkout directo para usuarios IMA
-                console.log('🔍 DEBUG: Processing direct checkout for IMA user');
-                processDirectCheckout();
+                // Modal de orden de compra para usuarios IMA
+                console.log('🔍 DEBUG: Showing purchase order modal for IMA user');
+                showPurchaseOrderModal();
             } else {
                 // Modal de métodos de pago para usuarios regulares
                 console.log('🔍 DEBUG: Showing payment method modal for regular user');
@@ -3406,6 +3458,157 @@ function getCartHTML(customer) {
                     selectPaymentMethod('transferencia', transferOption);
                 }
             }, 100);
+        }
+
+        // Modal de orden de compra para clientes IMA
+        function showPurchaseOrderModal() {
+            const modal = document.createElement('div');
+            modal.style.cssText = \`
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            \`;
+
+            modal.innerHTML = \`
+                <div style="background: white; border-radius: 20px; padding: 2rem; max-width: 500px; width: 90%; max-height: 90%; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        <div style="background: #FFCE36; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                            <i class="fas fa-file-invoice" style="font-size: 24px; color: #333;"></i>
+                        </div>
+                        <h2 style="color: #333; margin: 0; font-size: 1.5rem; font-weight: 700;">
+                            Orden de Compra
+                        </h2>
+                        <p style="color: #666; margin: 0.5rem 0 0 0; font-size: 0.95rem;">
+                            ¿Deseas adjuntar una orden de compra a tu pedido?
+                        </p>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; border-left: 4px solid #FFCE36;">
+                        <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                            <i class="fas fa-info-circle" style="color: #FFCE36; margin-right: 0.5rem;"></i>
+                            <span style="font-weight: 600; color: #333;">Información</span>
+                        </div>
+                        <p style="margin: 0; color: #555; font-size: 0.9rem; line-height: 1.5;">
+                            Puedes subir tu orden de compra para adjuntarla al pedido. 
+                            Si no tienes una, puedes continuar sin subirla - el proceso funcionará igual.
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom: 2rem;">
+                        <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #333;">
+                            <i class="fas fa-upload" style="color: #FFCE36; margin-right: 0.5rem;"></i>
+                            Subir Orden de Compra (opcional)
+                        </label>
+                        <input type="file" id="ordenCompra" accept="image/*,.pdf" 
+                               style="width: 100%; padding: 1rem; border: 2px dashed #FFCE36; border-radius: 12px; background: #fff; font-size: 0.9rem;">
+                        <p style="margin: 0.75rem 0 0 0; color: #666; font-size: 0.85rem;">
+                            <i class="fas fa-check-circle" style="color: #28a745; margin-right: 0.25rem;"></i>
+                            Acepta imágenes (JPG, PNG) o PDF. Máximo 5MB.
+                        </p>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <button onclick="processPurchaseOrderCheckout(false)" 
+                                style="background: #6c757d; color: white; border: none; padding: 1rem 2rem; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.2s ease;">
+                            <i class="fas fa-times" style="margin-right: 0.5rem;"></i>
+                            Continuar sin O.C.
+                        </button>
+                        <button onclick="processPurchaseOrderCheckout(true)" 
+                                style="background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%); color: #333; border: none; padding: 1rem 2rem; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(255, 206, 54, 0.4); transition: all 0.2s ease;">
+                            <i class="fas fa-shopping-cart" style="margin-right: 0.5rem;"></i>
+                            Procesar Pedido
+                        </button>
+                    </div>
+                </div>
+            \`;
+
+            document.body.appendChild(modal);
+        }
+
+        // Función para procesar checkout de clientes IMA con/sin orden de compra
+        async function processPurchaseOrderCheckout(includeOrderFile) {
+            const ordenCompraFile = includeOrderFile ? document.getElementById('ordenCompra')?.files[0] : null;
+            
+            // Validar archivo si se requiere
+            if (includeOrderFile && !ordenCompraFile) {
+                showNotification('Selecciona un archivo de orden de compra', 'error');
+                return;
+            }
+
+            // Cerrar modal
+            document.querySelector('div[style*="position: fixed"]')?.remove();
+
+            // Mostrar loading
+            const checkoutBtn = document.querySelector('.checkout-btn');
+            const originalText = checkoutBtn.innerHTML;
+            checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            checkoutBtn.disabled = true;
+
+            try {
+                console.log('🔍 DEBUG: Processing IMA checkout with purchase order:', !!ordenCompraFile);
+                showNotification('Procesando pedido...', 'success');
+                
+                const formData = new FormData();
+                const cartItemsJSON = JSON.stringify(cart.map(item => ({
+                    variantId: item.variantId,
+                    quantity: item.quantity,
+                    price: item.price,
+                    title: item.title,
+                    sku: item.sku
+                })));
+                
+                formData.append('cartItems', cartItemsJSON);
+                formData.append('paymentMethod', 'ima-directo');
+                
+                // Agregar orden de compra si existe
+                if (ordenCompraFile) {
+                    formData.append('ordenCompra', ordenCompraFile);
+                    console.log('🔍 DEBUG: Purchase order file attached:', ordenCompraFile.name);
+                }
+                
+                console.log('🔍 DEBUG: Cart data to send:', cart);
+                console.log('🔍 DEBUG: CartItems JSON string:', cartItemsJSON);
+                
+                const response = await fetch('/api/checkout', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('🔍 DEBUG: Received response, status:', response.status);
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Limpiar carrito
+                    localStorage.removeItem('b2bCart');
+                    cart = [];
+                    updateCartBadge();
+
+                    showNotification('¡Pedido procesado exitosamente!', 'success');
+                    
+                    // Mostrar modal de éxito personalizado para IMA
+                    showOrderSuccessModal(data);
+                    
+                    setTimeout(() => {
+                        window.location.href = '/portal';
+                    }, 8000);
+                } else {
+                    showNotification(data.message || 'Error procesando el pedido', 'error');
+                }
+            } catch (error) {
+                console.error('Error en checkout IMA:', error);
+                showNotification('Error de conexión. Inténtalo nuevamente.', 'error');
+            } finally {
+                // Restaurar botón
+                checkoutBtn.innerHTML = originalText;
+                checkoutBtn.disabled = false;
+            }
         }
 
         function selectPaymentMethod(method, element) {
