@@ -81,7 +81,7 @@ app.use(async (req, res, next) => {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           maxAge: 24 * 60 * 60 * 1000, // 24 horas
-          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+          sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax'
         });
         console.log('🔄 Session regenerated:', newSessionId);
       },
@@ -101,7 +101,7 @@ app.use(async (req, res, next) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             maxAge: 24 * 60 * 60 * 1000, // 24 horas
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+            sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax'
           });
           console.log('🆔 SessionId created on save:', newSessionId);
         }
@@ -2072,12 +2072,10 @@ app.get('/portal', async (req, res) => {
     console.log('🔍 DEBUG PORTAL - req.session.authenticated:', req.session.authenticated);
     console.log('🔍 DEBUG PORTAL - req.session.sessionId:', req.session.sessionId);
     
-    // COMENTAR TEMPORALMENTE EL REDIRECT PARA DEBUG
     // Verificar si el usuario está autenticado
     if (!req.session.customer) {
       console.log('❌ Usuario no autenticado, redirigiendo a login');
-      // COMENTADO PARA DEBUG: return res.redirect('/');
-      console.log('🚨 REDIRECT COMENTADO PARA DEBUG - continuando...');
+      return res.redirect('/');
     }
 
     console.log('✅ Usuario autenticado:', req.session.customer?.email || 'No customer data');
@@ -2969,9 +2967,18 @@ function getCartHTML(customer) {
                 text-align: left;
             }
         }
-        /* ANIMACIONES DE ENTRADA SUTILES */
+        /* ANIMACIONES DE ENTRADA SUTILES - OPTIMIZADAS PARA MOBILE */
         .stat-card, .product-card, .cart-item {
             animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        /* Reducir animaciones en mobile para evitar conflictos */
+        @media (max-width: 768px) {
+            .stat-card, .product-card, .cart-item {
+                animation: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
         }
         
         @keyframes fadeInUp {
@@ -4433,20 +4440,19 @@ function getCartHTML(customer) {
         function showNotification(message, type) {
             console.log('DEBUG: Notification position updated to 140px');
             const notification = document.createElement('div');
-            notification.style.cssText = \`
-                position: fixed;
-                top: 140px;
-                right: 20px;
-                background: \${type === 'success' ? '#10b981' : '#ef4444'};
-                color: #1A202C;
-                padding: 1rem 1.5rem;
-                border-radius: 12px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-                z-index: 10000;
-                font-weight: 600;
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
-            \`;
+            notification.style.cssText = 
+                'position: fixed;' +
+                'top: 140px;' +
+                'right: 20px;' +
+                'background: ' + (type === 'success' ? '#10b981' : '#ef4444') + ';' +
+                'color: #1A202C;' +
+                'padding: 1rem 1.5rem;' +
+                'border-radius: 12px;' +
+                'box-shadow: 0 10px 30px rgba(0,0,0,0.2);' +
+                'z-index: 10000;' +
+                'font-weight: 600;' +
+                'transform: translateX(100%);' +
+                'transition: transform 0.3s ease;';
             notification.textContent = message;
             
             document.body.appendChild(notification);
@@ -5015,7 +5021,7 @@ function getLoginHTML() {
         /* Sistema de Notificaciones IMANIX */
         .notification-container {
             position: fixed;
-            top: 20px;
+            top: 140px;
             right: 20px;
             z-index: 10000;
             max-width: 400px;
@@ -5076,6 +5082,7 @@ function getLoginHTML() {
 
         @media (max-width: 480px) {
             .notification-container {
+                top: 100px;
                 left: 20px;
                 right: 20px;
                 max-width: none;
@@ -5087,9 +5094,18 @@ function getLoginHTML() {
                 font-size: 13px;
             }
         }
-        /* ANIMACIONES DE ENTRADA SUTILES */
+        /* ANIMACIONES DE ENTRADA SUTILES - OPTIMIZADAS PARA MOBILE */
         .stat-card, .product-card, .cart-item {
             animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        /* Reducir animaciones en mobile para evitar conflictos */
+        @media (max-width: 768px) {
+            .stat-card, .product-card, .cart-item {
+                animation: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
         }
         
         @keyframes fadeInUp {
@@ -5415,10 +5431,9 @@ function getLoginHTML() {
             \`;
             
             // Estilos dinámicos
-            notification.style.cssText = \`
-                background: linear-gradient(135deg, \${config.bgColor}, \${config.borderColor});
-                border-left: 4px solid \${config.borderColor};
-            \`;
+            notification.style.cssText = 
+                'background: linear-gradient(135deg, ' + config.bgColor + ', ' + config.borderColor + ');' +
+                'border-left: 4px solid ' + config.borderColor + ';';
             
             container.appendChild(notification);
             
@@ -6326,7 +6341,7 @@ function getCompleteProfileHTML(customer) {
         /* Sistema de Notificaciones IMANIX */
         .notification-container {
             position: fixed;
-            top: 20px;
+            top: 140px;
             right: 20px;
             z-index: 10000;
             max-width: 400px;
@@ -6396,15 +6411,25 @@ function getCompleteProfileHTML(customer) {
                 gap: 1rem;
             }
 
-            notification-container {
+            .notification-container {
+                top: 100px;
                 left: 20px;
                 right: 20px;
                 max-width: none;
             }
         }
-        /* ANIMACIONES DE ENTRADA SUTILES */
+        /* ANIMACIONES DE ENTRADA SUTILES - OPTIMIZADAS PARA MOBILE */
         .stat-card, .product-card, .cart-item {
             animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        /* Reducir animaciones en mobile para evitar conflictos */
+        @media (max-width: 768px) {
+            .stat-card, .product-card, .cart-item {
+                animation: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
         }
         
         @keyframes fadeInUp {
@@ -6711,10 +6736,9 @@ function getCompleteProfileHTML(customer) {
             \`;
             
             // Estilos dinámicos
-            notification.style.cssText = \`
-                background: linear-gradient(135deg, \${config.bgColor}, \${config.borderColor});
-                border-left: 4px solid \${config.borderColor};
-            \`;
+            notification.style.cssText = 
+                'background: linear-gradient(135deg, ' + config.bgColor + ', ' + config.borderColor + ');' +
+                'border-left: 4px solid ' + config.borderColor + ';';
             
             container.appendChild(notification);
             
@@ -7276,10 +7300,17 @@ function getPortalHTML(products, customer) {
             }
         };
         
-        // Inicializar cuando se carga la página
+        // Inicializar cuando se carga la página - con timeout para mobile
         document.addEventListener('DOMContentLoaded', function() {
             console.log('📦 Inicializando carrito...');
-            window.updateCartBadge();
+            // Retrasar inicialización para evitar conflictos con scroll inmediato
+            setTimeout(function() {
+                try {
+                    window.updateCartBadge();
+                } catch(e) {
+                    console.error('Error inicializando carrito:', e);
+                }
+            }, 100);
         });
         
         console.log('🚀 TODAS LAS FUNCIONES GLOBALES CARGADAS EXITOSAMENTE');
@@ -8344,18 +8375,140 @@ function getPortalHTML(products, customer) {
             .products-grid {
                 grid-template-columns: 1fr;
                 gap: 1.5rem;
+                margin-top: 2rem;
+                padding: 0 1rem;
+            }
+
+            .product-card {
+                padding: 1.5rem !important;
+                margin: 0 !important;
             }
 
             .catalog-controls {
                 margin-bottom: 1.5rem;
+                padding: 0 1rem;
             }
 
             .controls-top {
                 margin-bottom: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .qty-btn {
+                min-width: 44px !important;
+                min-height: 44px !important;
+                font-size: 1rem !important;
+                border-radius: 8px !important;
+            }
+
+            .qty-input {
+                min-height: 44px !important;
+                font-size: 1.1rem !important;
+                text-align: center !important;
+                width: 70px !important;
+            }
+
+            .add-to-cart-btn {
+                padding: 1rem 1.5rem !important;
+                font-size: 1rem !important;
+                min-height: 50px !important;
+                margin-top: 1rem !important;
+            }
+
+            .product-price {
+                font-size: 1.1rem !important;
+                margin: 1rem 0 !important;
+            }
+
+            .product-title {
+                font-size: 1.1rem !important;
+                line-height: 1.4 !important;
+                margin-bottom: 0.75rem !important;
             }
 
             .search-box {
                 max-width: 100%;
+                min-height: 44px !important;
+                font-size: 1rem !important;
+            }
+
+            .container {
+                padding: 0 1rem !important;
+            }
+
+            .stats-cards {
+                padding: 0 1rem;
+            }
+
+            .stat-card {
+                padding: 1.5rem !important;
+                text-align: center;
+            }
+
+            .quantity-controls {
+                gap: 0.75rem !important;
+                justify-content: center !important;
+                margin: 1rem 0 !important;
+            }
+
+            .discount-overlay {
+                font-size: 0.9rem !important;
+                padding: 0.5rem 0.75rem !important;
+            }
+
+            .stock-info {
+                font-size: 0.9rem !important;
+                margin-top: 0.5rem !important;
+                text-align: center;
+            }
+            
+            .navbar {
+                padding: 1rem !important;
+            }
+            
+            .navbar .container {
+                padding: 0 !important;
+            }
+
+            /* Ocultar información redundante en móvil */
+            .savings {
+                display: none !important;
+            }
+
+            .product-meta .stock-count {
+                display: none !important;
+            }
+
+            .product-meta .sku {
+                font-size: 0.8rem !important;
+                opacity: 0.7;
+                text-align: center;
+                display: block !important;
+                margin: 0.5rem 0 !important;
+            }
+
+            .price-breakdown.highlight {
+                font-size: 0.9rem !important;
+                margin-top: 0.25rem !important;
+            }
+
+            .discounted-price {
+                font-size: 1.4rem !important;
+                font-weight: 700 !important;
+                margin-bottom: 0.25rem !important;
+                display: block !important;
+            }
+
+            .quantity-selector {
+                margin: 1rem 0 !important;
+            }
+
+            .quantity-label {
+                font-size: 0.9rem !important;
+                text-align: center !important;
+                display: block !important;
+                margin-bottom: 0.5rem !important;
             }
 
             .filters-header {
@@ -8411,9 +8564,18 @@ function getPortalHTML(products, customer) {
                 font-size: 1.875rem;
             }
         }
-        /* ANIMACIONES DE ENTRADA SUTILES */
+        /* ANIMACIONES DE ENTRADA SUTILES - OPTIMIZADAS PARA MOBILE */
         .stat-card, .product-card, .cart-item {
             animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        /* Reducir animaciones en mobile para evitar conflictos */
+        @media (max-width: 768px) {
+            .stat-card, .product-card, .cart-item {
+                animation: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
         }
         
         @keyframes fadeInUp {
@@ -9008,7 +9170,7 @@ function getPortalHTML(products, customer) {
                 var bgColor = type === 'success' ? '#10b981' : '#ef4444';
                 notification.style.cssText = 
                     'position: fixed;' +
-                    'top: 20px;' +
+                    'top: 140px;' +
                     'right: 20px;' +
                     'background: ' + bgColor + ';' +
                     'color: white;' +
@@ -9067,10 +9229,17 @@ function getPortalHTML(products, customer) {
         // Las funciones ya están asignadas globalmente arriba - eliminando asignaciones duplicadas
         // window.toggleUserDropdown, window.addToCart, window.showCart, etc. ya están definidas
         
-        // Inicializar cuando el DOM esté completamente cargado
+        // Inicializar cuando el DOM esté completamente cargado - con protección mobile
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 DOM cargado, inicializando funciones...');
-            updateCartBadge();
+            // Retrasar para evitar conflictos con scroll inmediato en mobile
+            setTimeout(function() {
+                try {
+                    updateCartBadge();
+                } catch(e) {
+                    console.error('Error inicializando funciones:', e);
+                }
+            }, 150);
         });
         
         
@@ -10007,9 +10176,18 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                 gap: 0.5rem;
             }
         }
-        /* ANIMACIONES DE ENTRADA SUTILES */
+        /* ANIMACIONES DE ENTRADA SUTILES - OPTIMIZADAS PARA MOBILE */
         .stat-card, .product-card, .cart-item {
             animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        /* Reducir animaciones en mobile para evitar conflictos */
+        @media (max-width: 768px) {
+            .stat-card, .product-card, .cart-item {
+                animation: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
         }
         
         @keyframes fadeInUp {
@@ -10608,7 +10786,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             const notification = document.createElement('div');
             const bgColor = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6';
             notification.style.position = 'fixed';
-            notification.style.top = '20px';
+            notification.style.top = '140px';
             notification.style.right = '20px';
             notification.style.background = bgColor;
             notification.style.color = 'white';
@@ -11174,9 +11352,18 @@ function getAccountHTML(customer, profile, addresses, stats) {
                 transform: translateY(-2px);
                 box-shadow: 0 4px 15px rgba(255, 206, 54, 0.4);
             }
-        /* ANIMACIONES DE ENTRADA SUTILES */
+        /* ANIMACIONES DE ENTRADA SUTILES - OPTIMIZADAS PARA MOBILE */
         .stat-card, .product-card, .cart-item {
             animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        /* Reducir animaciones en mobile para evitar conflictos */
+        @media (max-width: 768px) {
+            .stat-card, .product-card, .cart-item {
+                animation: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
         }
         
         @keyframes fadeInUp {
@@ -11533,9 +11720,18 @@ function getOrdersHTML(customer, orders, currentPage, totalPages) {
             }
             .empty-state { text-align: center; padding: 3rem; color: #666; }
             .empty-state h3 { margin-bottom: 1rem; color: #2c3e50; }
-        /* ANIMACIONES DE ENTRADA SUTILES */
+        /* ANIMACIONES DE ENTRADA SUTILES - OPTIMIZADAS PARA MOBILE */
         .stat-card, .product-card, .cart-item {
             animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        /* Reducir animaciones en mobile para evitar conflictos */
+        @media (max-width: 768px) {
+            .stat-card, .product-card, .cart-item {
+                animation: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
         }
         
         @keyframes fadeInUp {
@@ -11766,9 +11962,18 @@ function getOrderDetailHTML(customer, order) {
             .info-item:last-child { border-bottom: none; }
             .info-label { color: #666; font-weight: 500; }
             .info-value { color: #2c3e50; font-weight: 600; }
-        /* ANIMACIONES DE ENTRADA SUTILES */
+        /* ANIMACIONES DE ENTRADA SUTILES - OPTIMIZADAS PARA MOBILE */
         .stat-card, .product-card, .cart-item {
             animation: fadeInUp 0.6s ease-out !important;
+        }
+        
+        /* Reducir animaciones en mobile para evitar conflictos */
+        @media (max-width: 768px) {
+            .stat-card, .product-card, .cart-item {
+                animation: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
         }
         
         @keyframes fadeInUp {
@@ -12250,19 +12455,18 @@ function getBasicPortalHTML(customer) {
             // Success notification
             setTimeout(() => {
                 const notification = document.createElement('div');
-                notification.style.cssText = \`
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    background: #10B981;
-                    color: white;
-                    padding: 1rem 1.5rem;
-                    border-radius: 10px;
-                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-                    z-index: 1000;
-                    font-weight: 600;
-                    animation: slideIn 0.3s ease;
-                \`;
+                notification.style.cssText = 
+                    'position: fixed;' +
+                    'top: 140px;' +
+                    'right: 20px;' +
+                    'background: #10B981;' +
+                    'color: white;' +
+                    'padding: 1rem 1.5rem;' +
+                    'border-radius: 10px;' +
+                    'box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);' +
+                    'z-index: 1000;' +
+                    'font-weight: 600;' +
+                    'animation: slideIn 0.3s ease;';
                 notification.innerHTML = '<i class="fas fa-check"></i> ¡Bienvenido al Portal B2B!';
                 document.body.appendChild(notification);
                 
