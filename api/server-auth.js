@@ -6125,6 +6125,7 @@ function getPortalHTML(products, customer) {
 
         return products.map(product => {
             const variant = product.variants?.edges?.[0]?.node;
+            console.log('🔍 Debug producto:', product.title, 'SKU:', variant?.sku);
             const originalPrice = variant?.price ? parseInt(variant.price) : 0;
             const discountedPrice = applyB2BDiscount(originalPrice, discount);
             const savings = originalPrice - discountedPrice;
@@ -6156,6 +6157,7 @@ function getPortalHTML(products, customer) {
                 });
             }
 
+            console.log('🎯 Generando botón para:', product.title, 'con SKU:', variant?.sku);
             return `
                 <div class="product-card" 
                      data-tags="${product.tags || ''}" 
