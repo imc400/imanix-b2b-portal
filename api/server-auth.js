@@ -358,7 +358,7 @@ function generateOrderEmailHTML(customer, cartItems, orderData) {
 }
 
 // Función para generar Excel del pedido
-async function generateOrderExcel(customer, cartItems, orderData, profileData) {
+async function generateOrderExcel(customer, cartItems, orderData, profileData, shippingInfo = null) {
   try {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Resumen de Pedido');
@@ -560,6 +560,39 @@ async function generateOrderExcel(customer, cartItems, orderData, profileData) {
       { width: 20 }  // F - Total/Values
     ];
     
+    // Información de envío si está disponible
+    if (shippingInfo) {
+      row += 2;
+      worksheet.mergeCells(`A${row}:F${row}`);
+      const shippingHeaderCell = worksheet.getCell(`A${row}`);
+      shippingHeaderCell.value = 'INFORMACIÓN DE ENVÍO';
+      shippingHeaderCell.font = { bold: true, size: 12, color: { argb: '374151' } };
+      shippingHeaderCell.alignment = { horizontal: 'center' };
+      shippingHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F3F4F6' } };
+      row++;
+
+      const shippingData = [
+        ['Región:', getRegionName(shippingInfo.region)],
+        ['Comuna:', shippingInfo.comuna],
+        ['Dirección:', shippingInfo.direccion1],
+        ...(shippingInfo.direccion2 ? [['Dirección Complementaria:', shippingInfo.direccion2]] : []),
+        ...(shippingInfo.codigoPostal ? [['Código Postal:', shippingInfo.codigoPostal]] : []),
+        ['Celular de Contacto:', shippingInfo.celular]
+      ];
+
+      shippingData.forEach(([label, value]) => {
+        worksheet.getCell(`A${row}`).value = label;
+        worksheet.getCell(`A${row}`).font = { bold: true };
+        worksheet.getCell(`B${row}`).value = value;
+        worksheet.getCell(`B${row}`).alignment = { horizontal: 'left' };
+        
+        // Merge cells for better appearance
+        worksheet.mergeCells(`B${row}:F${row}`);
+        
+        row++;
+      });
+    }
+    
     // Nota final
     row += 2;
     worksheet.mergeCells(`A${row}:F${row}`);
@@ -577,7 +610,7 @@ async function generateOrderExcel(customer, cartItems, orderData, profileData) {
 }
 
 // Función para enviar email de notificación del pedido
-async function sendOrderEmail(customer, cartItems, orderData, profileData = null, ordenCompra = null) {
+async function sendOrderEmail(customer, cartItems, orderData, profileData = null, ordenCompra = null, shippingInfo = null) {
   try {
     // Verificar si el transporter está configurado
     if (!transporter) {
@@ -593,7 +626,7 @@ async function sendOrderEmail(customer, cartItems, orderData, profileData = null
     const excelWorkbook = await generateOrderExcel(customer, cartItems, {
       ...orderData,
       paymentMethod: orderData.paymentMethod
-    }, profileData);
+    }, profileData, shippingInfo);
     
     // Convertir Excel a buffer
     const excelBuffer = await excelWorkbook.xlsx.writeBuffer();
@@ -1346,9 +1379,22 @@ app.post('/api/checkout', upload.fields([
     const comprobante = req.files?.comprobante?.[0];
     const ordenCompra = req.files?.ordenCompra?.[0];
     
+    // Parse shipping info si viene como string JSON
+    let shippingInfo;
+    try {
+      shippingInfo = typeof req.body.shippingInfo === 'string' 
+        ? JSON.parse(req.body.shippingInfo) 
+        : req.body.shippingInfo;
+      console.log('✅ DEBUG checkout - Shipping info parsed successfully:', !!shippingInfo);
+    } catch (parseError) {
+      console.error('❌ DEBUG checkout - Error parsing shipping info:', parseError);
+      shippingInfo = null;
+    }
+    
     console.log('🔍 DEBUG checkout - PaymentMethod extracted:', paymentMethod);
     console.log('🔍 DEBUG checkout - Comprobante file:', !!comprobante);
     console.log('🔍 DEBUG checkout - Orden de compra file:', !!ordenCompra);
+    console.log('🔍 DEBUG checkout - Shipping info:', shippingInfo);
     
     // Parse cartItems si viene como string JSON (FormData)
     let cartItems;
@@ -1393,7 +1439,7 @@ app.post('/api/checkout', upload.fields([
     console.log('✅ DEBUG checkout - All validations passed, proceeding to createDraftOrder');
 
     // Crear draft order en Shopify
-    const { draftOrder, profileData } = await createDraftOrder(customer, cartItems, discountPercentage, paymentMethod, comprobante, ordenCompra);
+    const { draftOrder, profileData } = await createDraftOrder(customer, cartItems, discountPercentage, paymentMethod, comprobante, ordenCompra, shippingInfo);
     
     // Log para seguimiento
     console.log(`🎯 Draft Order #${draftOrder.id} creado para cliente B2B: ${customer?.email || 'no-email@example.com'}`);
@@ -1433,7 +1479,7 @@ app.post('/api/checkout', upload.fields([
           total: draftOrder.total_price,
           discount: draftOrder.total_discounts,
           paymentMethod: paymentMethod
-        }, profileData, ordenCompra);
+        }, profileData, ordenCompra, shippingInfo);
         
         if (emailResult.success) {
           console.log('✅ Email de notificación enviado exitosamente');
@@ -1573,8 +1619,29 @@ async function saveDraftOrderToDatabase(draftOrder, customer, calculatedDiscount
     }
 }
 
+// Función auxiliar para obtener nombre de región
+function getRegionName(regionId) {
+    const regions = {
+        "1": "Región de Tarapacá",
+        "2": "Región de Antofagasta", 
+        "3": "Región de Atacama",
+        "4": "Región de Coquimbo",
+        "5": "Región de Valparaíso",
+        "13": "Región Metropolitana de Santiago",
+        "6": "Región del Libertador General Bernardo O'Higgins",
+        "7": "Región del Maule",
+        "8": "Región del Biobío",
+        "9": "Región de La Araucanía",
+        "14": "Región de Los Ríos",
+        "10": "Región de Los Lagos",
+        "11": "Región Aysén del General Carlos Ibáñez del Campo",
+        "12": "Región de Magallanes y de la Antártica Chilena"
+    };
+    return regions[regionId] || `Región ${regionId}`;
+}
+
 // Función para crear Draft Order en Shopify
-async function createDraftOrder(customer, cartItems, discountPercentage, paymentMethod = 'contacto', comprobante = null, ordenCompra = null) {
+async function createDraftOrder(customer, cartItems, discountPercentage, paymentMethod = 'contacto', comprobante = null, ordenCompra = null, shippingInfo = null) {
     // Obtener datos del perfil empresarial desde la base de datos
     let profileData = null;
     if (database) {
@@ -1687,6 +1754,33 @@ CONTACTO:
         orderNote += `
 
 ⚠️ PERFIL EMPRESARIAL INCOMPLETO - Verificar datos con el cliente`;
+    }
+
+    // Agregar información de envío si está disponible
+    if (shippingInfo) {
+        orderNote += `
+
+INFORMACIÓN DE ENVÍO:
+• Región: ${shippingInfo.region ? getRegionName(shippingInfo.region) : 'N/A'}
+• Comuna: ${shippingInfo.comuna || 'N/A'}
+• Dirección: ${shippingInfo.direccion1 || 'N/A'}`;
+
+        if (shippingInfo.direccion2) {
+            orderNote += `
+• Dirección Complementaria: ${shippingInfo.direccion2}`;
+        }
+        
+        if (shippingInfo.codigoPostal) {
+            orderNote += `
+• Código Postal: ${shippingInfo.codigoPostal}`;
+        }
+        
+        orderNote += `
+• Celular de Contacto: ${shippingInfo.celular || 'N/A'}`;
+    } else {
+        orderNote += `
+
+⚠️ INFORMACIÓN DE ENVÍO NO PROPORCIONADA`;
     }
 
     const draftOrder = {
@@ -2219,6 +2313,13 @@ function getCartHTML(customer) {
             color: var(--gray-800) !important;
             border-bottom: 3px solid var(--imanix-yellow-dark) !important;
             box-shadow: var(--shadow-sm) !important;
+        }
+        
+        /* ANIMACIONES */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 206, 54, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(255, 206, 54, 0.3); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 206, 54, 0); }
         }
 
         </style>
@@ -3010,6 +3111,7 @@ function getCartHTML(customer) {
     <script>
         // Variables globales
         let cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
+        let shippingInfo = JSON.parse(localStorage.getItem('b2bShippingInfo')) || null;
         const customerDiscount = ${customerDiscount};
         const customerTags = '${customer?.tags || ''}';
         
@@ -3066,6 +3168,298 @@ function getCartHTML(customer) {
         // Función para calcular IVA
         function calculateIVA(netPrice) {
             return Math.round(netPrice * 0.19);
+        }
+
+        // Datos de regiones y comunas de Chile
+        const chileRegions = {
+            "1": {
+                name: "Región de Tarapacá",
+                communes: ["Iquique", "Alto Hospicio", "Pozo Almonte", "Camiña", "Colchane", "Huara", "Pica"]
+            },
+            "2": {
+                name: "Región de Antofagasta", 
+                communes: ["Antofagasta", "Mejillones", "Sierra Gorda", "Taltal", "Calama", "Ollagüe", "San Pedro de Atacama", "Tocopilla", "María Elena"]
+            },
+            "3": {
+                name: "Región de Atacama",
+                communes: ["Copiapó", "Caldera", "Tierra Amarilla", "Chañaral", "Diego de Almagro", "Vallenar", "Alto del Carmen", "Freirina", "Huasco"]
+            },
+            "4": {
+                name: "Región de Coquimbo",
+                communes: ["La Serena", "Coquimbo", "Andacollo", "La Higuera", "Paiguano", "Vicuña", "Illapel", "Canela", "Los Vilos", "Salamanca", "Ovalle", "Combarbalá", "Monte Patria", "Punitaqui", "Río Hurtado"]
+            },
+            "5": {
+                name: "Región de Valparaíso",
+                communes: ["Valparaíso", "Casablanca", "Concón", "Juan Fernández", "Puchuncaví", "Quintero", "Viña del Mar", "Isla de Pascua", "Los Andes", "Calle Larga", "Rinconada", "San Esteban", "La Ligua", "Cabildo", "Papudo", "Petorca", "Zapallar", "Quillota", "Calera", "Hijuelas", "La Cruz", "Nogales", "San Antonio", "Algarrobo", "Cartagena", "El Quisco", "El Tabo", "Santo Domingo", "San Felipe", "Catemu", "Llaillay", "Panquehue", "Putaendo", "Santa María", "Quilpué", "Limache", "Olmué", "Villa Alemana"]
+            },
+            "13": {
+                name: "Región Metropolitana de Santiago",
+                communes: ["Cerrillos", "Cerro Navia", "Conchalí", "El Bosque", "Estación Central", "Huechuraba", "Independencia", "La Cisterna", "La Florida", "La Granja", "La Pintana", "La Reina", "Las Condes", "Lo Barnechea", "Lo Espejo", "Lo Prado", "Macul", "Maipú", "Ñuñoa", "Pedro Aguirre Cerda", "Peñalolén", "Providencia", "Pudahuel", "Quilicura", "Quinta Normal", "Recoleta", "Renca", "Santiago", "San Joaquín", "San Miguel", "San Ramón", "Vitacura", "Puente Alto", "Pirque", "San José de Maipo", "Colina", "Lampa", "Tiltil", "San Bernardo", "Buin", "Calera de Tango", "Paine", "Melipilla", "Alhué", "Curacaví", "María Pinto", "San Pedro", "Talagante", "El Monte", "Isla de Maipo", "Padre Hurtado", "Peñaflor"]
+            },
+            "6": {
+                name: "Región del Libertador General Bernardo O'Higgins",
+                communes: ["Rancagua", "Codegua", "Coinco", "Coltauco", "Doñihue", "Graneros", "Las Cabras", "Machalí", "Malloa", "Mostazal", "Olivar", "Peumo", "Pichidegua", "Quinta de Tilcoco", "Rengo", "Requínoa", "San Vicente", "Pichilemu", "La Estrella", "Litueche", "Marchihue", "Navidad", "Paredones", "San Fernando", "Chépica", "Chimbarongo", "Lolol", "Nancagua", "Palmilla", "Peralillo", "Placilla", "Pumanque", "Santa Cruz"]
+            },
+            "7": {
+                name: "Región del Maule",
+                communes: ["Talca", "ConstutiCión", "Curepto", "Empedrado", "Maule", "Pelarco", "Pencahue", "Río Claro", "San Clemente", "San Rafael", "Cauquenes", "Chanco", "Pelluhue", "Curicó", "Hualañé", "Licantén", "Molina", "Rauco", "Romeral", "Sagrada Familia", "Teno", "Vichuquén", "Linares", "Colbún", "Longaví", "Parral", "Retiro", "San Javier", "Villa Alegre", "Yerbas Buenas"]
+            },
+            "8": {
+                name: "Región del Biobío",
+                communes: ["Concepción", "Coronel", "Chiguayante", "Florida", "Hualqui", "Lota", "Penco", "San Pedro de la Paz", "Santa Juana", "Talcahuano", "Tomé", "Hualpén", "Lebu", "Arauco", "Cañete", "Contulmo", "Curanilahue", "Los Álamos", "Tirúa", "Los Ángeles", "Antuco", "Cabrero", "Laja", "Mulchén", "Nacimiento", "Negrete", "Quilaco", "Quilleco", "San Rosendo", "Santa Bárbara", "Tucapel", "Yumbel", "Alto Biobío", "Chillán", "Bulnes", "Cobquecura", "Coelemu", "Coihueco", "Chillán Viejo", "El Carmen", "Ninhue", "Ñiquén", "Pemuco", "Pinto", "Portezuelo", "Quillón", "Quirihue", "Ránquil", "San Carlos", "San Fabián", "San Ignacio", "San Nicolás", "Treguaco", "Yungay"]
+            },
+            "9": {
+                name: "Región de La Araucanía",
+                communes: ["Temuco", "Carahue", "Cunco", "Curarrehue", "Freire", "Galvarino", "Gorbea", "Lautaro", "Loncoche", "Melipeuco", "Nueva Imperial", "Padre las Casas", "Perquenco", "Pitrufquén", "Pucón", "Saavedra", "Teodoro Schmidt", "Toltén", "Vilcún", "Villarrica", "Cholchol", "Angol", "Collipulli", "Curacautín", "Ercilla", "Lonquimay", "Los Sauces", "Lumaco", "Purén", "Renaico", "Traiguén", "Victoria"]
+            },
+            "14": {
+                name: "Región de Los Ríos",
+                communes: ["Valdivia", "Corral", "Lanco", "Los Lagos", "Máfil", "Mariquina", "Paillaco", "Panguipulli", "La Unión", "Futrono", "Lago Ranco", "Río Bueno"]
+            },
+            "10": {
+                name: "Región de Los Lagos",
+                communes: ["Puerto Montt", "Calbuco", "Cochamó", "Fresia", "Frutillar", "Los Muermos", "Llanquihue", "Maullín", "Puerto Varas", "Castro", "Ancud", "Chonchi", "Curaco de Vélez", "Dalcahue", "Puqueldón", "Queilén", "Quellón", "Quemchi", "Quinchao", "Osorno", "Puerto Octay", "Purranque", "Puyehue", "Río Negro", "San Juan de la Costa", "San Pablo", "Chaitén", "Futaleufú", "Hualaihué", "Palena"]
+            },
+            "11": {
+                name: "Región Aysén del General Carlos Ibáñez del Campo",
+                communes: ["Coyhaique", "Lago Verde", "Aysén", "Cisnes", "Guaitecas", "Cochrane", "O'Higgins", "Tortel", "Chile Chico", "Río Ibáñez"]
+            },
+            "12": {
+                name: "Región de Magallanes y de la Antártica Chilena",
+                communes: ["Punta Arenas", "Laguna Blanca", "Río Verde", "San Gregorio", "Cabo de Hornos", "Antártica", "Porvenir", "Primavera", "Timaukel", "Natales", "Torres del Paine"]
+            }
+        };
+
+        // Función para actualizar información de envío en la UI
+        function updateShippingPreview() {
+            const statusElement = document.getElementById('shippingStatus');
+            const previewElement = document.getElementById('shippingPreview');
+            const buttonElement = document.querySelector('.shipping-btn');
+            
+            if (shippingInfo) {
+                statusElement.textContent = 'Configurado';
+                statusElement.style.color = '#10b981';
+                
+                const regionName = chileRegions[shippingInfo.region]?.name || 'Región no encontrada';
+                previewElement.innerHTML = \`
+                    <strong>\${shippingInfo.direccion1}</strong><br>
+                    \${shippingInfo.comuna}, \${regionName}<br>
+                    <i class="fas fa-phone" style="margin-right: 0.25rem;"></i>\${shippingInfo.celular}
+                \`;
+                
+                buttonElement.innerHTML = '<i class="fas fa-edit" style="margin-right: 0.5rem;"></i>Editar Información de Envío';
+                buttonElement.style.background = '#f0f9ff';
+                buttonElement.style.borderColor = '#0ea5e9';
+                buttonElement.style.color = '#0369a1';
+            } else {
+                statusElement.textContent = 'Sin configurar';
+                statusElement.style.color = '#6b7280';
+                previewElement.textContent = 'Agrega los datos de envío para completar tu pedido';
+                buttonElement.innerHTML = '<i class="fas fa-plus" style="margin-right: 0.5rem;"></i>Agregar Información de Envío';
+                buttonElement.style.background = '#f3f4f6';
+                buttonElement.style.borderColor = '#d1d5db';
+                buttonElement.style.color = '#6b7280';
+            }
+        }
+
+        // Función para mostrar el modal de información de envío
+        function showShippingModal() {
+            const modal = document.createElement('div');
+            modal.id = 'shippingModal';
+            modal.style.cssText = \`
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                padding: 1rem;
+            \`;
+
+            const regionOptions = Object.entries(chileRegions).map(([id, region]) => 
+                \`<option value="\${id}" \${shippingInfo?.region === id ? 'selected' : ''}>\${region.name}</option>\`
+            ).join('');
+
+            modal.innerHTML = \`
+                <div style="background: white; border-radius: 12px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);">
+                    <div style="padding: 1.5rem; border-bottom: 1px solid #e5e7eb;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #FFCE36, #F7B500); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-truck" style="color: #1a202c; font-size: 1.1rem;"></i>
+                                </div>
+                                <div>
+                                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #1a202c;">Información de Envío</h3>
+                                    <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">Completa los datos para la entrega de tu pedido</p>
+                                </div>
+                            </div>
+                            <button onclick="closeShippingModal()" style="width: 32px; height: 32px; border-radius: 50%; border: none; background: #f3f4f6; color: #6b7280; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="padding: 1.5rem;">
+                        <form id="shippingForm">
+                            <div style="display: grid; gap: 1rem;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <div>
+                                        <label style="display: block; font-weight: 600; color: #374151; margin-bottom: 0.5rem; font-size: 0.875rem;">
+                                            <i class="fas fa-map-marked-alt" style="margin-right: 0.5rem; color: #FFCE36;"></i>Región *
+                                        </label>
+                                        <select id="regionSelect" required style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem; background: white;">
+                                            <option value="">Seleccionar región</option>
+                                            \${regionOptions}
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; font-weight: 600; color: #374151; margin-bottom: 0.5rem; font-size: 0.875rem;">
+                                            <i class="fas fa-map-pin" style="margin-right: 0.5rem; color: #FFCE36;"></i>Comuna *
+                                        </label>
+                                        <select id="communeSelect" required style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem; background: white;" disabled>
+                                            <option value="">Seleccionar comuna</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label style="display: block; font-weight: 600; color: #374151; margin-bottom: 0.5rem; font-size: 0.875rem;">
+                                        <i class="fas fa-home" style="margin-right: 0.5rem; color: #FFCE36;"></i>Dirección Principal *
+                                    </label>
+                                    <input type="text" id="direccion1" required maxlength="100" placeholder="Ej: Av. Providencia 1234" value="\${shippingInfo?.direccion1 || ''}" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem;">
+                                </div>
+                                
+                                <div>
+                                    <label style="display: block; font-weight: 600; color: #374151; margin-bottom: 0.5rem; font-size: 0.875rem;">
+                                        <i class="fas fa-building" style="margin-right: 0.5rem; color: #FFCE36;"></i>Dirección Complementaria
+                                    </label>
+                                    <input type="text" id="direccion2" maxlength="100" placeholder="Ej: Depto 301, Of. 15B" value="\${shippingInfo?.direccion2 || ''}" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem;">
+                                </div>
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <div>
+                                        <label style="display: block; font-weight: 600; color: #374151; margin-bottom: 0.5rem; font-size: 0.875rem;">
+                                            <i class="fas fa-mailbox" style="margin-right: 0.5rem; color: #FFCE36;"></i>Código Postal
+                                        </label>
+                                        <input type="text" id="codigoPostal" maxlength="10" placeholder="Ej: 7500000" value="\${shippingInfo?.codigoPostal || ''}" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem;">
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; font-weight: 600; color: #374151; margin-bottom: 0.5rem; font-size: 0.875rem;">
+                                            <i class="fas fa-mobile-alt" style="margin-right: 0.5rem; color: #FFCE36;"></i>Celular *
+                                        </label>
+                                        <input type="tel" id="celular" required maxlength="15" placeholder="Ej: +56912345678" value="\${shippingInfo?.celular || ''}" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem;">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+                                <button type="button" onclick="closeShippingModal()" style="flex: 1; padding: 0.75rem 1rem; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; color: #6b7280; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                                    Cancelar
+                                </button>
+                                <button type="submit" style="flex: 2; padding: 0.75rem 1rem; background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%); border: 1px solid #F7B500; border-radius: 6px; color: #1a202c; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                                    <i class="fas fa-save" style="margin-right: 0.5rem;"></i>
+                                    Guardar Información
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            \`;
+
+            document.body.appendChild(modal);
+            
+            // Configurar eventos
+            setupShippingModal();
+        }
+
+        // Función para configurar eventos del modal
+        function setupShippingModal() {
+            const regionSelect = document.getElementById('regionSelect');
+            const communeSelect = document.getElementById('communeSelect');
+            const form = document.getElementById('shippingForm');
+            
+            // Manejar cambio de región
+            regionSelect.addEventListener('change', function() {
+                const regionId = this.value;
+                communeSelect.innerHTML = '<option value="">Seleccionar comuna</option>';
+                
+                if (regionId && chileRegions[regionId]) {
+                    communeSelect.disabled = false;
+                    chileRegions[regionId].communes.forEach(commune => {
+                        const option = document.createElement('option');
+                        option.value = commune;
+                        option.textContent = commune;
+                        if (shippingInfo?.comuna === commune) {
+                            option.selected = true;
+                        }
+                        communeSelect.appendChild(option);
+                    });
+                } else {
+                    communeSelect.disabled = true;
+                }
+            });
+            
+            // Si hay datos existentes, cargar comunas
+            if (shippingInfo?.region) {
+                regionSelect.dispatchEvent(new Event('change'));
+            }
+            
+            // Manejar envío del formulario
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveShippingInfo();
+            });
+        }
+
+        // Función para guardar información de envío
+        function saveShippingInfo() {
+            const form = document.getElementById('shippingForm');
+            const formData = new FormData(form);
+            
+            const newShippingInfo = {
+                region: document.getElementById('regionSelect').value,
+                comuna: document.getElementById('communeSelect').value,
+                direccion1: document.getElementById('direccion1').value.trim(),
+                direccion2: document.getElementById('direccion2').value.trim(),
+                codigoPostal: document.getElementById('codigoPostal').value.trim(),
+                celular: document.getElementById('celular').value.trim()
+            };
+            
+            // Validaciones
+            if (!newShippingInfo.region || !newShippingInfo.comuna || !newShippingInfo.direccion1 || !newShippingInfo.celular) {
+                showNotification('Por favor completa todos los campos obligatorios', 'error');
+                return;
+            }
+            
+            // Validar formato de celular
+            if (!/^\\+?[0-9]{8,15}$/.test(newShippingInfo.celular.replace(/\\s/g, ''))) {
+                showNotification('Por favor ingresa un número de celular válido', 'error');
+                return;
+            }
+            
+            // Guardar en localStorage
+            shippingInfo = newShippingInfo;
+            localStorage.setItem('b2bShippingInfo', JSON.stringify(shippingInfo));
+            
+            // Actualizar UI
+            updateShippingPreview();
+            closeShippingModal();
+            
+            showNotification('Información de envío guardada correctamente', 'success');
+        }
+
+        // Función para cerrar el modal
+        function closeShippingModal() {
+            const modal = document.getElementById('shippingModal');
+            if (modal) {
+                modal.remove();
+            }
         }
 
         // Función para renderizar el carrito
@@ -3187,6 +3581,20 @@ function getCartHTML(customer) {
                             <span class="summary-value">\${formatPrice(totalIVAConDescuento)}</span>
                         </div>
                         
+                        <div class="shipping-info-section" style="margin: 1.5rem 0; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div class="shipping-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-weight: 600; color: #374151;"><i class="fas fa-truck" style="margin-right: 0.5rem; color: #FFCE36;"></i>Información de Envío</span>
+                                <span id="shippingStatus" style="font-size: 0.875rem; color: #6b7280;">Sin configurar</span>
+                            </div>
+                            <div id="shippingPreview" style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.75rem;">
+                                Agrega los datos de envío para completar tu pedido
+                            </div>
+                            <button class="shipping-btn" onclick="showShippingModal()" style="width: 100%; padding: 0.75rem; background: #f3f4f6; border: 2px dashed #d1d5db; border-radius: 6px; color: #6b7280; font-weight: 500; cursor: pointer; transition: all 0.2s ease;">
+                                <i class="fas fa-plus" style="margin-right: 0.5rem;"></i>
+                                Agregar Información de Envío
+                            </button>
+                        </div>
+                        
                         <button class="checkout-btn" onclick="proceedToCheckout()">
                             <i class="fas fa-credit-card"></i>
                             Realizar Pedido
@@ -3204,6 +3612,11 @@ function getCartHTML(customer) {
                     </div>
                 </div>
             \`;
+            
+            // Inicializar preview de información de envío
+            setTimeout(() => {
+                updateShippingPreview();
+            }, 100);
         }
 
         // Función para actualizar cantidad con validación de stock
@@ -3290,6 +3703,7 @@ function getCartHTML(customer) {
                 
                 formData.append('cartItems', cartItemsJSON);
                 formData.append('paymentMethod', 'ima_agreement'); // Método especial para usuarios IMA
+                formData.append('shippingInfo', JSON.stringify(shippingInfo)); // Información de envío
                 
                 // Debug FormData contents
                 console.log('🔍 DEBUG: FormData contents:');
@@ -3353,6 +3767,20 @@ function getCartHTML(customer) {
             console.log('🔍 DEBUG: proceedToCheckout called, cart length:', cart.length);
             if (cart.length === 0) {
                 showNotification('Tu carrito está vacío', 'error');
+                return;
+            }
+            
+            // Validar información de envío
+            if (!shippingInfo) {
+                showNotification('Por favor completa la información de envío antes de continuar', 'warning');
+                // Scroll hasta la sección de envío
+                document.querySelector('.shipping-info-section').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+                // Hacer parpadear la sección
+                const shippingSection = document.querySelector('.shipping-info-section');
+                shippingSection.style.animation = 'pulse 0.5s ease-in-out 3';
                 return;
             }
             
@@ -3566,6 +3994,7 @@ function getCartHTML(customer) {
                 
                 formData.append('cartItems', cartItemsJSON);
                 formData.append('paymentMethod', 'ima-directo');
+                formData.append('shippingInfo', JSON.stringify(shippingInfo)); // Información de envío
                 
                 // Agregar orden de compra si existe
                 if (ordenCompraFile) {
@@ -3666,6 +4095,7 @@ function getCartHTML(customer) {
                     sku: item.sku
                 }))));
                 formData.append('paymentMethod', paymentMethod);
+                formData.append('shippingInfo', JSON.stringify(shippingInfo)); // Información de envío
                 
                 if (comprobanteFile) {
                     formData.append('comprobante', comprobanteFile);
