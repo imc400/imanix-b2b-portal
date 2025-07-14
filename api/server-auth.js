@@ -8448,6 +8448,8 @@ function getPortalHTML(products, customer) {
                 font-size: 0.8rem !important;
                 border: none !important;
                 text-align: center !important;
+                position: relative !important;
+                overflow: hidden !important;
             }
 
             .product-card .discounted-price {
@@ -8464,8 +8466,38 @@ function getPortalHTML(products, customer) {
                 color: rgba(255,255,255,0.9) !important;
                 margin: 0 !important;
                 line-height: 1.1 !important;
+                position: relative !important;
+                z-index: 1 !important;
+                display: block !important;
+                width: 100% !important;
+                text-align: center !important;
             }
 
+            /* Ocultar cualquier precio suelto que no esté en el cuadro verde */
+            .product-card .price-breakdown:not(.highlight) {
+                display: none !important;
+            }
+            
+            /* Ocultar elementos de total calculado dinámico */
+            .product-card .item-total,
+            .product-card .item-total-price,
+            .product-card .item-total-breakdown {
+                display: none !important;
+            }
+            
+            /* Evitar que texto calculado se superponga con controles */
+            .product-card .quantity-controls + * {
+                margin-top: 1rem !important;
+                clear: both !important;
+            }
+            
+            /* Separar visualmente los elementos */
+            .product-card .quantity-selector {
+                margin-bottom: 1rem !important;
+                position: relative !important;
+                z-index: 10 !important;
+            }
+            
             /* Controles de cantidad centrados */
             .quantity-controls {
                 display: flex;
@@ -8473,6 +8505,8 @@ function getPortalHTML(products, customer) {
                 justify-content: center;
                 gap: 0.5rem;
                 margin: 0.75rem 0;
+                position: relative;
+                z-index: 10;
             }
 
             .qty-btn {
