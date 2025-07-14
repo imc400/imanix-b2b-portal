@@ -8485,17 +8485,25 @@ function getPortalHTML(products, customer) {
                 display: none !important;
             }
             
-            /* Evitar que texto calculado se superponga con controles */
-            .product-card .quantity-controls + * {
-                margin-top: 1rem !important;
-                clear: both !important;
-            }
-            
-            /* Separar visualmente los elementos */
+            /* FORZAR separación entre controles y cualquier precio dinámico */
             .product-card .quantity-selector {
-                margin-bottom: 1rem !important;
+                margin-bottom: 1.5rem !important;
                 position: relative !important;
                 z-index: 10 !important;
+                padding-bottom: 1rem !important;
+                border-bottom: 1px solid #e5e7eb !important;
+            }
+            
+            /* Cualquier elemento que aparezca después de quantity-selector */
+            .product-card .quantity-selector ~ * {
+                margin-top: 1rem !important;
+                clear: both !important;
+                position: relative !important;
+            }
+            
+            /* Crear espacio adicional para evitar superposición con precio dinámico */
+            .product-card .add-to-cart-btn {
+                margin-top: 2rem !important;
             }
             
             /* Controles de cantidad centrados */
