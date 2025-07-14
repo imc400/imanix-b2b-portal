@@ -8381,18 +8381,13 @@ function getPortalHTML(products, customer) {
 
             .product-card {
                 padding: 1rem;
-                margin: 0;
+                margin: 0 0 1rem 0;
                 border-radius: 12px;
                 background: white;
                 border: 1px solid #e5e7eb;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                display: grid;
-                grid-template-columns: 100px 1fr;
-                grid-template-rows: auto auto auto;
-                gap: 0.75rem;
-                align-items: start;
-                max-height: 180px;
-                overflow: hidden;
+                display: block;
+                position: relative;
             }
 
             .catalog-controls {
@@ -8406,46 +8401,42 @@ function getPortalHTML(products, customer) {
                 gap: 1rem;
             }
 
-            /* Layout compacto de imagen */
+            /* Imagen del producto centrada y compacta */
             .product-image {
-                grid-row: 1 / 4;
-                grid-column: 1;
                 text-align: center;
-                padding: 0.5rem;
+                margin-bottom: 0.75rem;
+                position: relative;
             }
 
             .product-image img {
-                width: 80px;
-                height: 80px;
+                width: 100px;
+                height: 100px;
                 object-fit: contain;
-                border-radius: 6px;
+                border-radius: 8px;
             }
 
-            /* Información principal compacta */
+            /* Título más compacto */
             .product-title {
-                grid-row: 1;
-                grid-column: 2;
                 font-size: 0.95rem;
                 font-weight: 600;
                 line-height: 1.3;
-                margin: 0;
+                margin-bottom: 0.5rem;
                 color: #1a202c;
+                text-align: center;
             }
 
-            .product-price {
-                grid-row: 2;
-                grid-column: 2;
-                margin: 0;
-                padding: 0;
-                background: none;
-                border: none;
+            /* Pricing simplificado */
+            .product-pricing {
+                text-align: center;
+                margin-bottom: 0.75rem;
             }
 
             .discounted-price {
                 font-size: 1.25rem;
                 font-weight: 700;
                 color: #10b981;
-                margin: 0;
+                display: block;
+                margin-bottom: 0.25rem;
             }
 
             .price-breakdown.highlight {
@@ -8454,23 +8445,19 @@ function getPortalHTML(products, customer) {
                 margin: 0;
             }
 
-            /* Controles en la tercera fila */
+            /* Controles de cantidad centrados */
             .quantity-controls {
-                grid-row: 3;
-                grid-column: 2;
                 display: flex;
                 align-items: center;
+                justify-content: center;
                 gap: 0.5rem;
-                margin: 0;
-                padding: 0;
-                background: none;
-                border: none;
+                margin: 0.75rem 0;
             }
 
             .qty-btn {
-                width: 28px;
-                height: 28px;
-                font-size: 0.9rem;
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
                 font-weight: 600;
                 border-radius: 6px;
                 background: #FFCE36;
@@ -8482,9 +8469,9 @@ function getPortalHTML(products, customer) {
             }
 
             .qty-input {
-                width: 45px;
-                height: 28px;
-                font-size: 0.9rem;
+                width: 50px;
+                height: 32px;
+                font-size: 1rem;
                 font-weight: 600;
                 text-align: center;
                 border: 1px solid #d1d5db;
@@ -8494,20 +8481,18 @@ function getPortalHTML(products, customer) {
             }
 
             .add-to-cart-btn {
-                position: absolute;
-                bottom: 1rem;
-                right: 1rem;
-                width: auto;
-                padding: 0.5rem 0.75rem;
-                font-size: 0.85rem;
+                width: 100%;
+                padding: 0.75rem;
+                font-size: 0.9rem;
                 font-weight: 600;
-                min-height: 32px;
+                min-height: 40px;
                 background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
                 border: none;
                 border-radius: 8px;
                 color: #1a202c;
-                box-shadow: 0 1px 3px rgba(255, 206, 54, 0.4);
+                box-shadow: 0 2px 4px rgba(255, 206, 54, 0.3);
                 transition: all 0.2s ease;
+                margin-top: 0.5rem;
             }
 
             .search-box {
@@ -8554,33 +8539,45 @@ function getPortalHTML(products, customer) {
                 padding: 0 !important;
             }
 
-            /* Simplificar elementos adicionales */
+            /* Optimizar elementos para mobile */
             .savings {
                 display: none;
             }
 
             .product-meta {
-                display: none; /* Ocultar completamente para diseño compacto */
+                text-align: center;
+                margin: 0.5rem 0;
+                font-size: 0.8rem;
+                color: #6b7280;
+            }
+
+            .product-meta .sku {
+                background: #f3f4f6;
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
+                display: inline-block;
             }
 
             .stock-info {
-                display: none; /* Ocultar para diseño compacto */
+                text-align: center;
+                font-size: 0.8rem;
+                color: #10b981;
+                margin: 0.25rem 0;
             }
 
             .quantity-selector {
-                display: none; /* Ocultar label redundante */
+                margin: 0.5rem 0;
             }
 
             .quantity-label {
-                display: none; /* Ocultar label redundante */
+                text-align: center;
+                font-size: 0.85rem;
+                font-weight: 500;
+                color: #374151;
+                margin-bottom: 0.5rem;
             }
 
-            /* Posicionar botón de agregar sin absolute */
-            .product-card {
-                position: relative;
-            }
-
-            /* Overlay de descuento compacto */
+            /* Badge de stock/descuento */
             .discount-overlay {
                 position: absolute;
                 top: 0.5rem;
@@ -8593,6 +8590,23 @@ function getPortalHTML(products, customer) {
                 border-radius: 4px;
                 box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
                 z-index: 10;
+            }
+
+            .stock-badge {
+                position: absolute;
+                bottom: 0.5rem;
+                left: 0.5rem;
+                background: #3b82f6;
+                color: white;
+                font-size: 0.7rem;
+                font-weight: 500;
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
+                z-index: 10;
+            }
+
+            .stock-badge.out-of-stock {
+                background: #ef4444;
             }
 
 
