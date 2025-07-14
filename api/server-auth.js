@@ -8437,27 +8437,29 @@ function getPortalHTML(products, customer) {
             }
 
             .discounted-price-block {
-                padding: 0.5rem 0.75rem !important;
-                border-radius: 8px !important;
+                padding: 0.3rem 0.5rem !important;
+                border-radius: 6px !important;
                 background: #10b981 !important;
                 color: white !important;
                 margin-bottom: 0.5rem !important;
                 display: inline-block !important;
                 min-width: auto !important;
+                font-size: 0.8rem !important;
             }
 
             .discounted-price {
-                font-size: 1rem !important;
+                font-size: 0.9rem !important;
                 font-weight: 700 !important;
                 color: white !important;
                 display: block !important;
-                margin-bottom: 0.25rem !important;
+                margin-bottom: 0.15rem !important;
             }
 
             .price-breakdown.highlight {
-                font-size: 0.7rem !important;
+                font-size: 0.6rem !important;
                 color: rgba(255,255,255,0.9) !important;
                 margin: 0 !important;
+                line-height: 1.1 !important;
             }
 
             /* Controles de cantidad centrados */
@@ -8595,16 +8597,17 @@ function getPortalHTML(products, customer) {
             /* Badge de stock/descuento */
             .discount-overlay {
                 position: absolute;
-                top: 0.5rem;
-                right: 0.5rem;
-                background: #10b981;
+                top: 0.25rem;
+                right: 0.25rem;
+                background: #ef4444;
                 color: white;
-                font-size: 0.7rem;
+                font-size: 0.6rem;
                 font-weight: 600;
-                padding: 0.25rem 0.5rem;
-                border-radius: 4px;
-                box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
+                padding: 0.2rem 0.4rem;
+                border-radius: 3px;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.2);
                 z-index: 10;
+                line-height: 1;
             }
 
             .stock-badge {
