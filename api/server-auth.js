@@ -8406,13 +8406,18 @@ function getPortalHTML(products, customer) {
                 text-align: center;
                 margin-bottom: 0.75rem;
                 position: relative;
+                width: auto !important;
+                height: auto !important;
+                overflow: visible !important;
+                border-radius: 0 !important;
             }
 
             .product-image img {
-                width: 100px;
-                height: 100px;
-                object-fit: contain;
-                border-radius: 8px;
+                width: 100px !important;
+                height: 100px !important;
+                object-fit: contain !important;
+                border-radius: 8px !important;
+                transform: none !important;
             }
 
             /* Título más compacto */
