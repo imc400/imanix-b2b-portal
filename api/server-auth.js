@@ -8413,8 +8413,8 @@ function getPortalHTML(products, customer) {
             }
 
             .product-image img {
-                width: 100px !important;
-                height: 100px !important;
+                width: 140px !important;
+                height: 140px !important;
                 object-fit: contain !important;
                 border-radius: 8px !important;
                 transform: none !important;
@@ -8430,24 +8430,34 @@ function getPortalHTML(products, customer) {
                 text-align: center;
             }
 
-            /* Pricing simplificado */
+            /* Pricing más compacto y menos dominante */
             .product-pricing {
                 text-align: center;
                 margin-bottom: 0.75rem;
             }
 
+            .discounted-price-block {
+                padding: 0.5rem 0.75rem !important;
+                border-radius: 8px !important;
+                background: #10b981 !important;
+                color: white !important;
+                margin-bottom: 0.5rem !important;
+                display: inline-block !important;
+                min-width: auto !important;
+            }
+
             .discounted-price {
-                font-size: 1.25rem;
-                font-weight: 700;
-                color: #10b981;
-                display: block;
-                margin-bottom: 0.25rem;
+                font-size: 1rem !important;
+                font-weight: 700 !important;
+                color: white !important;
+                display: block !important;
+                margin-bottom: 0.25rem !important;
             }
 
             .price-breakdown.highlight {
-                font-size: 0.75rem;
-                color: #6b7280;
-                margin: 0;
+                font-size: 0.7rem !important;
+                color: rgba(255,255,255,0.9) !important;
+                margin: 0 !important;
             }
 
             /* Controles de cantidad centrados */
@@ -8598,16 +8608,7 @@ function getPortalHTML(products, customer) {
             }
 
             .stock-badge {
-                position: absolute;
-                bottom: 0.5rem;
-                left: 0.5rem;
-                background: #3b82f6;
-                color: white;
-                font-size: 0.7rem;
-                font-weight: 500;
-                padding: 0.25rem 0.5rem;
-                border-radius: 4px;
-                z-index: 10;
+                display: none; /* Ocultar completamente para mobile */
             }
 
             .stock-badge.out-of-stock {
