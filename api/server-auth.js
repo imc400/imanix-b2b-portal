@@ -8604,13 +8604,13 @@ function getPortalHTML(products, customer) {
                 top: 0.25rem !important;
                 right: 0.25rem !important;
                 left: auto !important;
-                background: #ef4444 !important;
+                background: #10b981 !important;
                 color: white !important;
                 font-size: 0.6rem !important;
                 font-weight: 600 !important;
                 padding: 0.2rem 0.4rem !important;
                 border-radius: 3px !important;
-                box-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+                box-shadow: 0 1px 2px rgba(16, 185, 129, 0.3) !important;
                 z-index: 10 !important;
                 line-height: 1 !important;
                 text-shadow: none !important;
