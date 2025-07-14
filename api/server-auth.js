@@ -8560,9 +8560,28 @@ function getPortalHTML(products, customer) {
                 padding: 0 !important;
             }
 
-            /* Optimizar elementos para mobile */
+            /* Ocultar información de precio redundante en mobile */
             .savings {
                 display: none;
+            }
+            
+            /* Ocultar TODA información de precio excepto el cuadro verde */
+            .product-card .product-pricing > *:not(.price-row) {
+                display: none !important;
+            }
+            
+            .product-card .product-pricing .price-row > *:not(.discounted-price-block) {
+                display: none !important;
+            }
+            
+            /* Asegurar que solo se muestre el cuadro verde compacto */
+            .product-card .product-pricing {
+                text-align: center !important;
+                margin-bottom: 0.75rem !important;
+            }
+            
+            .product-card .price-row {
+                margin: 0 !important;
             }
 
             .product-meta {
