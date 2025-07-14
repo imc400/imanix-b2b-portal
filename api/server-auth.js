@@ -8380,15 +8380,19 @@ function getPortalHTML(products, customer) {
             }
 
             .product-card {
-                padding: 1.5rem !important;
-                margin: 0 !important;
-                border-radius: 16px !important;
-                background: white !important;
-                border: 1px solid #e5e7eb !important;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 1rem !important;
+                padding: 1rem;
+                margin: 0;
+                border-radius: 12px;
+                background: white;
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                display: grid;
+                grid-template-columns: 100px 1fr;
+                grid-template-rows: auto auto auto;
+                gap: 0.75rem;
+                align-items: start;
+                max-height: 180px;
+                overflow: hidden;
             }
 
             .catalog-controls {
@@ -8402,97 +8406,108 @@ function getPortalHTML(products, customer) {
                 gap: 1rem;
             }
 
-            /* Reorganizar layout de cantidad y precio */
-            .quantity-controls {
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                gap: 0.75rem !important;
-                margin: 0.75rem 0 !important;
-                padding: 0.75rem !important;
-                background: #f9fafb !important;
-                border-radius: 12px !important;
-                border: 1px solid #e5e7eb !important;
-            }
-
-            .qty-btn {
-                min-width: 40px !important;
-                min-height: 40px !important;
-                font-size: 1.1rem !important;
-                font-weight: 600 !important;
-                border-radius: 8px !important;
-                background: #FFCE36 !important;
-                border: none !important;
-                color: #1a202c !important;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
-            }
-
-            .qty-input {
-                min-height: 40px !important;
-                font-size: 1.1rem !important;
-                font-weight: 600 !important;
-                text-align: center !important;
-                width: 60px !important;
-                border: 1px solid #d1d5db !important;
-                border-radius: 8px !important;
-                background: white !important;
-            }
-
-            .add-to-cart-btn {
-                width: 100% !important;
-                padding: 1rem !important;
-                font-size: 1rem !important;
-                font-weight: 600 !important;
-                min-height: 48px !important;
-                margin-top: 1rem !important;
-                background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%) !important;
-                border: none !important;
-                border-radius: 12px !important;
-                color: #1a202c !important;
-                box-shadow: 0 2px 6px rgba(255, 206, 54, 0.3) !important;
-                transition: all 0.2s ease !important;
-            }
-
-            /* Mejorar diseño de precios */
-            .product-price {
-                order: -1 !important; /* Mover precio arriba */
-                text-align: center !important;
-                margin: 0 0 1rem 0 !important;
-                padding: 1rem !important;
-                background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
-                border-radius: 12px !important;
-                border: 1px solid #e5e7eb !important;
-            }
-
-            .discounted-price {
-                font-size: 1.5rem !important;
-                font-weight: 700 !important;
-                color: #10b981 !important;
-                display: block !important;
-                margin-bottom: 0.25rem !important;
-            }
-
-            .product-title {
-                font-size: 1.1rem !important;
-                font-weight: 600 !important;
-                line-height: 1.4 !important;
-                margin-bottom: 0.75rem !important;
-                color: #1a202c !important;
-                text-align: center !important;
-            }
-
-            /* Mejorar imagen del producto */
+            /* Layout compacto de imagen */
             .product-image {
-                order: -2 !important; /* Mover imagen arriba del todo */
-                text-align: center !important;
-                margin-bottom: 1rem !important;
+                grid-row: 1 / 4;
+                grid-column: 1;
+                text-align: center;
+                padding: 0.5rem;
             }
 
             .product-image img {
-                max-width: 120px !important;
-                max-height: 120px !important;
-                object-fit: contain !important;
-                border-radius: 8px !important;
+                width: 80px;
+                height: 80px;
+                object-fit: contain;
+                border-radius: 6px;
+            }
+
+            /* Información principal compacta */
+            .product-title {
+                grid-row: 1;
+                grid-column: 2;
+                font-size: 0.95rem;
+                font-weight: 600;
+                line-height: 1.3;
+                margin: 0;
+                color: #1a202c;
+            }
+
+            .product-price {
+                grid-row: 2;
+                grid-column: 2;
+                margin: 0;
+                padding: 0;
+                background: none;
+                border: none;
+            }
+
+            .discounted-price {
+                font-size: 1.25rem;
+                font-weight: 700;
+                color: #10b981;
+                margin: 0;
+            }
+
+            .price-breakdown.highlight {
+                font-size: 0.75rem;
+                color: #6b7280;
+                margin: 0;
+            }
+
+            /* Controles en la tercera fila */
+            .quantity-controls {
+                grid-row: 3;
+                grid-column: 2;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                margin: 0;
+                padding: 0;
+                background: none;
+                border: none;
+            }
+
+            .qty-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 0.9rem;
+                font-weight: 600;
+                border-radius: 6px;
+                background: #FFCE36;
+                border: none;
+                color: #1a202c;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .qty-input {
+                width: 45px;
+                height: 28px;
+                font-size: 0.9rem;
+                font-weight: 600;
+                text-align: center;
+                border: 1px solid #d1d5db;
+                border-radius: 6px;
+                background: white;
+                margin: 0;
+            }
+
+            .add-to-cart-btn {
+                position: absolute;
+                bottom: 1rem;
+                right: 1rem;
+                width: auto;
+                padding: 0.5rem 0.75rem;
+                font-size: 0.85rem;
+                font-weight: 600;
+                min-height: 32px;
+                background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
+                border: none;
+                border-radius: 8px;
+                color: #1a202c;
+                box-shadow: 0 1px 3px rgba(255, 206, 54, 0.4);
+                transition: all 0.2s ease;
             }
 
             .search-box {
@@ -8539,84 +8554,47 @@ function getPortalHTML(products, customer) {
                 padding: 0 !important;
             }
 
-            /* Mejorar información del producto en móvil */
+            /* Simplificar elementos adicionales */
             .savings {
-                display: none !important;
+                display: none;
             }
 
             .product-meta {
-                order: 1 !important;
-                text-align: center !important;
-                margin: 0.75rem 0 !important;
-                padding: 0.75rem !important;
-                background: #f8fafc !important;
-                border-radius: 8px !important;
-                border: 1px solid #e5e7eb !important;
+                display: none; /* Ocultar completamente para diseño compacto */
             }
 
-            .product-meta .stock-count {
-                display: none !important;
-            }
-
-            .product-meta .sku {
-                font-size: 0.85rem !important;
-                font-weight: 500 !important;
-                color: #6b7280 !important;
-                text-align: center !important;
-                display: block !important;
-                margin: 0 !important;
-                background: #ffffff !important;
-                padding: 0.5rem !important;
-                border-radius: 6px !important;
-            }
-
-            /* Mejorar overlay de descuento */
-            .discount-overlay {
-                position: absolute !important;
-                top: 1rem !important;
-                right: 1rem !important;
-                background: #10b981 !important;
-                color: white !important;
-                font-size: 0.8rem !important;
-                font-weight: 600 !important;
-                padding: 0.4rem 0.7rem !important;
-                border-radius: 6px !important;
-                box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3) !important;
-            }
-
-            .price-breakdown.highlight {
-                font-size: 0.85rem !important;
-                margin-top: 0.25rem !important;
-                text-align: center !important;
-                color: #6b7280 !important;
+            .stock-info {
+                display: none; /* Ocultar para diseño compacto */
             }
 
             .quantity-selector {
-                order: 2 !important;
-                margin: 1rem 0 !important;
+                display: none; /* Ocultar label redundante */
             }
 
             .quantity-label {
-                font-size: 0.9rem !important;
-                font-weight: 600 !important;
-                text-align: center !important;
-                display: block !important;
-                margin-bottom: 0.75rem !important;
-                color: #374151 !important;
+                display: none; /* Ocultar label redundante */
             }
 
-            /* Mejorar stock info */
-            .stock-info {
-                font-size: 0.85rem !important;
-                color: #10b981 !important;
-                font-weight: 500 !important;
-                text-align: center !important;
-                margin: 0.5rem 0 !important;
-                padding: 0.4rem 0.7rem !important;
-                background: #ecfdf5 !important;
-                border-radius: 6px !important;
-                border: 1px solid #d1fae5 !important;
+            /* Posicionar botón de agregar sin absolute */
+            .product-card {
+                position: relative;
             }
+
+            /* Overlay de descuento compacto */
+            .discount-overlay {
+                position: absolute;
+                top: 0.5rem;
+                right: 0.5rem;
+                background: #10b981;
+                color: white;
+                font-size: 0.7rem;
+                font-weight: 600;
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
+                box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
+                z-index: 10;
+            }
+
 
             .filters-header {
                 flex-direction: column;
