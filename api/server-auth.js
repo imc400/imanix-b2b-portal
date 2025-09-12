@@ -18,6 +18,18 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Configuración de Parrotfy
+const PARROTFY_CONFIG = {
+  baseUrl: process.env.PARROTFY_API_URL || 'https://braintoys-spa.parrotfy.com/api/v1',
+  token: process.env.PARROTFY_API_TOKEN || '071068a06d09e1fd0f9c3032139c006e0702b78c8a0f0197',
+  warehouseId: process.env.PARROTFY_WAREHOUSE_ID || null
+};
+
+console.log('🦜 Parrotfy configuration:');
+console.log('🔗 Base URL:', PARROTFY_CONFIG.baseUrl);
+console.log('🔑 Token disponible:', !!PARROTFY_CONFIG.token);
+console.log('🏪 Warehouse ID:', PARROTFY_CONFIG.warehouseId || 'No especificado');
+
 // Configuración de Nodemailer para Gmail
 let transporter = null;
 
@@ -193,6 +205,157 @@ const upload = multer({
 // Configuración de Shopify API
 const SHOPIFY_SHOP_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN || 'braintoys-chile.myshopify.com';
 const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ADMIN_API_TOKEN;
+
+// Cache global para stock de Parrotfy (5 minutos de TTL)
+let parrotfyStockCache = {
+  data: [],
+  lastUpdated: 0,
+  ttl: 5 * 60 * 1000 // 5 minutos en milliseconds
+};
+
+// Función para obtener stock completo desde Parrotfy
+async function fetchParrotfyStock(warehouseId = null) {
+  try {
+    console.log('🦜 Obteniendo stock desde Parrotfy...');
+    console.log('🔍 DEBUG URL:', `${PARROTFY_CONFIG.baseUrl}/inventory_movements/stock`);
+    console.log('🔍 DEBUG Token (first 20 chars):', PARROTFY_CONFIG.token.substring(0, 20) + '...');
+    
+    let url = `${PARROTFY_CONFIG.baseUrl}/inventory_movements/stock`;
+    if (warehouseId) {
+      url += `?warehouse_id=${warehouseId}`;
+    }
+    
+    const headers = {
+      'Authorization': `Token ${PARROTFY_CONFIG.token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    };
+    
+    console.log('🔍 DEBUG Headers:', JSON.stringify(headers, null, 2));
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: headers
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Parrotfy API error: ${response.status} - ${response.statusText}`);
+    }
+    
+    const stockData = await response.json();
+    console.log(`🦜 Stock obtenido exitosamente: ${stockData.length} productos`);
+    
+    return stockData;
+  } catch (error) {
+    console.error('❌ Error obteniendo stock de Parrotfy:', error);
+    throw error;
+  }
+}
+
+// Función para obtener stock de Parrotfy con cache
+async function getParrotfyStockWithCache() {
+  const now = Date.now();
+  
+  // Verificar si el cache es válido
+  if (parrotfyStockCache.data.length > 0 && (now - parrotfyStockCache.lastUpdated) < parrotfyStockCache.ttl) {
+    console.log('🦜 Usando stock desde cache');
+    return parrotfyStockCache.data;
+  }
+  
+  try {
+    // Obtener stock fresco
+    const stockData = await fetchParrotfyStock(PARROTFY_CONFIG.warehouseId);
+    
+    // Actualizar cache
+    parrotfyStockCache = {
+      data: stockData,
+      lastUpdated: now,
+      ttl: parrotfyStockCache.ttl
+    };
+    
+    return stockData;
+  } catch (error) {
+    // Si hay error pero tenemos cache, usar cache aunque esté expirado
+    if (parrotfyStockCache.data.length > 0) {
+      console.log('🦜 Error en API, usando cache expirado como fallback');
+      return parrotfyStockCache.data;
+    }
+    throw error;
+  }
+}
+
+// Función para obtener stock de un producto específico por SKU
+async function getStockBySku(sku) {
+  try {
+    if (!sku || sku === 'N/A') {
+      console.log('🦜 SKU no válido:', sku);
+      return { stock: 0, source: 'invalid-sku' };
+    }
+    
+    console.log('🦜 Buscando stock para SKU:', sku);
+    
+    const stockData = await getParrotfyStockWithCache();
+    
+    // Buscar producto por código (SKU)
+    const product = stockData.find(item => item.code === sku);
+    
+    if (product) {
+      const stock = Math.max(0, product.available_stock || 0); // Usar available_stock, mínimo 0
+      console.log(`🦜 Stock encontrado para ${sku}: ${stock} unidades (disponibles: ${product.available_stock}, actual: ${product.current_stock})`);
+      return { 
+        stock: stock, 
+        source: 'parrotfy',
+        details: {
+          current_stock: product.current_stock,
+          reserved_stock: product.reserved_stock,
+          available_stock: product.available_stock
+        }
+      };
+    } else {
+      console.log(`🦜 Producto con SKU ${sku} no encontrado en Parrotfy`);
+      return { stock: 0, source: 'not-found' };
+    }
+  } catch (error) {
+    console.error('❌ Error obteniendo stock de Parrotfy para SKU:', sku, error);
+    return { stock: 0, source: 'error', error: error.message };
+  }
+}
+
+// Función síncrona para obtener stock desde cache (para renderizado)
+function getStockFromCache(sku) {
+  try {
+    if (!sku || sku === 'N/A') {
+      return { stock: 0, source: 'invalid-sku' };
+    }
+    
+    // Si no tenemos cache, retornar 0 para no bloquear el renderizado
+    if (!parrotfyStockCache.data || parrotfyStockCache.data.length === 0) {
+      console.log('🦜 No hay cache de stock disponible para SKU:', sku);
+      return { stock: 0, source: 'no-cache' };
+    }
+    
+    // Buscar producto por código (SKU) en cache
+    const product = parrotfyStockCache.data.find(item => item.code === sku);
+    
+    if (product) {
+      const stock = Math.max(0, product.available_stock || 0);
+      return { 
+        stock: stock, 
+        source: 'parrotfy-cache',
+        details: {
+          current_stock: product.current_stock,
+          reserved_stock: product.reserved_stock,
+          available_stock: product.available_stock
+        }
+      };
+    } else {
+      return { stock: 0, source: 'not-found-cache' };
+    }
+  } catch (error) {
+    console.error('❌ Error obteniendo stock desde cache para SKU:', sku, error);
+    return { stock: 0, source: 'cache-error' };
+  }
+}
 
 // Función para buscar cliente en Shopify por email
 async function findCustomerByEmail(email) {
@@ -2047,6 +2210,18 @@ app.get('/', async (req, res) => {
         // Redirigir a completar perfil
         return res.redirect('/complete-profile');
       }
+    }
+
+    // Precargar stock de Parrotfy en background (no bloquear la carga de la página)
+    try {
+      console.log('🦜 Precargando stock de Parrotfy...');
+      getParrotfyStockWithCache().then(() => {
+        console.log('🦜 Cache de stock inicializado exitosamente');
+      }).catch(error => {
+        console.log('⚠️ Error precargando stock de Parrotfy:', error.message);
+      });
+    } catch (error) {
+      console.log('⚠️ Error iniciando precarga de stock:', error.message);
     }
 
     // Obtener productos desde Shopify directamente
@@ -6974,7 +7149,27 @@ function getPortalHTML(products, customer) {
             const originalPriceIVA = calculateIVA(originalPriceNeto);
             
             const image = product.images?.edges?.[0]?.node?.url || '/placeholder.jpg';
-            const stock = variant?.inventoryQuantity || 0;
+            const sku = variant?.sku;
+            
+            // Obtener stock desde Parrotfy (usando cache) o fallback a Shopify
+            let stock = 0;
+            let stockSource = 'shopify';
+            
+            if (sku && sku !== 'N/A' && sku.trim() !== '') {
+                const parrotfyStock = getStockFromCache(sku);
+                if (parrotfyStock.source !== 'no-cache' && parrotfyStock.source !== 'cache-error') {
+                    stock = parrotfyStock.stock;
+                    stockSource = parrotfyStock.source;
+                } else {
+                    // Fallback a stock de Shopify si no hay cache de Parrotfy
+                    stock = variant?.inventoryQuantity || 0;
+                    stockSource = 'shopify-fallback';
+                }
+            } else {
+                // Sin SKU válido, usar stock de Shopify
+                stock = variant?.inventoryQuantity || 0;
+                stockSource = 'shopify-no-sku';
+            }
 
             // Extraer metacampos
             const metafields = {};
@@ -6992,7 +7187,7 @@ function getPortalHTML(products, customer) {
                 });
             }
 
-            console.log('🎯 Generando botón para:', product.title, 'con SKU:', variant?.sku);
+            console.log('🎯 Generando botón para:', product.title, 'con SKU:', sku, 'Stock:', stock, 'Fuente:', stockSource);
             return `
                 <div class="product-card" 
                      data-tags="${product.tags || ''}" 
@@ -11251,7 +11446,7 @@ app.get('/api/orders/:id', requireAuthAPI, async (req, res) => {
   }
 });
 
-// API - Verificar stock de un producto
+// API - Verificar stock de un producto (ahora usando Parrotfy)
 app.get('/api/product/:productId/stock', requireAuthAPI, async (req, res) => {
   try {
     let productId = decodeURIComponent(req.params.productId);
@@ -11263,7 +11458,7 @@ app.get('/api/product/:productId/stock', requireAuthAPI, async (req, res) => {
       console.log('🔍 ID extraído del GID:', productId);
     }
     
-    // Obtener información del producto desde Shopify
+    // Obtener información del producto desde Shopify para obtener el SKU
     const response = await fetch(`https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2024-01/products/${productId}.json`, {
       headers: {
         'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
@@ -11276,25 +11471,50 @@ app.get('/api/product/:productId/stock', requireAuthAPI, async (req, res) => {
       return res.status(404).json({ 
         success: false, 
         message: 'Producto no encontrado',
-        stock: 0
+        stock: 0,
+        source: 'shopify-error'
       });
     }
 
     const data = await response.json();
     const product = data.product;
+    const sku = product.variants && product.variants.length > 0 
+      ? product.variants[0].sku 
+      : null;
     
-    // Obtener stock del primer variant (asumiendo que hay solo uno por producto)
-    const stock = product.variants && product.variants.length > 0 
-      ? product.variants[0].inventory_quantity || 0 
-      : 0;
+    console.log('🔍 SKU obtenido de Shopify:', sku);
     
-    console.log('📦 Stock disponible para producto ' + productId + ':', stock);
+    // Intentar obtener stock desde Parrotfy usando el SKU
+    let stockResult = { stock: 0, source: 'unknown' };
+    
+    if (sku && sku !== 'N/A' && sku.trim() !== '') {
+      try {
+        stockResult = await getStockBySku(sku);
+        console.log('🦜 Resultado de stock de Parrotfy:', stockResult);
+      } catch (parrotfyError) {
+        console.error('⚠️ Error consultando Parrotfy, usando fallback a Shopify:', parrotfyError.message);
+        // Fallback a stock de Shopify
+        const shopifyStock = product.variants[0].inventory_quantity || 0;
+        stockResult = { stock: shopifyStock, source: 'shopify-fallback', error: parrotfyError.message };
+      }
+    } else {
+      console.log('⚠️ SKU no válido, usando stock de Shopify como fallback');
+      const shopifyStock = product.variants && product.variants.length > 0 
+        ? product.variants[0].inventory_quantity || 0 
+        : 0;
+      stockResult = { stock: shopifyStock, source: 'shopify-no-sku' };
+    }
+    
+    console.log(`📦 Stock final para producto ${productId} (SKU: ${sku}):`, stockResult.stock, `(fuente: ${stockResult.source})`);
     
     res.json({ 
       success: true, 
       productId: productId,
-      stock: stock,
-      title: product.title
+      sku: sku,
+      stock: stockResult.stock,
+      source: stockResult.source,
+      title: product.title,
+      details: stockResult.details || null
     });
     
   } catch (error) {
@@ -11302,7 +11522,99 @@ app.get('/api/product/:productId/stock', requireAuthAPI, async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Error verificando stock disponible',
-      stock: 0
+      stock: 0,
+      source: 'error'
+    });
+  }
+});
+
+// Endpoints de administración de Parrotfy
+app.get('/admin/parrotfy/refresh-cache', async (req, res) => {
+  try {
+    console.log('🔄 Refrescando cache de stock de Parrotfy...');
+    
+    // Forzar actualización del cache
+    parrotfyStockCache.lastUpdated = 0; // Invalidar cache
+    const stockData = await getParrotfyStockWithCache();
+    
+    res.json({
+      success: true,
+      message: 'Cache de stock actualizado exitosamente',
+      timestamp: new Date().toISOString(),
+      products_count: stockData.length,
+      cache_ttl_minutes: parrotfyStockCache.ttl / (60 * 1000)
+    });
+  } catch (error) {
+    console.error('❌ Error refrescando cache de Parrotfy:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error actualizando cache de stock',
+      error: error.message
+    });
+  }
+});
+
+app.get('/admin/parrotfy/cache-status', async (req, res) => {
+  try {
+    const cacheAge = Date.now() - parrotfyStockCache.lastUpdated;
+    const cacheAgeMinutes = Math.floor(cacheAge / (60 * 1000));
+    const isExpired = cacheAge > parrotfyStockCache.ttl;
+    
+    res.json({
+      success: true,
+      cache: {
+        products_count: parrotfyStockCache.data.length,
+        last_updated: new Date(parrotfyStockCache.lastUpdated).toISOString(),
+        cache_age_minutes: cacheAgeMinutes,
+        ttl_minutes: parrotfyStockCache.ttl / (60 * 1000),
+        is_expired: isExpired,
+        is_empty: parrotfyStockCache.data.length === 0
+      },
+      config: {
+        base_url: PARROTFY_CONFIG.baseUrl,
+        warehouse_id: PARROTFY_CONFIG.warehouseId || 'No especificado',
+        token_configured: !!PARROTFY_CONFIG.token
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error obteniendo estado del cache:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error obteniendo estado del cache',
+      error: error.message
+    });
+  }
+});
+
+app.get('/admin/parrotfy/test-connection', async (req, res) => {
+  try {
+    console.log('🧪 Probando conexión con Parrotfy...');
+    
+    const stockData = await fetchParrotfyStock(PARROTFY_CONFIG.warehouseId);
+    
+    res.json({
+      success: true,
+      message: 'Conexión con Parrotfy exitosa',
+      timestamp: new Date().toISOString(),
+      products_count: stockData.length,
+      sample_products: stockData.slice(0, 3).map(p => ({
+        code: p.code,
+        name: p.name,
+        available_stock: p.available_stock,
+        current_stock: p.current_stock
+      }))
+    });
+  } catch (error) {
+    console.error('❌ Error probando conexión con Parrotfy:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error conectando con Parrotfy',
+      error: error.message,
+      config: {
+        base_url: PARROTFY_CONFIG.baseUrl,
+        token_configured: !!PARROTFY_CONFIG.token,
+        warehouse_id: PARROTFY_CONFIG.warehouseId || 'No especificado'
+      }
     });
   }
 });
@@ -12668,6 +12980,15 @@ function getBasicPortalHTML(customer) {
   `;
 }
 
+
+// Para desarrollo local: iniciar servidor si no estamos en Vercel
+if (!process.env.VERCEL) {
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => {
+    console.log(`🚀 Servidor iniciado en http://localhost:${port}`);
+    console.log(`🔧 Admin Parrotfy: http://localhost:${port}/admin/parrotfy/test-connection`);
+  });
+}
 
 // Export handler for Vercel serverless
 module.exports = app;
