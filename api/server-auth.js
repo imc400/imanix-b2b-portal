@@ -2128,6 +2128,42 @@ app.get('/complete-profile', (req, res) => {
   }
 });
 
+// Ruta de producto individual
+app.get('/product/:productId', async (req, res) => {
+  try {
+    console.log('📱 ACCEDIENDO A PÁGINA DE PRODUCTO INDIVIDUAL');
+    const productId = decodeURIComponent(req.params.productId);
+    console.log('🔍 ID del producto:', productId);
+
+    // Verificar autenticación
+    if (!req.session.customer) {
+      console.log('❌ Usuario no autenticado, redirigiendo a login');
+      return res.redirect('/');
+    }
+
+    // Verificar perfil completo
+    const profileCompleted = await database.checkProfileCompletion(req.session.customer.email);
+    if (!profileCompleted) {
+      console.log('⚠️ Perfil incompleto, redirigiendo a completar perfil');
+      return res.redirect('/complete-profile');
+    }
+
+    // Obtener producto individual desde Shopify
+    const product = await fetchSingleProductFromShopify(productId);
+    if (!product) {
+      console.log('❌ Producto no encontrado');
+      return res.status(404).send('Producto no encontrado');
+    }
+
+    console.log('✅ Producto obtenido:', product.title);
+    res.send(getProductDetailHTML(product, req.session.customer));
+
+  } catch (error) {
+    console.error('❌ Error en ruta de producto individual:', error);
+    res.status(500).send('Error interno del servidor');
+  }
+});
+
 // Ruta del carrito
 app.get('/carrito', async (req, res) => {
   try {
@@ -6895,6 +6931,714 @@ function getCompleteProfileHTML(customer) {
 </html>`;
 }
 
+// Función para obtener un producto individual desde Shopify
+async function fetchSingleProductFromShopify(productId) {
+  try {
+    console.log('🔍 Buscando producto individual:', productId);
+
+    // Primero intentar desde archivo local
+    try {
+      const data = await fs.readFile('b2b-products.json', 'utf8');
+      const products = JSON.parse(data);
+      const product = products.find(p => p.id === productId);
+      if (product) {
+        console.log('✅ Producto encontrado en archivo local');
+        return product;
+      }
+    } catch (fileError) {
+      console.log('⚠️ No se pudo cargar archivo local');
+    }
+
+    // Fallback: consulta directa a Shopify API
+    console.log('🔄 Consultando producto directamente desde Shopify API...');
+
+    // Limpiar productId para GraphQL
+    const cleanProductId = productId.startsWith('gid://shopify/Product/')
+      ? productId
+      : `gid://shopify/Product/${productId}`;
+
+    const graphqlQuery = `
+      query getProduct($id: ID!) {
+        product(id: $id) {
+          id
+          title
+          description
+          descriptionHtml
+          handle
+          tags
+          productType
+          vendor
+          createdAt
+          updatedAt
+          status
+          images(first: 10) {
+            edges {
+              node {
+                id
+                url
+                altText
+                width
+                height
+              }
+            }
+          }
+          variants(first: 100) {
+            edges {
+              node {
+                id
+                title
+                sku
+                price
+                inventoryQuantity
+                image {
+                  id
+                  url
+                  altText
+                }
+                selectedOptions {
+                  name
+                  value
+                }
+              }
+            }
+          }
+          metafields(first: 20) {
+            edges {
+              node {
+                namespace
+                key
+                value
+                type
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    const response = await fetch(`https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2024-01/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: graphqlQuery,
+        variables: { id: cleanProductId }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error Shopify API: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.errors) {
+      console.error('❌ Errores GraphQL:', result.errors);
+      return null;
+    }
+
+    const product = result.data.product;
+    if (!product) {
+      console.log('❌ Producto no encontrado en Shopify');
+      return null;
+    }
+
+    console.log('✅ Producto obtenido desde Shopify API:', product.title);
+    return product;
+
+  } catch (error) {
+    console.error('❌ Error obteniendo producto individual:', error);
+    return null;
+  }
+}
+
+// Función para generar HTML de la página de producto individual
+function getProductDetailHTML(product, customer) {
+  const customerDiscount = customer?.discount || 0;
+
+  // Extraer información del producto
+  const variant = product.variants?.edges?.[0]?.node;
+  const originalPrice = parseFloat(variant?.price || 0);
+  const discountedPrice = originalPrice * (1 - customerDiscount / 100);
+  const savings = originalPrice - discountedPrice;
+  const discount = customerDiscount;
+
+  // Precios con IVA
+  const discountedPriceNeto = discountedPrice / 1.19;
+  const discountedPriceIVA = discountedPrice - discountedPriceNeto;
+
+  // Stock
+  const stock = variant?.inventoryQuantity || 0;
+
+  // Imágenes
+  const images = product.images?.edges?.map(edge => edge.node) || [];
+  const mainImage = images[0]?.url || '/placeholder.jpg';
+
+  // SKU
+  const sku = variant?.sku || 'N/A';
+
+  function formatPrice(price) {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0
+    }).format(price);
+  }
+
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${product.title} - Portal B2B IMANIX</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        var cart = JSON.parse(localStorage.getItem('b2bCart')) || [];
+
+        window.showNotification = function(message, type) {
+            var notification = document.createElement('div');
+            var bgColor = type === 'success' ? '#10b981' : '#ef4444';
+            notification.style.cssText =
+                'position: fixed;' +
+                'top: 20px;' +
+                'right: 20px;' +
+                'background: ' + bgColor + ';' +
+                'color: white;' +
+                'padding: 1rem 1.5rem;' +
+                'border-radius: 12px;' +
+                'box-shadow: 0 10px 30px rgba(0,0,0,0.2);' +
+                'z-index: 10000;' +
+                'font-weight: 600;' +
+                'transform: translateX(400px);' +
+                'transition: transform 0.3s ease;';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(function() { notification.style.transform = 'translateX(0)'; }, 100);
+            setTimeout(function() {
+                notification.style.transform = 'translateX(400px)';
+                setTimeout(function() { document.body.removeChild(notification); }, 300);
+            }, 3000);
+        };
+
+        window.updateCartBadge = function() {
+            var badge = document.getElementById('cartBadge');
+            var totalItems = cart.reduce(function(sum, item) { return sum + item.quantity; }, 0);
+            if (badge) {
+                badge.textContent = totalItems;
+                badge.style.display = totalItems > 0 ? 'inline' : 'none';
+            }
+        };
+
+        window.addToCart = function() {
+            var qtyInput = document.getElementById('quantity');
+            var quantity = parseInt(qtyInput.value) || 1;
+            var maxStock = ${stock};
+
+            if (quantity > maxStock) {
+                window.showNotification('Solo hay ' + maxStock + ' unidades disponibles', 'error');
+                return;
+            }
+
+            var existingItem = cart.find(function(item) {
+                return item.productId === '${product.id}';
+            });
+
+            if (existingItem) {
+                var newTotal = existingItem.quantity + quantity;
+                if (newTotal > maxStock) {
+                    window.showNotification('Ya tienes ' + existingItem.quantity + ' unidades. Solo puedes agregar ' + (maxStock - existingItem.quantity) + ' más', 'error');
+                    return;
+                }
+                existingItem.quantity = newTotal;
+            } else {
+                cart.push({
+                    productId: '${product.id}',
+                    variantId: '${variant?.id || ''}',
+                    title: '${product.title.replace(/'/g, "\\'")}',
+                    price: ${discountedPrice},
+                    image: '${mainImage}',
+                    quantity: quantity,
+                    sku: '${sku}'
+                });
+            }
+
+            localStorage.setItem('b2bCart', JSON.stringify(cart));
+            window.updateCartBadge();
+
+            var message = quantity === 1 ?
+                'Producto agregado al carrito' :
+                quantity + ' unidades agregadas al carrito';
+            window.showNotification(message, 'success');
+        };
+
+        window.changeQuantity = function(delta) {
+            var input = document.getElementById('quantity');
+            var current = parseInt(input.value) || 1;
+            var newValue = current + delta;
+            var maxStock = ${stock};
+
+            if (newValue >= 1 && newValue <= maxStock) {
+                input.value = newValue;
+            } else if (newValue > maxStock) {
+                window.showNotification('Solo hay ' + maxStock + ' unidades disponibles', 'error');
+            }
+        };
+
+        window.changeImage = function(imageUrl) {
+            document.getElementById('mainImage').src = imageUrl;
+        };
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #f8fafc;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #FFCE36;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #1f2937;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: #374151;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background: rgba(0,0,0,0.1);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 20px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6b7280;
+            text-decoration: none;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            color: #374151;
+        }
+
+        .product-detail {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .product-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            padding: 2rem;
+        }
+
+        .image-gallery {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .main-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 3px solid #f1f5f9;
+        }
+
+        .image-thumbnails {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .thumbnail:hover {
+            border-color: #FFCE36;
+            transform: scale(1.05);
+        }
+
+        .product-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .product-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+            line-height: 1.3;
+        }
+
+        .product-meta {
+            display: flex;
+            gap: 1rem;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .discount-badge {
+            background: #10b981;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .pricing {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 2px solid #e2e8f0;
+        }
+
+        .current-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #10b981;
+            margin-bottom: 0.5rem;
+        }
+
+        .price-breakdown {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .original-price {
+            color: #9ca3af;
+            text-decoration: line-through;
+            margin-right: 0.5rem;
+        }
+
+        .savings {
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .stock-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: ${stock > 0 ? '#059669' : '#dc2626'};
+            font-weight: 600;
+        }
+
+        .quantity-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .qty-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .qty-btn:hover {
+            border-color: #FFCE36;
+            background: #FFCE36;
+            color: white;
+        }
+
+        .qty-input {
+            width: 80px;
+            height: 40px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .add-to-cart {
+            background: #FFCE36;
+            color: #1f2937;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .add-to-cart:hover {
+            background: #fbbf24;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(251, 191, 36, 0.3);
+        }
+
+        .add-to-cart:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .description {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .description h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+
+        .description-content {
+            color: #4b5563;
+            line-height: 1.7;
+        }
+
+        .description-content p {
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .product-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                padding: 1.5rem;
+            }
+
+            .product-title {
+                font-size: 1.5rem;
+            }
+
+            .current-price {
+                font-size: 2rem;
+            }
+
+            .main-image {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-store"></i>
+                Portal B2B IMANIX
+            </div>
+            <nav class="nav-actions">
+                <a href="/portal" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+                <a href="/carrito" class="nav-link">
+                    <i class="fas fa-shopping-cart"></i>
+                    Carrito
+                    <span id="cartBadge" class="cart-badge" style="display: none;">0</span>
+                </a>
+                <a href="/perfil" class="nav-link">
+                    <i class="fas fa-user"></i>
+                    ${customer?.firstName || 'Usuario'}
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <a href="/portal" class="back-link">
+            <i class="fas fa-arrow-left"></i>
+            Volver al catálogo
+        </a>
+
+        <div class="product-detail">
+            <div class="product-content">
+                <div class="image-gallery">
+                    <img id="mainImage" src="${mainImage}" alt="${product.title}" class="main-image">
+                    ${images.length > 1 ? `
+                    <div class="image-thumbnails">
+                        ${images.map(img => `
+                            <img src="${img.url}" alt="${img.altText || product.title}"
+                                 class="thumbnail" onclick="changeImage('${img.url}')">
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                </div>
+
+                <div class="product-info">
+                    ${discount > 0 ? `<div class="discount-badge">${discount}% OFF</div>` : ''}
+
+                    <h1 class="product-title">${product.title}</h1>
+
+                    <div class="product-meta">
+                        <span><i class="fas fa-tag"></i> SKU: ${sku}</span>
+                        <span><i class="fas fa-boxes"></i> Stock: ${stock} unidades</span>
+                    </div>
+
+                    <div class="stock-info">
+                        <i class="fas fa-${stock > 0 ? 'check-circle' : 'times-circle'}"></i>
+                        ${stock > 0 ? `${stock} unidades disponibles` : 'Sin stock'}
+                    </div>
+
+                    <div class="pricing">
+                        <div class="current-price">${formatPrice(discountedPrice)}</div>
+                        <div class="price-breakdown">
+                            Neto: ${formatPrice(discountedPriceNeto)} + IVA: ${formatPrice(discountedPriceIVA)}
+                        </div>
+                        ${savings > 0 ? `
+                        <div>
+                            <span class="original-price">${formatPrice(originalPrice)}</span>
+                            <span class="savings">Ahorras ${formatPrice(savings)}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    ${stock > 0 ? `
+                    <div class="quantity-section">
+                        <label><strong>Cantidad:</strong></label>
+                        <div class="quantity-controls">
+                            <button class="qty-btn" onclick="changeQuantity(-1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" id="quantity" class="qty-input" value="1" min="1" max="${stock}">
+                            <button class="qty-btn" onclick="changeQuantity(1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <small style="color: #6b7280;">Máximo ${stock} unidades disponibles</small>
+                    </div>
+
+                    <button class="add-to-cart" onclick="addToCart()">
+                        <i class="fas fa-cart-plus"></i>
+                        Agregar al Carrito
+                    </button>
+                    ` : `
+                    <button class="add-to-cart" disabled>
+                        <i class="fas fa-times"></i>
+                        Sin Stock
+                    </button>
+                    `}
+                </div>
+            </div>
+        </div>
+
+        ${product.description ? `
+        <div class="description">
+            <h3><i class="fas fa-info-circle"></i> Descripción del Producto</h3>
+            <div class="description-content">
+                ${product.descriptionHtml || product.description.replace(/\\n/g, '<br>')}
+            </div>
+        </div>
+        ` : ''}
+    </div>
+
+    <script>
+        // Inicializar badge del carrito
+        document.addEventListener('DOMContentLoaded', function() {
+            window.updateCartBadge();
+        });
+    </script>
+</body>
+</html>`;
+}
+
 // Función para generar HTML del portal
 function getPortalHTML(products, customer) {
     const customerDiscount = customer?.discount || 0;
@@ -7002,20 +7746,20 @@ function getPortalHTML(products, customer) {
 
             console.log('🎯 Generando botón para:', product.title, 'con SKU:', sku, 'Stock:', stock, 'Fuente:', stockSource);
             return `
-                <div class="product-card" 
-                     data-tags="${product.tags || ''}" 
-                     data-price="${discountedPrice}" 
+                <div class="product-card"
+                     data-tags="${product.tags || ''}"
+                     data-price="${discountedPrice}"
                      data-stock="${stock}"
                      data-filter-b2b="${filterB2B}"
                      data-title="${product.title.toLowerCase()}"
                      data-metafields='${JSON.stringify(metafields).replace(/'/g, "&#39;")}'>
-                    <div class="product-image">
+                    <div class="product-image" onclick="window.location.href='/product/${encodeURIComponent(product.id)}'" style="cursor: pointer;">
                         <img src="${image}" alt="${product.title}" loading="lazy">
                         <div class="discount-overlay">${discount}% OFF</div>
                         ${stock > 0 ? `<div class="stock-badge">${stock} disponibles</div>` : '<div class="stock-badge out-of-stock">Sin stock</div>'}
                     </div>
                     <div class="product-info">
-                        <h3 class="product-title">${product.title}</h3>
+                        <h3 class="product-title" onclick="window.location.href='/product/${encodeURIComponent(product.id)}'" style="cursor: pointer;">${product.title}</h3>
                         <div class="product-pricing">
                             <div class="price-row">
                                 <div class="discounted-price-block">
