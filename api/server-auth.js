@@ -7126,13 +7126,43 @@ function getProductDetailHTML(product, customer) {
         };
 
         window.updateCartBadge = function() {
-            var badge = document.getElementById('cartBadge');
+            var badge = document.getElementById('cartNavbarBadge');
             var totalItems = cart.reduce(function(sum, item) { return sum + item.quantity; }, 0);
             if (badge) {
                 badge.textContent = totalItems;
                 badge.style.display = totalItems > 0 ? 'inline' : 'none';
             }
         };
+
+        window.toggleUserDropdown = function() {
+            var dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        };
+
+        window.logout = function() {
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                fetch('/api/auth/logout', { method: 'POST' })
+                    .then(() => {
+                        localStorage.removeItem('b2bCart');
+                        window.location.href = '/';
+                    })
+                    .catch(() => {
+                        window.location.href = '/';
+                    });
+            }
+        };
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            var dropdown = document.getElementById('userDropdown');
+            var userAccount = document.querySelector('.user-account');
+
+            if (dropdown && userAccount && !userAccount.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
 
         window.addToCart = function() {
             var qtyInput = document.getElementById('quantity');
@@ -7207,60 +7237,177 @@ function getProductDetailHTML(product, customer) {
             line-height: 1.6;
         }
 
-        .header {
-            background: #FFCE36;
+        /* NAVBAR PRINCIPAL - COPIADO DEL PORTAL */
+        .navbar {
+            background: #FFFFFF !important;
+            border-bottom: 3px solid #FFCE36 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
             padding: 1rem 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
-        .header-content {
+        .navbar-content {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 20px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #1f2937;
-        }
-
-        .nav-actions {
+        .navbar-brand {
             display: flex;
             align-items: center;
             gap: 1rem;
+            text-decoration: none;
+            color: #1A202C;
+            font-weight: 800;
+            font-size: 1.25rem;
         }
 
-        .nav-link {
-            text-decoration: none;
-            color: #374151;
-            font-weight: 600;
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-account {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             padding: 0.5rem 1rem;
             border-radius: 8px;
-            transition: all 0.3s;
+            cursor: pointer;
+            transition: all 0.3s ease;
             position: relative;
+            background: rgba(255, 206, 54, 0.1);
+            border: 1px solid rgba(255, 206, 54, 0.3);
+            color: #1A202C;
+            font-weight: 600;
         }
 
-        .nav-link:hover {
-            background: rgba(0,0,0,0.1);
+        .user-account:hover {
+            background: rgba(255, 206, 54, 0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 206, 54, 0.2);
         }
 
-        .cart-badge {
+        .user-dropdown {
             position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #ef4444;
+            top: calc(100% + 0.5rem);
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e5e7eb;
+            min-width: 250px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .user-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-header {
+            padding: 1rem;
+            border-bottom: 1px solid #f3f4f6;
+            background: linear-gradient(135deg, #FFCE36 0%, #FFC107 100%);
+            color: #1A202C;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .user-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .user-email {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-top: 0.25rem;
+        }
+
+        .dropdown-menu {
+            padding: 0.5rem;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #374151;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 206, 54, 0.1);
+            color: #1A202C;
+            transform: translateX(4px);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: #f3f4f6;
+            margin: 0.5rem 0;
+        }
+
+        .cart-navbar-btn {
+            background: linear-gradient(135deg, #FFCE36 0%, #F7B500 100%);
+            color: #1A202C;
+            border: 1px solid #E6B800;
+            padding: 0.75rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .cart-navbar-btn:hover {
+            background: linear-gradient(135deg, #E6B800 0%, #D4A500 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(255, 206, 54, 0.3);
+        }
+
+        .cart-navbar-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #EF4444;
             color: white;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 0.75rem;
+            min-width: 22px;
+            height: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 2px solid white;
         }
 
         .container {
@@ -7518,29 +7665,43 @@ function getProductDetailHTML(product, customer) {
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-content">
-            <div class="logo">
-                <i class="fas fa-store"></i>
-                Portal B2B IMANIX
-            </div>
-            <nav class="nav-actions">
-                <a href="/portal" class="nav-link">
-                    <i class="fas fa-home"></i>
-                    Inicio
-                </a>
-                <a href="/carrito" class="nav-link">
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="/portal" class="navbar-brand" style="text-decoration: none;">
+                <img src="/images/Logo%202160x1200%20(1).png" alt="IMANIX Portal B2B" style="height: 70px; width: auto;" />
+            </a>
+            <div class="navbar-actions">
+                <div class="user-account" onclick="toggleUserDropdown()">
+                    <i class="fas fa-user-circle"></i>
+                    <span>${customer?.firstName || 'Usuario'} ${customer?.lastName || ''}</span>
+                    <i class="fas fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.25rem;"></i>
+
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-header">
+                            <div class="user-name">${customer?.firstName || 'Usuario'} ${customer?.lastName || ''}</div>
+                            <div class="user-email">${customer?.email || 'no-email@example.com'}</div>
+                        </div>
+
+                        <div class="dropdown-menu">
+                            <a href="/perfil" class="dropdown-item">
+                                <i class="fas fa-user-edit"></i>
+                                Mi Perfil
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <button onclick="logout()" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Cerrar Sesión
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <a href="/carrito" class="cart-navbar-btn">
                     <i class="fas fa-shopping-cart"></i>
-                    Carrito
-                    <span id="cartBadge" class="cart-badge" style="display: none;">0</span>
+                    <span class="cart-navbar-badge" id="cartNavbarBadge">0</span>
                 </a>
-                <a href="/perfil" class="nav-link">
-                    <i class="fas fa-user"></i>
-                    ${customer?.firstName || 'Usuario'}
-                </a>
-            </nav>
+            </div>
         </div>
-    </header>
+    </nav>
 
     <div class="container">
         <a href="/portal" class="back-link">
