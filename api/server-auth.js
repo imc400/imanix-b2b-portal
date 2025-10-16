@@ -8787,13 +8787,6 @@ function getPortalHTML(products, customer) {
             margin-bottom: 1.5rem;
         }
 
-        .filters-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
         .search-box {
             padding: 0.75rem 1rem;
             border: 1px solid #e5e7eb;
@@ -8847,30 +8840,41 @@ function getPortalHTML(products, customer) {
         }
 
         .clear-filters-btn {
-            padding: 0.5rem 1rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px;
-            background: white;
-            color: #6b7280;
-            font-weight: 500;
+            padding: 0.625rem 1.25rem;
+            border: 1px solid #fca5a5;
+            border-radius: 8px;
+            background: #fef2f2;
+            color: #dc2626;
+            font-weight: 600;
             font-size: 0.875rem;
             cursor: pointer;
             transition: all 0.2s ease;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 0.375rem;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
         }
 
         .clear-filters-btn:hover {
             border-color: #ef4444;
-            background: #fef2f2;
-            color: #ef4444;
+            background: #fee2e2;
+            color: #b91c1c;
             transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .clear-filters-btn:active {
+            transform: translateY(0);
         }
 
         .clear-filters-btn i {
-            font-size: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .clear-filters-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
         }
 
         .filter-results {
@@ -8885,9 +8889,12 @@ function getPortalHTML(products, customer) {
         }
 
         .filters-section {
-            margin: 1.5rem 0;
-            padding: 0;
-            background: transparent;
+            margin: 1.25rem 0;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f3f4f6;
         }
 
         .filters-title {
@@ -9630,12 +9637,6 @@ function getPortalHTML(products, customer) {
             }
 
 
-            .filters-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.75rem;
-            }
-
             .filter-chips-container {
                 gap: 0.375rem;
             }
@@ -9646,8 +9647,18 @@ function getPortalHTML(products, customer) {
             }
 
             .clear-filters-btn {
-                padding: 0.375rem 0.75rem;
+                padding: 0.5rem 1rem;
                 font-size: 0.8rem;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .filters-section {
+                padding: 1.25rem;
+            }
+
+            .filters-title {
+                font-size: 0.95rem;
             }
 
             .catalog-header {
@@ -9916,33 +9927,30 @@ function getPortalHTML(products, customer) {
                 </h2>
                 <div class="catalog-controls">
                     <div class="controls-top">
-                        <input type="text" class="search-box" placeholder="Buscar productos..." 
+                        <input type="text" class="search-box" placeholder="Buscar productos..."
                                id="searchInput" onkeyup="filterProducts()">
                     </div>
-                    
+
+                    <button class="clear-filters-btn" onclick="clearAllFilters()">
+                        <i class="fas fa-times-circle"></i>
+                        Limpiar todos los filtros
+                    </button>
+
                     <div class="filters-section">
-                        <div class="filters-header">
-                            <h3 class="filters-title">
-                                <i class="fas fa-filter"></i>
-                                Filtrar por categoría
-                            </h3>
-                            <button class="clear-filters-btn" onclick="clearAllFilters()">
-                                <i class="fas fa-times"></i>
-                                Limpiar filtros
-                            </button>
-                        </div>
+                        <h3 class="filters-title">
+                            <i class="fas fa-filter"></i>
+                            Filtrar por categoría
+                        </h3>
                         <div class="filter-chips-container">
                             ${renderFilterChips(extractUniqueFilters(products))}
                         </div>
                     </div>
-                    
+
                     <div class="filters-section">
-                        <div class="filters-header">
-                            <h3 class="filters-title">
-                                <i class="fas fa-boxes"></i>
-                                Filtrar por disponibilidad
-                            </h3>
-                        </div>
+                        <h3 class="filters-title">
+                            <i class="fas fa-boxes"></i>
+                            Filtrar por disponibilidad
+                        </h3>
                         <div class="filter-chips-container">
                             ${renderStockFilterChips()}
                         </div>
