@@ -5524,12 +5524,13 @@ function getLoginHTML() {
                 return;
             }
 
-            // Validación básica de email con debugging mejorado
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            // Validación básica de email - regex explícito sin escapado de backslash
+            const emailRegex = /^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/;
             console.log('🔍 DEBUG VALIDACIÓN:');
             console.log('  - Email:', email);
             console.log('  - Email length:', email.length);
             console.log('  - Email charCodes:', Array.from(email).map(c => c.charCodeAt(0)).join(','));
+            console.log('  - Regex:', emailRegex);
             console.log('  - Regex test:', emailRegex.test(email));
 
             if (!emailRegex.test(email)) {
