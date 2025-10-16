@@ -7653,6 +7653,27 @@ function getProductDetailHTML(product, customer) {
             margin-bottom: 1rem;
         }
 
+        /* Fix para imágenes en descripciones - responsive */
+        .description-content img {
+            max-width: 100% !important;
+            height: auto !important;
+            display: block;
+            margin: 1rem auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .description-content table {
+            max-width: 100% !important;
+            overflow-x: auto;
+            display: block;
+        }
+
+        .description-content table img {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+
         @media (max-width: 768px) {
             .product-content {
                 grid-template-columns: 1fr;
