@@ -5523,14 +5523,23 @@ function getLoginHTML() {
                 showError('Por favor ingresa tu email para acceder al portal');
                 return;
             }
-            
-            // Validación básica de email
+
+            // Validación básica de email con debugging mejorado
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            console.log('🔍 DEBUG VALIDACIÓN:');
+            console.log('  - Email:', email);
+            console.log('  - Email length:', email.length);
+            console.log('  - Email charCodes:', Array.from(email).map(c => c.charCodeAt(0)).join(','));
+            console.log('  - Regex test:', emailRegex.test(email));
+
             if (!emailRegex.test(email)) {
                 console.log('❌ Email con formato inválido');
+                console.log('❌ El email no pasó la validación regex');
                 showError('Por favor ingresa un email válido');
                 return;
             }
+
+            console.log('✅ Email pasó validación frontend');
 
             // Mostrar estado de carga
             loginButton.disabled = true;
