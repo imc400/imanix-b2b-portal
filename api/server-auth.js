@@ -7254,7 +7254,7 @@ function getProductDetailHTML(product, customer) {
                     productId: '${product.id}',
                     variantId: '${variant?.id || ''}',
                     title: '${product.title.replace(/'/g, "\\'")}',
-                    price: ${discountedPrice},
+                    price: ${originalPrice},
                     image: '${mainImage}',
                     quantity: quantity,
                     sku: '${sku}'
@@ -8042,8 +8042,8 @@ function getPortalHTML(products, customer) {
                         </div>
                         ` : ''}
                         
-                        <button class="add-to-cart-btn" ${stock === 0 ? 'disabled' : ''} 
-                                onclick="addToCartWithQuantity('${product.id}', '${variant?.id}', '${product.title.replace(/'/g, '&#39;').replace(/"/g, '&quot;')}', ${discountedPrice}, '${image}', '${variant?.sku || 'N/A'}')"
+                        <button class="add-to-cart-btn" ${stock === 0 ? 'disabled' : ''}
+                                onclick="addToCartWithQuantity('${product.id}', '${variant?.id}', '${product.title.replace(/'/g, '&#39;').replace(/"/g, '&quot;')}', ${originalPrice}, '${image}', '${variant?.sku || 'N/A'}')"
                             <i class="fas fa-cart-plus"></i>
                             ${stock > 0 ? 'Agregar al Carrito' : 'Sin Stock'}
                         </button>
