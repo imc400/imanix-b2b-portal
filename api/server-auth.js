@@ -12524,7 +12524,21 @@ app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json'
             }
           );
 
+          console.log('📊 Respuesta de Shopify:', JSON.stringify(response.data, null, 2));
+
+          if (!response.data || !response.data.data) {
+            console.error(`❌ Respuesta inválida de Shopify:`, response.data);
+            allAdjustmentsSuccessful = false;
+            continue;
+          }
+
           const result = response.data.data.inventoryAdjustQuantities;
+
+          if (!result) {
+            console.error(`❌ inventoryAdjustQuantities es null. Respuesta completa:`, response.data);
+            allAdjustmentsSuccessful = false;
+            continue;
+          }
 
           if (result.userErrors && result.userErrors.length > 0) {
             console.error(`❌ Error descontando stock para ${lineItem.title}:`, result.userErrors);
@@ -12620,7 +12634,21 @@ app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json'
             }
           );
 
+          console.log('📊 Respuesta de Shopify (devolución):', JSON.stringify(response.data, null, 2));
+
+          if (!response.data || !response.data.data) {
+            console.error(`❌ Respuesta inválida de Shopify:`, response.data);
+            allAdjustmentsSuccessful = false;
+            continue;
+          }
+
           const result = response.data.data.inventoryAdjustQuantities;
+
+          if (!result) {
+            console.error(`❌ inventoryAdjustQuantities es null. Respuesta completa:`, response.data);
+            allAdjustmentsSuccessful = false;
+            continue;
+          }
 
           if (result.userErrors && result.userErrors.length > 0) {
             console.error(`❌ Error devolviendo stock para ${lineItem.title}:`, result.userErrors);
