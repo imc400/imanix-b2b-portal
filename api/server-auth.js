@@ -194,6 +194,7 @@ const upload = multer({
 // Configuración de Shopify API
 const SHOPIFY_SHOP_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN || 'braintoys-chile.myshopify.com';
 const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ADMIN_API_TOKEN;
+const SHOPIFY_B2B_LOCATION_ID = process.env.SHOPIFY_B2B_LOCATION_ID || '108215271699'; // Bodega Distribuidores
 
 
 
@@ -1977,6 +1978,23 @@ async function fetchB2BProductsFromShopify() {
                   sku
                   price
                   inventoryQuantity
+                  inventoryItem {
+                    id
+                    inventoryLevels(first: 10) {
+                      edges {
+                        node {
+                          quantities(names: ["available"]) {
+                            name
+                            quantity
+                          }
+                          location {
+                            id
+                            legacyResourceId
+                          }
+                        }
+                      }
+                    }
+                  }
                   image {
                     url
                     altText
@@ -2019,6 +2037,42 @@ async function fetchB2BProductsFromShopify() {
     }
 
     console.log(`✅ ${allProducts.length} productos B2B obtenidos desde Shopify`);
+
+    // Filtrar el inventario solo de "Bodega Distribuidores"
+    allProducts = allProducts.map(product => {
+      let productTotalInventory = 0;
+
+      if (product.variants && product.variants.edges) {
+        product.variants.edges = product.variants.edges.map(variantEdge => {
+          const variant = variantEdge.node;
+          let locationStock = 0;
+
+          // Buscar el stock en la ubicación específica
+          if (variant.inventoryItem && variant.inventoryItem.inventoryLevels && variant.inventoryItem.inventoryLevels.edges) {
+            const locationLevel = variant.inventoryItem.inventoryLevels.edges.find(levelEdge => {
+              return levelEdge.node.location.legacyResourceId === SHOPIFY_B2B_LOCATION_ID;
+            });
+
+            if (locationLevel && locationLevel.node.quantities && locationLevel.node.quantities.length > 0) {
+              locationStock = locationLevel.node.quantities[0].quantity || 0;
+            }
+          }
+
+          // Actualizar el inventoryQuantity con el stock de la ubicación específica
+          variant.inventoryQuantity = locationStock;
+          productTotalInventory += locationStock;
+
+          return variantEdge;
+        });
+      }
+
+      // Actualizar el totalInventory del producto
+      product.totalInventory = productTotalInventory;
+
+      return product;
+    });
+
+    console.log(`✅ Inventario filtrado por Bodega Distribuidores (Location ID: ${SHOPIFY_B2B_LOCATION_ID})`);
     return allProducts;
   } catch (error) {
     console.error('Error obteniendo productos desde Shopify:', error);
@@ -12215,37 +12269,85 @@ app.get('/api/product/:productId/stock', requireAuthAPI, async (req, res) => {
       console.log('🔍 ID extraído del GID:', productId);
     }
     
-    // Obtener información del producto desde Shopify para obtener el SKU
-    const response = await fetch(`https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2024-01/products/${productId}.json`, {
-      headers: {
-        'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
-        'Content-Type': 'application/json'
+    // Obtener información del producto desde Shopify con inventario por ubicación
+    const graphqlQuery = `
+      query getProduct($id: ID!) {
+        product(id: $id) {
+          id
+          title
+          variants(first: 1) {
+            edges {
+              node {
+                id
+                sku
+                inventoryItem {
+                  id
+                  inventoryLevels(first: 10) {
+                    edges {
+                      node {
+                        quantities(names: ["available"]) {
+                          name
+                          quantity
+                        }
+                        location {
+                          id
+                          legacyResourceId
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
-    });
+    `;
 
-    if (!response.ok) {
-      console.error('❌ Error obteniendo producto de Shopify:', response.status);
-      return res.status(404).json({ 
-        success: false, 
+    const gid = `gid://shopify/Product/${productId}`;
+    const response = await axios.post(
+      `https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2024-04/graphql.json`,
+      {
+        query: graphqlQuery,
+        variables: { id: gid }
+      },
+      {
+        headers: {
+          'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.data || !response.data.data || !response.data.data.product) {
+      console.error('❌ Error obteniendo producto de Shopify');
+      return res.status(404).json({
+        success: false,
         message: 'Producto no encontrado',
         stock: 0,
         source: 'shopify-error'
       });
     }
 
-    const data = await response.json();
-    const product = data.product;
-    const sku = product.variants && product.variants.length > 0 
-      ? product.variants[0].sku 
-      : null;
-    
+    const product = response.data.data.product;
+    const variant = product.variants?.edges?.[0]?.node;
+    const sku = variant?.sku || null;
+
     console.log('🔍 SKU obtenido de Shopify:', sku);
-    
-    // Obtener stock desde Shopify
-    const shopifyStock = product.variants && product.variants.length > 0
-      ? product.variants[0].inventory_quantity || 0
-      : 0;
-    const stockResult = { stock: shopifyStock, source: 'shopify' };
+
+    // Buscar el stock en la ubicación específica (Bodega Distribuidores)
+    let shopifyStock = 0;
+    if (variant?.inventoryItem?.inventoryLevels?.edges) {
+      const locationLevel = variant.inventoryItem.inventoryLevels.edges.find(levelEdge => {
+        return levelEdge.node.location.legacyResourceId === SHOPIFY_B2B_LOCATION_ID;
+      });
+
+      if (locationLevel?.node?.quantities && locationLevel.node.quantities.length > 0) {
+        shopifyStock = locationLevel.node.quantities[0].quantity || 0;
+      }
+    }
+
+    const stockResult = { stock: shopifyStock, source: 'shopify-bodega-distribuidores' };
     
     console.log(`📦 Stock final para producto ${productId} (SKU: ${sku}):`, stockResult.stock, `(fuente: ${stockResult.source})`);
     
