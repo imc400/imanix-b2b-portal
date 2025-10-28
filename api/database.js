@@ -288,6 +288,29 @@ const database = {
     }
   },
 
+  // Actualizar estado de un pedido por shopify_order_id
+  async updateOrderStatus(shopifyOrderId, status) {
+    try {
+      const { data, error } = await supabase
+        .from('draft_orders')
+        .update({
+          status: status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('shopify_order_id', shopifyOrderId.toString())
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      return data || null;
+    } catch (error) {
+      console.error('Error actualizando estado del pedido:', error);
+      return null;
+    }
+  },
+
   // Agregar dirección
   async addAddress(email, addressData) {
     try {

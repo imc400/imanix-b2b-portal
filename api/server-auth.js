@@ -12554,6 +12554,12 @@ app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json'
 
           await updateDraftOrderTags(draftOrder.id, newTags);
 
+          // Actualizar estado del pedido en la base de datos
+          if (database) {
+            await database.updateOrderStatus(draftOrder.id, 'Pago recibido');
+            console.log('💳 Estado del pedido actualizado a "Pago recibido" en BD');
+          }
+
           console.log('✅ Stock descontado exitosamente de Bodega Distribuidores!');
           console.log('🏷️ Etiqueta "stock-descontado" agregada al draft order');
           console.log('📋 Draft order permanece como BORRADOR');
@@ -12665,6 +12671,12 @@ app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json'
           const newTags = currentTags.filter(tag => tag.toLowerCase() !== 'stock-descontado').join(',');
 
           await updateDraftOrderTags(draftOrder.id, newTags);
+
+          // Actualizar estado del pedido en la base de datos
+          if (database) {
+            await database.updateOrderStatus(draftOrder.id, 'Pendiente');
+            console.log('⏳ Estado del pedido actualizado a "Pendiente" en BD');
+          }
 
           console.log('✅ Stock devuelto exitosamente a Bodega Distribuidores!');
           console.log('🏷️ Etiqueta "stock-descontado" eliminada del draft order');
