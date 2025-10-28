@@ -12421,7 +12421,7 @@ app.post('/webhooks/products/update', express.raw({ type: 'application/json' }),
   }
 });
 
-// Webhook para Draft Orders - Completar cuando se agrega etiqueta "pagado"
+// Webhook para Draft Orders - Descontar stock cuando se agrega etiqueta "pagado"
 app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json' }), async (req, res) => {
   console.log('🔄 Webhook de Draft Order recibido');
 
@@ -12450,65 +12450,108 @@ app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json'
     console.log(`🏷️ Tags: ${draftOrder.tags || 'sin tags'}`);
     console.log(`📊 Status: ${draftOrder.status}`);
 
-    // Verificar si tiene la etiqueta "pagado" y aún está en estado "open"
+    // Verificar si tiene la etiqueta "pagado" pero NO la etiqueta "stock-descontado"
     const tags = (draftOrder.tags || '').toLowerCase();
 
-    if (tags.includes('pagado') && draftOrder.status === 'open') {
-      console.log('✅ Draft Order tiene etiqueta "pagado" - procediendo a completar...');
+    if (tags.includes('pagado') && !tags.includes('stock-descontado')) {
+      console.log('✅ Draft Order tiene etiqueta "pagado" - procediendo a descontar stock...');
 
       try {
-        // Completar el draft order usando GraphQL
-        const completeDraftOrderMutation = `
-          mutation draftOrderComplete($id: ID!) {
-            draftOrderComplete(id: $id) {
-              draftOrder {
-                id
-                status
-                order {
+        const locationId = `gid://shopify/Location/${SHOPIFY_B2B_LOCATION_ID}`;
+        let allAdjustmentsSuccessful = true;
+
+        // Descontar stock de cada producto en el draft order
+        for (const lineItem of draftOrder.line_items) {
+          if (!lineItem.variant_id) {
+            console.log(`⚠️ Line item sin variant_id: ${lineItem.title}`);
+            continue;
+          }
+
+          const inventoryItemId = await getInventoryItemId(lineItem.variant_id);
+
+          if (!inventoryItemId) {
+            console.log(`⚠️ No se pudo obtener inventory_item_id para variant ${lineItem.variant_id}`);
+            continue;
+          }
+
+          const quantityToDeduct = lineItem.quantity * -1; // Negativo para descontar
+
+          console.log(`📉 Descontando ${lineItem.quantity} unidades de "${lineItem.title}" (Variant ID: ${lineItem.variant_id})`);
+
+          // Usar inventoryAdjustQuantities para descontar el stock
+          const adjustInventoryMutation = `
+            mutation inventoryAdjustQuantities($input: InventoryAdjustQuantitiesInput!) {
+              inventoryAdjustQuantities(input: $input) {
+                inventoryAdjustmentGroup {
                   id
-                  name
+                  reason
+                  changes {
+                    name
+                    delta
+                  }
+                }
+                userErrors {
+                  field
+                  message
                 }
               }
-              userErrors {
-                field
-                message
-              }
             }
-          }
-        `;
+          `;
 
-        const draftOrderGid = `gid://shopify/DraftOrder/${draftOrder.id}`;
+          const adjustmentInput = {
+            reason: "correction",
+            name: "available",
+            changes: [
+              {
+                inventoryItemId: inventoryItemId,
+                locationId: locationId,
+                delta: quantityToDeduct
+              }
+            ]
+          };
 
-        const response = await axios.post(
-          `https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2024-04/graphql.json`,
-          {
-            query: completeDraftOrderMutation,
-            variables: { id: draftOrderGid }
-          },
-          {
-            headers: {
-              'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
-              'Content-Type': 'application/json',
+          const response = await axios.post(
+            `https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2024-04/graphql.json`,
+            {
+              query: adjustInventoryMutation,
+              variables: { input: adjustmentInput }
             },
+            {
+              headers: {
+                'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+
+          const result = response.data.data.inventoryAdjustQuantities;
+
+          if (result.userErrors && result.userErrors.length > 0) {
+            console.error(`❌ Error descontando stock para ${lineItem.title}:`, result.userErrors);
+            allAdjustmentsSuccessful = false;
+          } else {
+            console.log(`✅ Stock descontado correctamente para ${lineItem.title}`);
           }
-        );
-
-        const result = response.data.data.draftOrderComplete;
-
-        if (result.userErrors && result.userErrors.length > 0) {
-          console.error('❌ Errores al completar draft order:', result.userErrors);
-          return res.status(200).send('OK - con errores');
         }
 
-        console.log('✅ Draft Order completado exitosamente!');
-        console.log(`📦 Orden creada: ${result.draftOrder.order.name} (${result.draftOrder.order.id})`);
-        console.log('📉 El stock ha sido descontado automáticamente de Bodega Distribuidores');
+        // Si todos los ajustes fueron exitosos, agregar etiqueta "stock-descontado"
+        if (allAdjustmentsSuccessful) {
+          const newTags = draftOrder.tags ? `${draftOrder.tags},stock-descontado` : 'stock-descontado';
+
+          await updateDraftOrderTags(draftOrder.id, newTags);
+
+          console.log('✅ Stock descontado exitosamente de Bodega Distribuidores!');
+          console.log('🏷️ Etiqueta "stock-descontado" agregada al draft order');
+          console.log('📋 Draft order permanece como BORRADOR');
+        }
 
       } catch (error) {
-        console.error('❌ Error completando draft order:', error.response?.data || error.message);
+        console.error('❌ Error descontando stock:', error.response?.data || error.message);
       }
+    } else if (tags.includes('stock-descontado')) {
+      console.log('ℹ️ Draft Order ya tiene stock descontado');
     } else {
-      console.log('ℹ️ Draft Order no tiene etiqueta "pagado" o ya fue procesado');
+      console.log('ℹ️ Draft Order no tiene etiqueta "pagado"');
     }
 
     res.status(200).send('OK');
@@ -12517,6 +12560,95 @@ app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json'
     res.status(500).send('Error');
   }
 });
+
+// Función auxiliar para obtener el inventory_item_id de una variante
+async function getInventoryItemId(variantId) {
+  try {
+    const query = `
+      query getVariant($id: ID!) {
+        productVariant(id: $id) {
+          inventoryItem {
+            id
+          }
+        }
+      }
+    `;
+
+    const gid = `gid://shopify/ProductVariant/${variantId}`;
+
+    const response = await axios.post(
+      `https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2024-04/graphql.json`,
+      {
+        query: query,
+        variables: { id: gid }
+      },
+      {
+        headers: {
+          'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data.data.productVariant?.inventoryItem?.id || null;
+  } catch (error) {
+    console.error('Error obteniendo inventory_item_id:', error);
+    return null;
+  }
+}
+
+// Función auxiliar para actualizar las etiquetas de un draft order
+async function updateDraftOrderTags(draftOrderId, newTags) {
+  try {
+    const mutation = `
+      mutation draftOrderUpdate($id: ID!, $input: DraftOrderInput!) {
+        draftOrderUpdate(id: $id, input: $input) {
+          draftOrder {
+            id
+            tags
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `;
+
+    const gid = `gid://shopify/DraftOrder/${draftOrderId}`;
+
+    const response = await axios.post(
+      `https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2024-04/graphql.json`,
+      {
+        query: mutation,
+        variables: {
+          id: gid,
+          input: {
+            tags: newTags
+          }
+        }
+      },
+      {
+        headers: {
+          'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const result = response.data.data.draftOrderUpdate;
+
+    if (result.userErrors && result.userErrors.length > 0) {
+      console.error('Error actualizando tags:', result.userErrors);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error actualizando draft order tags:', error);
+    return false;
+  }
+}
 
 // Página Mi Cuenta
 app.get('/cuenta', requireAuth, async (req, res) => {
