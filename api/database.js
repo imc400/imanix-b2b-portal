@@ -421,11 +421,10 @@ const database = {
       const fullOrderData = {
         ...orderData,
         customer_email: email,
-        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
-      console.log('📋 Datos completos a insertar:', {
+      console.log('📋 Datos completos a insertar/actualizar:', {
         customer_email: fullOrderData.customer_email,
         shopify_order_id: fullOrderData.shopify_order_id,
         order_number: fullOrderData.order_number,
@@ -434,10 +433,13 @@ const database = {
         status: fullOrderData.status
       });
 
-      console.log('🚀 Ejecutando insert en tabla draft_orders...');
+      console.log('🚀 Ejecutando upsert en tabla draft_orders (evita duplicados)...');
       const { data, error } = await supabase
         .from('draft_orders')
-        .insert(fullOrderData)
+        .upsert(fullOrderData, {
+          onConflict: 'shopify_order_id',
+          ignoreDuplicates: false
+        })
         .select()
         .single();
       
