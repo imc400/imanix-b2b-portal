@@ -12421,6 +12421,103 @@ app.post('/webhooks/products/update', express.raw({ type: 'application/json' }),
   }
 });
 
+// Webhook para Draft Orders - Completar cuando se agrega etiqueta "pagado"
+app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json' }), async (req, res) => {
+  console.log('🔄 Webhook de Draft Order recibido');
+
+  try {
+    // Validar webhook secret
+    const hmacHeader = req.get('X-Shopify-Hmac-Sha256');
+    const webhookSecret = process.env.WEBHOOK_SECRET;
+
+    if (webhookSecret && hmacHeader) {
+      const crypto = require('crypto');
+      const body = req.body;
+      const hash = crypto.createHmac('sha256', webhookSecret).update(body, 'utf8').digest('base64');
+
+      if (hash !== hmacHeader) {
+        console.log('❌ Webhook no autorizado - HMAC inválido');
+        return res.status(401).send('Unauthorized');
+      }
+      console.log('🔐 Webhook verificado correctamente');
+    }
+
+    // Parsear el draft order
+    const bodyString = req.body.toString();
+    const draftOrder = JSON.parse(bodyString);
+
+    console.log(`📝 Draft Order ID: ${draftOrder.id}`);
+    console.log(`🏷️ Tags: ${draftOrder.tags || 'sin tags'}`);
+    console.log(`📊 Status: ${draftOrder.status}`);
+
+    // Verificar si tiene la etiqueta "pagado" y aún está en estado "open"
+    const tags = (draftOrder.tags || '').toLowerCase();
+
+    if (tags.includes('pagado') && draftOrder.status === 'open') {
+      console.log('✅ Draft Order tiene etiqueta "pagado" - procediendo a completar...');
+
+      try {
+        // Completar el draft order usando GraphQL
+        const completeDraftOrderMutation = `
+          mutation draftOrderComplete($id: ID!) {
+            draftOrderComplete(id: $id) {
+              draftOrder {
+                id
+                status
+                order {
+                  id
+                  name
+                }
+              }
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        `;
+
+        const draftOrderGid = `gid://shopify/DraftOrder/${draftOrder.id}`;
+
+        const response = await axios.post(
+          `https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2024-04/graphql.json`,
+          {
+            query: completeDraftOrderMutation,
+            variables: { id: draftOrderGid }
+          },
+          {
+            headers: {
+              'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        const result = response.data.data.draftOrderComplete;
+
+        if (result.userErrors && result.userErrors.length > 0) {
+          console.error('❌ Errores al completar draft order:', result.userErrors);
+          return res.status(200).send('OK - con errores');
+        }
+
+        console.log('✅ Draft Order completado exitosamente!');
+        console.log(`📦 Orden creada: ${result.draftOrder.order.name} (${result.draftOrder.order.id})`);
+        console.log('📉 El stock ha sido descontado automáticamente de Bodega Distribuidores');
+
+      } catch (error) {
+        console.error('❌ Error completando draft order:', error.response?.data || error.message);
+      }
+    } else {
+      console.log('ℹ️ Draft Order no tiene etiqueta "pagado" o ya fue procesado');
+    }
+
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('Error procesando webhook de draft order:', error);
+    res.status(500).send('Error');
+  }
+});
+
 // Página Mi Cuenta
 app.get('/cuenta', requireAuth, async (req, res) => {
   try {
