@@ -12548,7 +12548,105 @@ app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json'
       } catch (error) {
         console.error('❌ Error descontando stock:', error.response?.data || error.message);
       }
-    } else if (tags.includes('stock-descontado')) {
+    } else if (!tags.includes('pagado') && tags.includes('stock-descontado')) {
+      // Si NO tiene "pagado" pero SÍ tiene "stock-descontado" → Se eliminó la etiqueta "pagado"
+      console.log('🔄 Etiqueta "pagado" fue eliminada - procediendo a DEVOLVER stock...');
+
+      try {
+        const locationId = `gid://shopify/Location/${SHOPIFY_B2B_LOCATION_ID}`;
+        let allAdjustmentsSuccessful = true;
+
+        // Devolver stock de cada producto en el draft order
+        for (const lineItem of draftOrder.line_items) {
+          if (!lineItem.variant_id) {
+            console.log(`⚠️ Line item sin variant_id: ${lineItem.title}`);
+            continue;
+          }
+
+          const inventoryItemId = await getInventoryItemId(lineItem.variant_id);
+
+          if (!inventoryItemId) {
+            console.log(`⚠️ No se pudo obtener inventory_item_id para variant ${lineItem.variant_id}`);
+            continue;
+          }
+
+          const quantityToReturn = lineItem.quantity; // Positivo para devolver
+
+          console.log(`📈 Devolviendo ${lineItem.quantity} unidades de "${lineItem.title}" (Variant ID: ${lineItem.variant_id})`);
+
+          // Usar inventoryAdjustQuantities para devolver el stock
+          const adjustInventoryMutation = `
+            mutation inventoryAdjustQuantities($input: InventoryAdjustQuantitiesInput!) {
+              inventoryAdjustQuantities(input: $input) {
+                inventoryAdjustmentGroup {
+                  id
+                  reason
+                  changes {
+                    name
+                    delta
+                  }
+                }
+                userErrors {
+                  field
+                  message
+                }
+              }
+            }
+          `;
+
+          const adjustmentInput = {
+            reason: "correction",
+            name: "available",
+            changes: [
+              {
+                inventoryItemId: inventoryItemId,
+                locationId: locationId,
+                delta: quantityToReturn
+              }
+            ]
+          };
+
+          const response = await axios.post(
+            `https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2024-04/graphql.json`,
+            {
+              query: adjustInventoryMutation,
+              variables: { input: adjustmentInput }
+            },
+            {
+              headers: {
+                'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+
+          const result = response.data.data.inventoryAdjustQuantities;
+
+          if (result.userErrors && result.userErrors.length > 0) {
+            console.error(`❌ Error devolviendo stock para ${lineItem.title}:`, result.userErrors);
+            allAdjustmentsSuccessful = false;
+          } else {
+            console.log(`✅ Stock devuelto correctamente para ${lineItem.title}`);
+          }
+        }
+
+        // Si todos los ajustes fueron exitosos, eliminar etiqueta "stock-descontado"
+        if (allAdjustmentsSuccessful) {
+          // Eliminar la etiqueta "stock-descontado" de las tags
+          const currentTags = draftOrder.tags.split(',').map(t => t.trim());
+          const newTags = currentTags.filter(tag => tag.toLowerCase() !== 'stock-descontado').join(',');
+
+          await updateDraftOrderTags(draftOrder.id, newTags);
+
+          console.log('✅ Stock devuelto exitosamente a Bodega Distribuidores!');
+          console.log('🏷️ Etiqueta "stock-descontado" eliminada del draft order');
+          console.log('📋 Draft order permanece como BORRADOR');
+        }
+
+      } catch (error) {
+        console.error('❌ Error devolviendo stock:', error.response?.data || error.message);
+      }
+    } else if (tags.includes('pagado') && tags.includes('stock-descontado')) {
       console.log('ℹ️ Draft Order ya tiene stock descontado');
     } else {
       console.log('ℹ️ Draft Order no tiene etiqueta "pagado"');
