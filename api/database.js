@@ -130,13 +130,21 @@ const database = {
     }
   },
 
-  // Actualizar perfil
+  // Actualizar perfil (usa UPSERT para crear si no existe)
   async updateProfile(email, updates) {
     try {
+      const profileData = {
+        ...updates,
+        email: email,
+        updated_at: new Date().toISOString()
+      };
+
       const { data, error } = await supabase
         .from('user_profiles')
-        .update(updates)
-        .eq('email', email)
+        .upsert(profileData, {
+          onConflict: 'email',
+          ignoreDuplicates: false
+        })
         .select()
         .single();
 
@@ -144,6 +152,7 @@ const database = {
         throw error;
       }
 
+      console.log(`✅ Perfil actualizado/creado para: ${email}`);
       return data;
     } catch (error) {
       console.error('Error actualizando perfil:', error);
