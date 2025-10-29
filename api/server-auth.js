@@ -12457,6 +12457,11 @@ app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json'
       console.log('✅ Draft Order tiene etiqueta "pagado" - procediendo a descontar stock...');
 
       try {
+        // PRIMERO: Agregar etiqueta "stock-descontado" inmediatamente para evitar race conditions
+        const lockTags = draftOrder.tags ? `${draftOrder.tags},stock-descontado` : 'stock-descontado';
+        await updateDraftOrderTags(draftOrder.id, lockTags);
+        console.log('🔒 Etiqueta "stock-descontado" agregada como lock para evitar ejecuciones duplicadas');
+
         const locationId = `gid://shopify/Location/${SHOPIFY_B2B_LOCATION_ID}`;
         let allAdjustmentsSuccessful = true;
 
@@ -12548,12 +12553,8 @@ app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json'
           }
         }
 
-        // Si todos los ajustes fueron exitosos, agregar etiqueta "stock-descontado"
+        // Si todos los ajustes fueron exitosos, actualizar estado en BD
         if (allAdjustmentsSuccessful) {
-          const newTags = draftOrder.tags ? `${draftOrder.tags},stock-descontado` : 'stock-descontado';
-
-          await updateDraftOrderTags(draftOrder.id, newTags);
-
           // Actualizar estado del pedido en la base de datos
           if (database) {
             await database.updateOrderStatus(draftOrder.id, 'Pago recibido');
@@ -12561,18 +12562,39 @@ app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json'
           }
 
           console.log('✅ Stock descontado exitosamente de Bodega Distribuidores!');
-          console.log('🏷️ Etiqueta "stock-descontado" agregada al draft order');
+          console.log('🏷️ Etiqueta "stock-descontado" ya agregada como lock');
           console.log('📋 Draft order permanece como BORRADOR');
+        } else {
+          // Si falló algún ajuste, hacer rollback de la etiqueta
+          console.error('⚠️ Algunos ajustes fallaron, removiendo etiqueta "stock-descontado"');
+          const currentTags = lockTags.split(',').map(t => t.trim());
+          const rollbackTags = currentTags.filter(tag => tag.toLowerCase() !== 'stock-descontado').join(',');
+          await updateDraftOrderTags(draftOrder.id, rollbackTags);
         }
 
       } catch (error) {
         console.error('❌ Error descontando stock:', error.response?.data || error.message);
+        // Hacer rollback de la etiqueta en caso de error
+        try {
+          const currentTags = (draftOrder.tags || '').split(',').map(t => t.trim());
+          const rollbackTags = currentTags.filter(tag => tag.toLowerCase() !== 'stock-descontado').join(',');
+          await updateDraftOrderTags(draftOrder.id, rollbackTags);
+          console.log('🔄 Rollback: etiqueta "stock-descontado" removida por error');
+        } catch (rollbackError) {
+          console.error('❌ Error en rollback:', rollbackError.message);
+        }
       }
     } else if (!tags.includes('pagado') && tags.includes('stock-descontado')) {
       // Si NO tiene "pagado" pero SÍ tiene "stock-descontado" → Se eliminó la etiqueta "pagado"
       console.log('🔄 Etiqueta "pagado" fue eliminada - procediendo a DEVOLVER stock...');
 
       try {
+        // PRIMERO: Eliminar etiqueta "stock-descontado" inmediatamente como lock
+        const currentTags = draftOrder.tags.split(',').map(t => t.trim());
+        const unlockTags = currentTags.filter(tag => tag.toLowerCase() !== 'stock-descontado').join(',');
+        await updateDraftOrderTags(draftOrder.id, unlockTags);
+        console.log('🔓 Etiqueta "stock-descontado" eliminada como lock para evitar ejecuciones duplicadas');
+
         const locationId = `gid://shopify/Location/${SHOPIFY_B2B_LOCATION_ID}`;
         let allAdjustmentsSuccessful = true;
 
@@ -12664,14 +12686,8 @@ app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json'
           }
         }
 
-        // Si todos los ajustes fueron exitosos, eliminar etiqueta "stock-descontado"
+        // Si todos los ajustes fueron exitosos, actualizar estado en BD
         if (allAdjustmentsSuccessful) {
-          // Eliminar la etiqueta "stock-descontado" de las tags
-          const currentTags = draftOrder.tags.split(',').map(t => t.trim());
-          const newTags = currentTags.filter(tag => tag.toLowerCase() !== 'stock-descontado').join(',');
-
-          await updateDraftOrderTags(draftOrder.id, newTags);
-
           // Actualizar estado del pedido en la base de datos
           if (database) {
             await database.updateOrderStatus(draftOrder.id, 'Pendiente');
@@ -12679,12 +12695,25 @@ app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json'
           }
 
           console.log('✅ Stock devuelto exitosamente a Bodega Distribuidores!');
-          console.log('🏷️ Etiqueta "stock-descontado" eliminada del draft order');
+          console.log('🏷️ Etiqueta "stock-descontado" ya eliminada como unlock');
           console.log('📋 Draft order permanece como BORRADOR');
+        } else {
+          // Si falló algún ajuste, hacer rollback de la etiqueta (volver a agregar)
+          console.error('⚠️ Algunos ajustes de devolución fallaron, re-agregando etiqueta "stock-descontado"');
+          const rollbackTags = unlockTags ? `${unlockTags},stock-descontado` : 'stock-descontado';
+          await updateDraftOrderTags(draftOrder.id, rollbackTags);
         }
 
       } catch (error) {
         console.error('❌ Error devolviendo stock:', error.response?.data || error.message);
+        // Hacer rollback de la etiqueta en caso de error (volver a agregar)
+        try {
+          const rollbackTags = draftOrder.tags ? `${draftOrder.tags},stock-descontado` : 'stock-descontado';
+          await updateDraftOrderTags(draftOrder.id, rollbackTags);
+          console.log('🔄 Rollback: etiqueta "stock-descontado" re-agregada por error');
+        } catch (rollbackError) {
+          console.error('❌ Error en rollback:', rollbackError.message);
+        }
       }
     } else if (tags.includes('pagado') && tags.includes('stock-descontado')) {
       console.log('ℹ️ Draft Order ya tiene stock descontado');
