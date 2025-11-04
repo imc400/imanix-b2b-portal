@@ -12589,12 +12589,6 @@ app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json'
       console.log('🔄 Etiqueta "pagado" fue eliminada - procediendo a DEVOLVER stock...');
 
       try {
-        // PRIMERO: Eliminar etiqueta "stock-descontado" inmediatamente como lock
-        const currentTags = draftOrder.tags.split(',').map(t => t.trim());
-        const unlockTags = currentTags.filter(tag => tag.toLowerCase() !== 'stock-descontado').join(',');
-        await updateDraftOrderTags(draftOrder.id, unlockTags);
-        console.log('🔓 Etiqueta "stock-descontado" eliminada como lock para evitar ejecuciones duplicadas');
-
         const locationId = `gid://shopify/Location/${SHOPIFY_B2B_LOCATION_ID}`;
         let allAdjustmentsSuccessful = true;
 
@@ -12686,8 +12680,14 @@ app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json'
           }
         }
 
-        // Si todos los ajustes fueron exitosos, actualizar estado en BD
+        // Si todos los ajustes fueron exitosos, actualizar estado en BD y quitar etiqueta
         if (allAdjustmentsSuccessful) {
+          // AHORA SÍ: Eliminar etiqueta "stock-descontado" después de devolver el inventario
+          const currentTags = draftOrder.tags.split(',').map(t => t.trim());
+          const unlockTags = currentTags.filter(tag => tag.toLowerCase() !== 'stock-descontado').join(',');
+          await updateDraftOrderTags(draftOrder.id, unlockTags);
+          console.log('🔓 Etiqueta "stock-descontado" eliminada después de devolver inventario exitosamente');
+
           // Actualizar estado del pedido en la base de datos
           if (database) {
             await database.updateOrderStatus(draftOrder.id, 'Pendiente');
@@ -12695,25 +12695,16 @@ app.post('/webhooks/draft_orders/update', express.raw({ type: 'application/json'
           }
 
           console.log('✅ Stock devuelto exitosamente a Bodega Distribuidores!');
-          console.log('🏷️ Etiqueta "stock-descontado" ya eliminada como unlock');
           console.log('📋 Draft order permanece como BORRADOR');
         } else {
-          // Si falló algún ajuste, hacer rollback de la etiqueta (volver a agregar)
-          console.error('⚠️ Algunos ajustes de devolución fallaron, re-agregando etiqueta "stock-descontado"');
-          const rollbackTags = unlockTags ? `${unlockTags},stock-descontado` : 'stock-descontado';
-          await updateDraftOrderTags(draftOrder.id, rollbackTags);
+          // Si falló algún ajuste, NO hacer nada con las etiquetas (mantener "stock-descontado")
+          console.error('⚠️ Algunos ajustes de devolución fallaron, manteniendo etiqueta "stock-descontado"');
         }
 
       } catch (error) {
         console.error('❌ Error devolviendo stock:', error.response?.data || error.message);
-        // Hacer rollback de la etiqueta en caso de error (volver a agregar)
-        try {
-          const rollbackTags = draftOrder.tags ? `${draftOrder.tags},stock-descontado` : 'stock-descontado';
-          await updateDraftOrderTags(draftOrder.id, rollbackTags);
-          console.log('🔄 Rollback: etiqueta "stock-descontado" re-agregada por error');
-        } catch (rollbackError) {
-          console.error('❌ Error en rollback:', rollbackError.message);
-        }
+        // No hacer rollback de etiqueta: se mantiene "stock-descontado" para poder intentar de nuevo
+        console.log('⚠️ Etiqueta "stock-descontado" se mantiene para poder reintentar la devolución de inventario');
       }
     } else if (tags.includes('pagado') && tags.includes('stock-descontado')) {
       console.log('ℹ️ Draft Order ya tiene stock descontado');
