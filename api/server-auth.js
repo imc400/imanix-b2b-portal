@@ -1846,7 +1846,7 @@ INFORMACIÓN DE ENVÍO:
         draft_order: {
             line_items: lineItems,
             customer: {
-                id: customer.shopifyId || null,
+                id: customer.id || null,
                 email: customer?.email || 'no-email@example.com',
                 first_name: profileData?.first_name || customer?.firstName || 'Usuario' || customer.name?.split(' ')[0] || '',
                 last_name: profileData?.last_name || customer?.lastName || customer.name?.split(' ').slice(1).join(' ') || ''
