@@ -3243,6 +3243,10 @@ function getCartHTML(customer) {
                                 <i class="fas fa-user-edit"></i>
                                 Mi Perfil
                             </a>
+                            <a href="/pedidos" class="dropdown-item">
+                                <i class="fas fa-clipboard-list"></i>
+                                Historial de Pedidos
+                            </a>
                             <div class="dropdown-divider"></div>
                             <button onclick="logout()" class="dropdown-item">
                                 <i class="fas fa-sign-out-alt"></i>
@@ -7781,6 +7785,10 @@ function getProductDetailHTML(product, customer) {
                                 <i class="fas fa-user-edit"></i>
                                 Mi Perfil
                             </a>
+                            <a href="/pedidos" class="dropdown-item">
+                                <i class="fas fa-clipboard-list"></i>
+                                Historial de Pedidos
+                            </a>
                             <div class="dropdown-divider"></div>
                             <button onclick="logout()" class="dropdown-item">
                                 <i class="fas fa-sign-out-alt"></i>
@@ -9935,6 +9943,10 @@ function getPortalHTML(products, customer) {
                                 <i class="fas fa-user-edit"></i>
                                 Mi Perfil
                             </a>
+                            <a href="/pedidos" class="dropdown-item">
+                                <i class="fas fa-clipboard-list"></i>
+                                Historial de Pedidos
+                            </a>
                             <div class="dropdown-divider"></div>
                             <button onclick="logout()" class="dropdown-item">
                                 <i class="fas fa-sign-out-alt"></i>
@@ -11540,6 +11552,10 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                             <a href="/perfil" class="dropdown-item">
                                 <i class="fas fa-user-edit"></i>
                                 Mi Perfil
+                            </a>
+                            <a href="/pedidos" class="dropdown-item">
+                                <i class="fas fa-clipboard-list"></i>
+                                Historial de Pedidos
                             </a>
                             <div class="dropdown-divider"></div>
                             <button onclick="logout()" class="dropdown-item">
