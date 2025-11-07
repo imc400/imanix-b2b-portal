@@ -3243,7 +3243,7 @@ function getCartHTML(customer) {
                                 <i class="fas fa-user-edit"></i>
                                 Mi Perfil
                             </a>
-                            <a href="/pedidos" class="dropdown-item">
+                            <a href="/perfil?tab=orders" class="dropdown-item">
                                 <i class="fas fa-clipboard-list"></i>
                                 Historial de Pedidos
                             </a>
@@ -7785,7 +7785,7 @@ function getProductDetailHTML(product, customer) {
                                 <i class="fas fa-user-edit"></i>
                                 Mi Perfil
                             </a>
-                            <a href="/pedidos" class="dropdown-item">
+                            <a href="/perfil?tab=orders" class="dropdown-item">
                                 <i class="fas fa-clipboard-list"></i>
                                 Historial de Pedidos
                             </a>
@@ -9943,7 +9943,7 @@ function getPortalHTML(products, customer) {
                                 <i class="fas fa-user-edit"></i>
                                 Mi Perfil
                             </a>
-                            <a href="/pedidos" class="dropdown-item">
+                            <a href="/perfil?tab=orders" class="dropdown-item">
                                 <i class="fas fa-clipboard-list"></i>
                                 Historial de Pedidos
                             </a>
@@ -11553,7 +11553,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                                 <i class="fas fa-user-edit"></i>
                                 Mi Perfil
                             </a>
-                            <a href="/pedidos" class="dropdown-item">
+                            <a href="/perfil?tab=orders" class="dropdown-item">
                                 <i class="fas fa-clipboard-list"></i>
                                 Historial de Pedidos
                             </a>
@@ -12056,7 +12056,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                 try {
                     const response = await fetch('/api/auth/logout', { method: 'POST' });
                     const data = await response.json();
-                    
+
                     if (data.success) {
                         localStorage.removeItem('b2bCart');
                         window.location.href = '/';
@@ -12069,6 +12069,19 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                 }
             }
         }
+
+        // Auto-open tab based on URL parameter
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tab = urlParams.get('tab');
+
+            if (tab) {
+                const tabButton = document.querySelector(\`button[onclick*="switchTab('$\{tab}')"]}\`);
+                if (tabButton) {
+                    switchTab(tab, tabButton);
+                }
+            }
+        });
     </script>
 </body>
 </html>`;
