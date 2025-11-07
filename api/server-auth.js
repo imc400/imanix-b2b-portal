@@ -13255,28 +13255,28 @@ function getAccountHTML(customer, profile, addresses, stats) {
 
 // Función para generar HTML del Historial de Pedidos
 function getOrdersHTML(customer, orders, currentPage, totalPages) {
-  const ordersHTML = orders && orders.length > 0 ? 
+  const ordersHTML = orders && orders.length > 0 ?
     orders.map(order => `
         <div class="order-card">
             <div class="order-header">
                 <div class="order-info">
-                    <h3>Pedido #${order.id}</h3>
-                    <div class="order-date">${new Date(order.created_at).toLocaleDateString('es-ES')}</div>
+                    <h3>Pedido #${order.order_number || order.id}</h3>
+                    <div class="order-date">${new Date(order.created_at || order.order_date).toLocaleDateString('es-ES')}</div>
                 </div>
-                <div class="order-status">Pendiente</div>
+                <div class="order-status">${order.status || 'Pendiente'}</div>
             </div>
             <div class="order-details">
                 <div class="detail-item">
                     <span class="detail-label">Total:</span>
-                    <span class="detail-value">$${order.total.toLocaleString()}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Items:</span>
-                    <span class="detail-value">${order.item_count || 1}</span>
+                    <span class="detail-value">$${parseFloat(order.total_amount || 0).toLocaleString('es-CL')}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Descuento:</span>
-                    <span class="detail-value">${customer?.discountPercentage}%</span>
+                    <span class="detail-value">$${parseFloat(order.discount_amount || 0).toLocaleString('es-CL')}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Estado:</span>
+                    <span class="detail-value">${order.status || 'Pendiente'}</span>
                 </div>
             </div>
             <div class="order-actions">
