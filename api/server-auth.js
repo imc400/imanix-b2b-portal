@@ -938,6 +938,7 @@ app.post('/api/auth/login', async (req, res) => {
       
       // Establecer sesión real para el portal con datos de Shopify
       req.session.customer = {
+        id: shopifyCustomer?.id || null,
         email: cleanEmail,
         firstName: userProfile.first_name || shopifyCustomer?.first_name || 'Usuario',
         lastName: userProfile.last_name || shopifyCustomer?.last_name || 'B2B',
@@ -948,6 +949,7 @@ app.post('/api/auth/login', async (req, res) => {
       };
       
       console.log('✅ Sesión establecida con datos de Shopify:', req.session.customer);
+      console.log('🆔 Shopify Customer ID guardado en sesión:', req.session.customer.id);
       
       // GUARDAR SESIÓN EN SUPABASE
       await req.session.save();
@@ -1673,6 +1675,10 @@ function getRegionName(regionId) {
 
 // Función para crear Draft Order en Shopify
 async function createDraftOrder(customer, cartItems, discountPercentage, paymentMethod = 'contacto', comprobante = null, ordenCompra = null, shippingInfo = null) {
+    console.log('🔍 DEBUG createDraftOrder - Customer object:', JSON.stringify(customer, null, 2));
+    console.log('🆔 DEBUG createDraftOrder - Customer ID:', customer?.id);
+    console.log('📧 DEBUG createDraftOrder - Customer email:', customer?.email);
+
     // Obtener datos del perfil empresarial desde la base de datos
     let profileData = null;
     if (database) {
@@ -1877,6 +1883,9 @@ INFORMACIÓN DE ENVÍO:
             })
         }
     };
+
+    console.log('🚀 DEBUG - Draft Order payload customer:', JSON.stringify(draftOrder.draft_order.customer, null, 2));
+    console.log('🆔 DEBUG - Customer ID being sent to Shopify:', draftOrder.draft_order.customer.id);
 
     try {
         const response = await fetch(`https://${SHOPIFY_SHOP_DOMAIN}/admin/api/2023-10/draft_orders.json`, {
