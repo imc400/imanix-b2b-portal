@@ -12854,22 +12854,41 @@ app.get('/cuenta', requireAuth, async (req, res) => {
 // Página Historial de Pedidos
 app.get('/pedidos', requireAuth, async (req, res) => {
   try {
+    console.log('🔍 DEBUG /pedidos - Iniciando endpoint');
+    console.log('🔍 DEBUG /pedidos - Session customer:', req.session.customer);
+
     const customer = {
       ...req.session.customer,
       discountPercentage: req.session.customer?.discount
     };
+
+    console.log('🔍 DEBUG /pedidos - Customer object:', customer);
+    console.log('🔍 DEBUG /pedidos - Customer email:', customer?.email);
+
     const page = parseInt(req.query.page) || 1;
     const limit = 10;
     const offset = (page - 1) * limit;
-    
+
+    console.log('🔍 DEBUG /pedidos - Fetching orders...');
     const orders = await database.getUserOrders(customer?.email || 'no-email@example.com', limit, offset);
+    console.log('🔍 DEBUG /pedidos - Orders fetched:', orders?.length || 0);
+
+    console.log('🔍 DEBUG /pedidos - Counting total orders...');
     const totalOrders = await database.getUserOrdersCount(customer?.email || 'no-email@example.com');
+    console.log('🔍 DEBUG /pedidos - Total orders:', totalOrders);
+
     const totalPages = Math.ceil(totalOrders / limit);
-    
-    res.send(getOrdersHTML(customer, orders, page, totalPages));
+
+    console.log('🔍 DEBUG /pedidos - Generating HTML...');
+    const html = getOrdersHTML(customer, orders, page, totalPages);
+    console.log('🔍 DEBUG /pedidos - HTML generated successfully');
+
+    res.send(html);
   } catch (error) {
-    console.error('Error obteniendo historial de pedidos:', error);
-    res.status(500).send('Error interno del servidor');
+    console.error('❌ Error obteniendo historial de pedidos:', error);
+    console.error('❌ Error stack:', error.stack);
+    console.error('❌ Error message:', error.message);
+    res.status(500).send(`Error interno del servidor: ${error.message}`);
   }
 });
 
