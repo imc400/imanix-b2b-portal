@@ -12070,7 +12070,7 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
             }
         }
 
-        // Auto-open tab based on URL parameter
+        // Auto-open tab based on URL parameter and scroll to content
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const tab = urlParams.get('tab');
@@ -12079,6 +12079,23 @@ function getProfileHTML(customer, profile, addresses, orders, stats) {
                 const tabButton = document.querySelector(\`button[onclick*="switchTab('$\{tab}')"]}\`);
                 if (tabButton) {
                     switchTab(tab, tabButton);
+
+                    // Scroll to the tab content after a small delay to ensure tab switch completes
+                    setTimeout(() => {
+                        const tabContent = document.getElementById(tab + '-tab');
+                        if (tabContent) {
+                            tabContent.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'start'
+                            });
+
+                            // Additional offset to account for fixed navbar (adjust if needed)
+                            window.scrollBy({
+                                top: -100,
+                                behavior: 'smooth'
+                            });
+                        }
+                    }, 300);
                 }
             }
         });
